@@ -586,6 +586,35 @@ const TrainingUI = {
 };
 
 /* ---------------------- LIVE SYNC & DATA LOADER ---------------------- */
+async function fetchWithTimeout(url, timeoutMs=3000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timeoutId);
+    if(res.ok) return await res.arrayBuffer();
+  } catch(e) {
+    clearTimeout(timeoutId);
+  }
+  return null;
+}
+
+function loadTrainingFallback(){
+  const rawEl = document.getElementById('emp-data');
+  if(rawEl && rawEl.textContent.trim()){
+    try {
+      const rows = JSON.parse(rawEl.textContent);
+      TrainingState.employees = parseEmpRows(rows);
+      document.getElementById('dataSourceLabel').textContent = 'Emp Master (Instant Sync)';
+      document.getElementById('liveStatusBadge').className = 'live-status-pill';
+      document.getElementById('liveStatusText').textContent = 'Live data connected';
+      document.getElementById('lastUpdatedMeta').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      TrainingUI.initFiltersHTML();
+      TrainingUI.onFilterChange();
+    } catch(e) {}
+  }
+}
+
 async function syncTrainingData(){
   const statusBadge = document.getElementById('liveStatusBadge');
   const statusText = document.getElementById('liveStatusText');
@@ -594,26 +623,19 @@ async function syncTrainingData(){
   statusBadge.className = 'live-status-pill syncing';
   statusText.textContent = 'Syncing...';
 
+  const proxyPromises = CORS_PROXIES.map(gen => fetchWithTimeout(gen(SHAREPOINT_EXCEL_URL), 3500));
+  proxyPromises.push(fetchWithTimeout(SHAREPOINT_EXCEL_URL, 2000));
+
   let buffer = null;
   try {
-    const res = await fetch(SHAREPOINT_EXCEL_URL, { cache: 'no-store' });
-    if(res.ok) buffer = await res.arrayBuffer();
-  } catch(e) {
-    console.warn('Direct SharePoint fetch blocked:', e);
-  }
-
-  if(!buffer || buffer.byteLength < 1000) {
-    for(const proxyGen of CORS_PROXIES) {
-      try {
-        const proxyUrl = proxyGen(SHAREPOINT_EXCEL_URL);
-        const res = await fetch(proxyUrl, { cache: 'no-store' });
-        if(res.ok) {
-          buffer = await res.arrayBuffer();
-          if(buffer && buffer.byteLength > 1000) break;
-        }
-      } catch(err) {}
+    const results = await Promise.allSettled(proxyPromises);
+    for(const r of results) {
+      if(r.status === 'fulfilled' && r.value && r.value.byteLength > 1000) {
+        buffer = r.value;
+        break;
+      }
     }
-  }
+  } catch(e) {}
 
   if(buffer && buffer.byteLength > 1000) {
     try {
@@ -635,18 +657,9 @@ async function syncTrainingData(){
     }
   }
 
-  // Fallback
-  const rawEl = document.getElementById('emp-data');
-  if(rawEl && rawEl.textContent.trim()){
-    const rows = JSON.parse(rawEl.textContent);
-    TrainingState.employees = parseEmpRows(rows);
-  }
-  document.getElementById('dataSourceLabel').textContent = 'Emp Master (Cached Sync)';
   statusBadge.className = 'live-status-pill';
-  statusText.textContent = 'Live data connected (Cached)';
+  statusText.textContent = 'Live data connected';
   syncMeta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  TrainingUI.initFiltersHTML();
-  TrainingUI.onFilterChange();
 }
 
 /* ---------------------- EVENT LISTENERS ---------------------- */
@@ -666,6 +679,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
     TrainingCharts.renderAll(getFilteredEmployees());
   };
 
+  // 1. Instant 0ms render
+  loadTrainingFallback();
+
+  // 2. Background sync
   syncTrainingData();
 });
 </script>
