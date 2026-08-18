@@ -305,6 +305,56 @@ const State = {
   isLive: false
 };
 
+/* ---------------------- ALWAYS-SHOW DATA LABELS PLUGIN ---------------------- */
+const AlwaysShowDataLabelsPlugin = {
+  id: 'alwaysShowDataLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '600 11.5px "Plus Jakarta Sans", -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    const isDark = document.body.classList.contains('dark-theme');
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+    const chartId = chart.canvas.id;
+    const isPercentage = chartId === 'chartAOMScore' || chartId === 'chartCategoryScore' || chartId === 'chartTrendOverall';
+
+    chart.data.datasets.forEach((dataset, datasetIdx) => {
+      const meta = chart.getDatasetMeta(datasetIdx);
+      if (meta.hidden) return;
+
+      meta.data.forEach((element, index) => {
+        const rawVal = dataset.data[index];
+        if (rawVal === null || rawVal === undefined) return;
+
+        let labelText = '';
+        if (isPercentage) {
+          if (rawVal === 0 && chartId === 'chartCategoryScore') return; // Don't crowd unassessed categories
+          labelText = Number(rawVal).toFixed(1) + '%';
+        } else {
+          labelText = String(rawVal);
+        }
+
+        ctx.fillStyle = textColor;
+        let posX = element.x;
+        let posY = element.y - 4;
+
+        if (posY < 16) {
+          posY = element.y + 16;
+          ctx.textBaseline = 'top';
+        } else {
+          ctx.textBaseline = 'bottom';
+        }
+
+        ctx.fillText(labelText, posX, posY);
+      });
+    });
+    ctx.restore();
+  }
+};
+
 /* ---------------------- UTILS ---------------------- */
 const Utils = {
   debounce(fn, ms){
@@ -700,6 +750,7 @@ const ChartModule = {
 
     State.charts.aomScore = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -713,6 +764,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Score: ${c.raw.toFixed(1)}%` } }
@@ -720,7 +772,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
+            max: 105,
             ticks: { callback: v=>v+'%', color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Score %', color: this.getFontColor(), font: { size: 11 } }
@@ -744,6 +796,7 @@ const ChartModule = {
 
     State.charts.categoryScore = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -757,6 +810,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Score: ${c.raw.toFixed(1)}%` } }
@@ -764,7 +818,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
+            max: 105,
             ticks: { callback: v=>v+'%', color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Score %', color: this.getFontColor(), font: { size: 11 } }
@@ -781,6 +835,7 @@ const ChartModule = {
   /* 3. AOM-wise Training Count */
   renderAOMCount(records){
     const data = Calc.aomCounts(records);
+    const maxVal = Math.max(...data.map(d=>d.count), 10);
     const canvas = document.getElementById('chartAOMCount');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -788,6 +843,7 @@ const ChartModule = {
 
     State.charts.aomCount = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -801,6 +857,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Sessions: ${c.raw}` } }
@@ -808,6 +865,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
+            max: Math.ceil(maxVal * 1.15),
             ticks: { precision: 0, color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Trainings Count', color: this.getFontColor(), font: { size: 11 } }
@@ -824,6 +882,7 @@ const ChartModule = {
   /* 4. Category-wise Training Count */
   renderCategoryCount(records){
     const data = Calc.categoryCounts(records);
+    const maxVal = Math.max(...data.map(d=>d.count), 10);
     const canvas = document.getElementById('chartCategoryCount');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -831,6 +890,7 @@ const ChartModule = {
 
     State.charts.categoryCount = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -844,6 +904,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Sessions: ${c.raw}` } }
@@ -851,6 +912,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
+            max: Math.ceil(maxVal * 1.15),
             ticks: { precision: 0, color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Trainings Count', color: this.getFontColor(), font: { size: 11 } }
@@ -874,6 +936,7 @@ const ChartModule = {
 
     State.charts.trendOverall = new Chart(ctx, {
       type: 'line',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: trends.labels.length ? trends.labels : ['No Assessment Sessions'],
         datasets: [{
@@ -894,6 +957,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 18 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Score: ${c.raw.toFixed(1)}%` } }
@@ -901,7 +965,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
+            max: 105,
             ticks: { callback: v => v + '%', color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Score %', color: this.getFontColor(), font: { size: 11 } }
@@ -918,6 +982,7 @@ const ChartModule = {
   /* 6. Score Buckets Column Graph ("<60%", "60~70%", "70~80%", "80~90%", "90~95%", ">95%") */
   renderScoreBuckets(records){
     const buckets = Calc.scoreBuckets(records);
+    const maxVal = Math.max(...buckets.counts, 10);
     const canvas = document.getElementById('chartScoreBuckets');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -925,6 +990,7 @@ const ChartModule = {
 
     State.charts.scoreBuckets = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: buckets.labels,
         datasets: [{
@@ -938,6 +1004,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `${c.raw} Employees (${c.label})` } }
@@ -945,6 +1012,7 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
+            max: Math.ceil(maxVal * 1.18),
             ticks: { precision: 0, color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'Employees Count', color: this.getFontColor(), font: { size: 11 } }
