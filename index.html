@@ -138,6 +138,28 @@
       </div>
     </div>
 
+    <!-- 3. SCORE TREND (WEEK-WISE: OVERALL, DISPLAY, CAMPAIGN) -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Score trend</h2>
+        <span class="hint">Week-wise QC Score trajectories across Overall, Display, and Campaign audits</span>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <h3 style="font-size:14px; margin-bottom:12px;">Overall QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise overall audit performance trajectory</span></h3>
+          <div class="chart-box"><canvas id="chartTrendOverall"></canvas></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14px; margin-bottom:12px;">Display QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise display parameter compliance trajectory</span></h3>
+          <div class="chart-box"><canvas id="chartTrendDisplay"></canvas></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:14px; margin-bottom:12px;">Campaign QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise POSM &amp; branding deployment trajectory</span></h3>
+          <div class="chart-box"><canvas id="chartTrendCampaign"></canvas></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 3. TOP & BOTTOM PERFORMING VMs -->
     <div class="section">
       <div class="section-head">
@@ -594,6 +616,66 @@ const Calc = {
     return { top5, bottom5 };
   },
 
+  weeklyTrends(records){
+    const weeksMap = {};
+
+    records.forEach(r => {
+      if(!r.date || !(r.date instanceof Date) || isNaN(r.date)) return;
+      
+      const d = new Date(r.date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(d.setDate(diff));
+      mon.setHours(0,0,0,0);
+      
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+
+      const monStr = mon.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+      const sunStr = sun.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+      const key = `${monStr} - ${sunStr}`;
+      const timeKey = mon.getTime();
+
+      if(!weeksMap[key]){
+        weeksMap[key] = {
+          label: key,
+          time: timeKey,
+          qcSum: 0,
+          qcCount: 0,
+          dispOk: 0,
+          dispTot: 0,
+          campOk: 0,
+          campTot: 0,
+          auditCount: 0
+        };
+      }
+
+      weeksMap[key].auditCount++;
+      if(r.qcPct != null){
+        weeksMap[key].qcSum += r.qcPct;
+        weeksMap[key].qcCount++;
+      }
+      r.display.forEach(p => {
+        weeksMap[key].dispTot++;
+        if(p.ok) weeksMap[key].dispOk++;
+      });
+      r.campaign.forEach(p => {
+        weeksMap[key].campTot++;
+        if(p.ok) weeksMap[key].campOk++;
+      });
+    });
+
+    const sorted = Object.values(weeksMap).sort((a,b) => a.time - b.time);
+
+    return {
+      labels: sorted.map(w => w.label),
+      overall: sorted.map(w => w.qcCount ? (w.qcSum / w.qcCount) * 100 : 0),
+      display: sorted.map(w => w.dispTot ? (w.dispOk / w.dispTot) * 100 : 0),
+      campaign: sorted.map(w => w.campTot ? (w.campOk / w.campTot) * 100 : 0),
+      counts: sorted.map(w => w.auditCount)
+    };
+  },
+
   trainerInsights(records){
     const highlights = [];
     const lowlights = [];
@@ -662,6 +744,9 @@ const ChartModule = {
     this.renderBranchCombo(filtered);
     this.renderDisplay(filtered);
     this.renderCampaign(filtered);
+    this.renderTrendOverall(filtered);
+    this.renderTrendDisplay(filtered);
+    this.renderTrendCampaign(filtered);
   },
 
   /* 1. AOM Combo: Score % (Theme Red) + Audit Count (Accent Line) */
@@ -890,8 +975,171 @@ const ChartModule = {
         }
       }
     });
+  },
+
+  /* 5. Overall QC Score Trend (Week-wise) */
+  renderTrendOverall(records){
+    const data = Calc.weeklyTrends(records);
+    const canvas = document.getElementById('chartTrendOverall');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(State.charts.trendOverall) State.charts.trendOverall.destroy();
+
+    State.charts.trendOverall = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Overall QC %',
+          data: data.overall,
+          borderColor: THEME_COLORS.barBlue,
+          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          fill: true,
+          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 4.5,
+          pointHoverRadius: 6.5,
+          borderWidth: 2.5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => `Overall QC: ${c.raw.toFixed(1)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: v => v + '%', color: this.getFontColor() },
+            grid: { color: this.getGridColor() }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  },
+
+  /* 6. Display QC Score Trend (Week-wise) */
+  renderTrendDisplay(records){
+    const data = Calc.weeklyTrends(records);
+    const canvas = document.getElementById('chartTrendDisplay');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(State.charts.trendDisplay) State.charts.trendDisplay.destroy();
+
+    State.charts.trendDisplay = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Display QC %',
+          data: data.display,
+          borderColor: THEME_COLORS.barBlue,
+          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          fill: true,
+          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 4.5,
+          pointHoverRadius: 6.5,
+          borderWidth: 2.5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => `Display QC: ${c.raw.toFixed(1)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: v => v + '%', color: this.getFontColor() },
+            grid: { color: this.getGridColor() }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  },
+
+  /* 7. Campaign QC Score Trend (Week-wise) */
+  renderTrendCampaign(records){
+    const data = Calc.weeklyTrends(records);
+    const canvas = document.getElementById('chartTrendCampaign');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(State.charts.trendCampaign) State.charts.trendCampaign.destroy();
+
+    State.charts.trendCampaign = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Campaign QC %',
+          data: data.campaign,
+          borderColor: THEME_COLORS.barBlue,
+          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          fill: true,
+          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.5,
+          pointRadius: 4.5,
+          pointHoverRadius: 6.5,
+          borderWidth: 2.5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => `Campaign QC: ${c.raw.toFixed(1)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: v => v + '%', color: this.getFontColor() },
+            grid: { color: this.getGridColor() }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
   }
 };
+
 
 /* ---------------------- UI & RENDERING ---------------------- */
 const UI = {
