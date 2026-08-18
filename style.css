@@ -542,6 +542,21 @@ a {
 }
 
 /* =====================================================================
+   DARK LINE GRAPH CARD (Consistent on QC and Training pages)
+   ===================================================================== */
+.dark-line-card {
+  background: linear-gradient(145deg, #0b1329 0%, #071126 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.22) !important;
+  box-shadow: 0 8px 24px -4px rgba(2, 6, 23, 0.45) !important;
+}
+.dark-line-card h3 {
+  color: #f8fafc !important;
+}
+.dark-line-card h3 span {
+  color: #94a3b8 !important;
+}
+
+/* =====================================================================
    KPI GRID
    ===================================================================== */
 .kpi-grid {

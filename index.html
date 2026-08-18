@@ -145,15 +145,15 @@
         <span class="hint">Week-wise QC Score trajectories across Overall, Display, and Campaign audits</span>
       </div>
       <div class="grid-3">
-        <div class="card">
+        <div class="card dark-line-card">
           <h3 style="font-size:14px; margin-bottom:12px;">Overall QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise overall audit performance trajectory</span></h3>
           <div class="chart-box"><canvas id="chartTrendOverall"></canvas></div>
         </div>
-        <div class="card">
+        <div class="card dark-line-card">
           <h3 style="font-size:14px; margin-bottom:12px;">Display QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise display parameter compliance trajectory</span></h3>
           <div class="chart-box"><canvas id="chartTrendDisplay"></canvas></div>
         </div>
-        <div class="card">
+        <div class="card dark-line-card">
           <h3 style="font-size:14px; margin-bottom:12px;">Campaign QC Score Trend<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise POSM &amp; branding deployment trajectory</span></h3>
           <div class="chart-box"><canvas id="chartTrendCampaign"></canvas></div>
         </div>
@@ -731,6 +731,65 @@ const THEME_COLORS = {
   axisOrange: '#ea580c'
 };
 
+/* ---------------------- ALWAYS-SHOW DATA LABELS PLUGIN ---------------------- */
+const AlwaysShowDataLabelsPlugin = {
+  id: 'alwaysShowDataLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '700 11px "Plus Jakarta Sans", -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    const isDark = document.body.classList.contains('dark-theme');
+    const chartId = chart.canvas.id;
+    const isLineChart = chartId.startsWith('chartTrend');
+
+    chart.data.datasets.forEach((dataset, datasetIdx) => {
+      const meta = chart.getDatasetMeta(datasetIdx);
+      if (meta.hidden) return;
+
+      meta.data.forEach((element, index) => {
+        const rawVal = dataset.data[index];
+        if (rawVal === null || rawVal === undefined) return;
+
+        let labelText = '';
+        let textColor = isDark ? '#f8fafc' : '#0f172a';
+
+        if (isLineChart) {
+          // Line graph with dark background: vibrant yellow/white light label
+          labelText = Number(rawVal).toFixed(1) + '%';
+          textColor = '#fef08a';
+        } else if (dataset.type === 'line' || datasetIdx === 1) {
+          // Secondary count line on combo chart: vibrant orange
+          labelText = String(rawVal);
+          textColor = '#ea580c';
+        } else if (chartId === 'chartDisplay' || chartId === 'chartCampaign' || dataset.type === 'bar' || datasetIdx === 0) {
+          // Bar percentage
+          labelText = Number(rawVal).toFixed(1) + '%';
+          textColor = isDark ? '#f8fafc' : '#0f172a';
+        } else {
+          labelText = String(rawVal);
+        }
+
+        ctx.fillStyle = textColor;
+        let posX = element.x;
+        let posY = element.y - 4;
+
+        if (posY < 16) {
+          posY = element.y + 16;
+          ctx.textBaseline = 'top';
+        } else {
+          ctx.textBaseline = 'bottom';
+        }
+
+        ctx.fillText(labelText, posX, posY);
+      });
+    });
+    ctx.restore();
+  }
+};
+
 const ChartModule = {
   getFontColor(){
     return document.body.classList.contains('dark-theme') ? '#94a3b8' : '#475569';
@@ -749,7 +808,7 @@ const ChartModule = {
     this.renderTrendCampaign(filtered);
   },
 
-  /* 1. AOM Combo: Score % (Theme Red) + Audit Count (Accent Line) */
+  /* 1. AOM Combo: Score % (Theme Blue) + Audit Count (Orange Line) */
   renderAOMCombo(records){
     const data = Calc.aomScores(records);
     const ctx = document.getElementById('chartAOMCombo').getContext('2d');
@@ -757,6 +816,7 @@ const ChartModule = {
 
     State.charts.aomCombo = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [
@@ -791,6 +851,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: {
             display: true,
@@ -808,7 +869,7 @@ const ChartModule = {
             type: 'linear',
             position: 'left',
             min: 0,
-            max: 100,
+            max: 105,
             ticks: { callback: v=>v+'%', color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'QC Score %', color: this.getFontColor(), font: { size: 11 } }
@@ -830,7 +891,7 @@ const ChartModule = {
     });
   },
 
-  /* 2. Branch Combo: Score % (Theme Red) + Audit Count (Accent Line) */
+  /* 2. Branch Combo */
   renderBranchCombo(records){
     const data = Calc.branchScores(records).slice(0, 10);
     const ctx = document.getElementById('chartBranchCombo').getContext('2d');
@@ -838,6 +899,7 @@ const ChartModule = {
 
     State.charts.branchCombo = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [
@@ -872,6 +934,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: {
             display: true,
@@ -889,7 +952,7 @@ const ChartModule = {
             type: 'linear',
             position: 'left',
             min: 0,
-            max: 100,
+            max: 105,
             ticks: { callback: v=>v+'%', color: this.getFontColor() },
             grid: { color: this.getGridColor() },
             title: { display: true, text: 'QC Score %', color: this.getFontColor(), font: { size: 11 } }
@@ -911,7 +974,7 @@ const ChartModule = {
     });
   },
 
-  /* 3. Display Parameter Chart in Theme Red */
+  /* 3. Display Parameter Chart */
   renderDisplay(records){
     const data = Calc.paramScores(records, DISPLAY_PARAM_NAMES, r=>r.display);
     const ctx = document.getElementById('chartDisplay').getContext('2d');
@@ -919,6 +982,7 @@ const ChartModule = {
 
     State.charts.display = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -932,19 +996,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Approved: ${c.raw.toFixed(1)}%` } }
         },
         scales: {
-          y: { min: 0, max: 100, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
+          y: { min: 0, max: 105, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
           x: { ticks: { color: this.getFontColor(), font: { size: 10.5 } }, grid: { display: false } }
         }
       }
     });
   },
 
-  /* 4. Campaign Parameter Chart in Theme Red */
+  /* 4. Campaign Parameter Chart */
   renderCampaign(records){
     const data = Calc.paramScores(records, CAMPAIGN_PARAM_NAMES, r=>r.campaign);
     const ctx = document.getElementById('chartCampaign').getContext('2d');
@@ -952,6 +1017,7 @@ const ChartModule = {
 
     State.charts.campaign = new Chart(ctx, {
       type: 'bar',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.map(d=>d.name),
         datasets: [{
@@ -965,19 +1031,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: { label: c => `Approved: ${c.raw.toFixed(1)}%` } }
         },
         scales: {
-          y: { min: 0, max: 100, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
+          y: { min: 0, max: 105, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
           x: { ticks: { color: this.getFontColor(), font: { size: 10.5 } }, grid: { display: false } }
         }
       }
     });
   },
 
-  /* 5. Overall QC Score Trend (Week-wise) */
+  /* 5. Overall QC Score Trend (Week-wise, Dark Card Line Graph) */
   renderTrendOverall(records){
     const data = Calc.weeklyTrends(records);
     const canvas = document.getElementById('chartTrendOverall');
@@ -987,19 +1054,20 @@ const ChartModule = {
 
     State.charts.trendOverall = new Chart(ctx, {
       type: 'line',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.labels,
         datasets: [{
           label: 'Overall QC %',
           data: data.overall,
-          borderColor: THEME_COLORS.barBlue,
-          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
           fill: true,
-          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBackgroundColor: '#38bdf8',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 1.5,
-          pointRadius: 4.5,
-          pointHoverRadius: 6.5,
+          pointBorderWidth: 2,
+          pointRadius: 5.5,
+          pointHoverRadius: 7.5,
           borderWidth: 2.5,
           tension: 0.3
         }]
@@ -1007,6 +1075,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 18 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1018,12 +1087,12 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
-            ticks: { callback: v => v + '%', color: this.getFontColor() },
-            grid: { color: this.getGridColor() }
+            max: 105,
+            ticks: { callback: v => v + '%', color: '#94a3b8' },
+            grid: { color: 'rgba(255, 255, 255, 0.08)' }
           },
           x: {
-            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            ticks: { color: '#cbd5e1', font: { size: 9.5 } },
             grid: { display: false }
           }
         }
@@ -1031,7 +1100,7 @@ const ChartModule = {
     });
   },
 
-  /* 6. Display QC Score Trend (Week-wise) */
+  /* 6. Display QC Score Trend (Week-wise, Dark Card Line Graph) */
   renderTrendDisplay(records){
     const data = Calc.weeklyTrends(records);
     const canvas = document.getElementById('chartTrendDisplay');
@@ -1041,19 +1110,20 @@ const ChartModule = {
 
     State.charts.trendDisplay = new Chart(ctx, {
       type: 'line',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.labels,
         datasets: [{
           label: 'Display QC %',
           data: data.display,
-          borderColor: THEME_COLORS.barBlue,
-          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
           fill: true,
-          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBackgroundColor: '#38bdf8',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 1.5,
-          pointRadius: 4.5,
-          pointHoverRadius: 6.5,
+          pointBorderWidth: 2,
+          pointRadius: 5.5,
+          pointHoverRadius: 7.5,
           borderWidth: 2.5,
           tension: 0.3
         }]
@@ -1061,6 +1131,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 18 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1072,12 +1143,12 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
-            ticks: { callback: v => v + '%', color: this.getFontColor() },
-            grid: { color: this.getGridColor() }
+            max: 105,
+            ticks: { callback: v => v + '%', color: '#94a3b8' },
+            grid: { color: 'rgba(255, 255, 255, 0.08)' }
           },
           x: {
-            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            ticks: { color: '#cbd5e1', font: { size: 9.5 } },
             grid: { display: false }
           }
         }
@@ -1085,7 +1156,7 @@ const ChartModule = {
     });
   },
 
-  /* 7. Campaign QC Score Trend (Week-wise) */
+  /* 7. Campaign QC Score Trend (Week-wise, Dark Card Line Graph) */
   renderTrendCampaign(records){
     const data = Calc.weeklyTrends(records);
     const canvas = document.getElementById('chartTrendCampaign');
@@ -1095,19 +1166,20 @@ const ChartModule = {
 
     State.charts.trendCampaign = new Chart(ctx, {
       type: 'line',
+      plugins: [AlwaysShowDataLabelsPlugin],
       data: {
         labels: data.labels,
         datasets: [{
           label: 'Campaign QC %',
           data: data.campaign,
-          borderColor: THEME_COLORS.barBlue,
-          backgroundColor: 'rgba(2, 132, 199, 0.08)',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
           fill: true,
-          pointBackgroundColor: THEME_COLORS.barBlue,
+          pointBackgroundColor: '#38bdf8',
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 1.5,
-          pointRadius: 4.5,
-          pointHoverRadius: 6.5,
+          pointBorderWidth: 2,
+          pointRadius: 5.5,
+          pointHoverRadius: 7.5,
           borderWidth: 2.5,
           tension: 0.3
         }]
@@ -1115,6 +1187,7 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 18 } },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -1126,12 +1199,12 @@ const ChartModule = {
         scales: {
           y: {
             min: 0,
-            max: 100,
-            ticks: { callback: v => v + '%', color: this.getFontColor() },
-            grid: { color: this.getGridColor() }
+            max: 105,
+            ticks: { callback: v => v + '%', color: '#94a3b8' },
+            grid: { color: 'rgba(255, 255, 255, 0.08)' }
           },
           x: {
-            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            ticks: { color: '#cbd5e1', font: { size: 9.5 } },
             grid: { display: false }
           }
         }
@@ -1139,8 +1212,6 @@ const ChartModule = {
     });
   }
 };
-
-
 /* ---------------------- UI & RENDERING ---------------------- */
 const UI = {
   renderKPIs(filtered){
