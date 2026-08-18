@@ -159,11 +159,11 @@
       </div>
     </div>
 
-    <!-- 3. SCORE TREND (TIMELINE - ONLY ASSESSMENTS CONDUCTED) -->
+    <!-- 3. SCORE TREND & BUCKET DISTRIBUTION -->
     <div class="section">
       <div class="section-head">
         <h2>Score trend</h2>
-        <span class="hint">Timeline trend for conducted assessment evaluations &amp; weekly session volume</span>
+        <span class="hint">Timeline trend for conducted assessment evaluations &amp; employee score range distribution</span>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -171,8 +171,8 @@
           <div class="chart-box"><canvas id="chartTrendOverall"></canvas></div>
         </div>
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Weekly Training Sessions Conducted<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Week-wise training session volume trajectory</span></h3>
-          <div class="chart-box"><canvas id="chartTrendVolume"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">Employee Assessment Score Distribution<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Count of unique employees across overall average score buckets</span></h3>
+          <div class="chart-box"><canvas id="chartScoreBuckets"></canvas></div>
         </div>
       </div>
     </div>
@@ -227,10 +227,10 @@
       </div>
     </div>
 
-    <!-- 5. TRAINING DETAILS RECORDS TABLE -->
+    <!-- 5. TRAINING DETAILS RECORDS TABLE (PRESENT BUT UNATTEMPTED ASSESSMENTS ONLY) -->
     <div class="section">
       <div class="section-head">
-        <h2>📋 Training Records (Training Details)</h2>
+        <h2>📋 Training Records (Present but Unattempted Assessments)</h2>
         <div style="display:flex; align-items:center; gap:10px;">
           <input type="text" class="search-input" id="tableSearchInput" placeholder="🔍 Search VM name, topic, RH, branch...">
           <span class="hint" id="tableRecordCount">Showing 0 records</span>
@@ -425,6 +425,14 @@ const DataParser = {
 
       const attempted = row[idxAttempt] != null ? String(row[idxAttempt]).trim() : 'Not Conducted';
       const hasAssessment = scorePct != null || (totalPts > 0 && !attempted.toLowerCase().includes('not conducted'));
+      
+      const isPresent = (row[idxAtt] != null ? String(row[idxAtt]).trim().toLowerCase() : 'present') === 'present';
+      const isUnattempted = isPresent && (
+        attempted.toLowerCase() === 'no' ||
+        attempted.toLowerCase() === 'not attempted' ||
+        attempted.toLowerCase() === 'absent' ||
+        (scorePct === null && totalPts > 0)
+      );
 
       records.push({
         sr: row[idxSr] || (r - headerRowIdx),
@@ -446,7 +454,8 @@ const DataParser = {
         totalPoints: totalPts,
         achievedPoints: achPts,
         scorePct: scorePct,
-        hasAssessment: hasAssessment
+        hasAssessment: hasAssessment,
+        isUnattempted: isUnattempted
       });
     }
 
@@ -457,8 +466,6 @@ const DataParser = {
 /* ---------------------- CALCULATION ENGINE ---------------------- */
 const Calc = {
   kpis(records){
-    // 1. Trainings Conducted (Unique Date + Topic Batch)
-    // 2. Assessments Conducted (Checked against unique batch: 1 batch = 1 assessment if conducted)
     const batchesMap = {};
 
     records.forEach(r => {
@@ -479,7 +486,6 @@ const Calc = {
     const trainingsConducted = Object.keys(batchesMap).length;
     const assessmentCount = Object.values(batchesMap).filter(b => b.hasAssessment).length;
 
-    // 3. Unique Employees Trained
     const uniqueEmpSet = new Set();
     records.forEach(r => {
       if(r.empCode && r.empCode !== '—') uniqueEmpSet.add(r.empCode);
@@ -487,7 +493,6 @@ const Calc = {
     });
     const uniqueEmployees = uniqueEmpSet.size;
 
-    // 4. Overall Assessment Score %, Highest & Lowest (Conducted Assessments only)
     const allScores = [];
     records.forEach(r => {
       if(r.scorePct != null){
@@ -509,7 +514,6 @@ const Calc = {
     };
   },
 
-  // AOM-wise scores
   aomScores(records){
     const map = {};
     records.forEach(r => {
@@ -526,7 +530,6 @@ const Calc = {
     })).sort((a,b) => b.score - a.score);
   },
 
-  // AOM-wise training count
   aomCounts(records){
     const map = {};
     records.forEach(r => {
@@ -540,7 +543,6 @@ const Calc = {
     })).sort((a,b) => b.count - a.count);
   },
 
-  // Category-wise scores
   categoryScores(records){
     const map = {};
     records.forEach(r => {
@@ -557,7 +559,6 @@ const Calc = {
     })).sort((a,b) => b.score - a.score);
   },
 
-  // Category-wise training count
   categoryCounts(records){
     const map = {};
     records.forEach(r => {
@@ -574,7 +575,6 @@ const Calc = {
   // Timeline Trends (Score trend ONLY considers assessment conducted cases)
   weeklyTrends(records){
     const scoreWeeksMap = {};
-    const volumeWeeksMap = {};
 
     records.forEach(r => {
       if(!r.date || !(r.date instanceof Date) || isNaN(r.date)) return;
@@ -593,14 +593,6 @@ const Calc = {
       const key = r.weekNum ? `Week ${r.weekNum} (${monStr} - ${sunStr})` : `${monStr} - ${sunStr}`;
       const timeKey = mon.getTime();
 
-      // Volume tracking (all weeks)
-      if(!volumeWeeksMap[key]){
-        volumeWeeksMap[key] = { label: key, time: timeKey, sessions: new Set() };
-      }
-      if(r.dateStr && r.topic){
-        volumeWeeksMap[key].sessions.add(`${r.dateStr}___${r.topic}`);
-      }
-
       // Score tracking (ONLY weeks where assessment was conducted)
       if(r.scorePct != null){
         if(!scoreWeeksMap[key]){
@@ -612,17 +604,42 @@ const Calc = {
     });
 
     const sortedScoreWeeks = Object.values(scoreWeeksMap).sort((a,b) => a.time - b.time);
-    const sortedVolumeWeeks = Object.values(volumeWeeksMap).sort((a,b) => a.time - b.time);
 
     return {
-      scoreTrend: {
-        labels: sortedScoreWeeks.map(w => w.label),
-        scores: sortedScoreWeeks.map(w => (w.scoreSum / w.scoreCount) * 100)
-      },
-      volumeTrend: {
-        labels: sortedVolumeWeeks.map(w => w.label),
-        sessions: sortedVolumeWeeks.map(w => w.sessions.size)
+      labels: sortedScoreWeeks.map(w => w.label),
+      scores: sortedScoreWeeks.map(w => (w.scoreSum / w.scoreCount) * 100)
+    };
+  },
+
+  // Score Range Distribution Buckets: "<60%", "60~70%", "70~80%", "80~90%", "90~95%", ">95%"
+  scoreBuckets(records){
+    const empMap = {};
+    records.forEach(r => {
+      const key = r.empCode && r.empCode !== '—' ? r.empCode : r.empName;
+      if(!empMap[key]) empMap[key] = [];
+      if(r.scorePct != null){
+        empMap[key].push(r.scorePct);
       }
+    });
+
+    const bucketLabels = ['<60%', '60~70%', '70~80%', '80~90%', '90~95%', '>95%'];
+    const bucketCounts = [0, 0, 0, 0, 0, 0];
+
+    Object.values(empMap).forEach(scores => {
+      if(scores.length > 0){
+        const avg = scores.reduce((a,b)=>a+b, 0) / scores.length;
+        if(avg < 0.60) bucketCounts[0]++;
+        else if(avg < 0.70) bucketCounts[1]++;
+        else if(avg < 0.80) bucketCounts[2]++;
+        else if(avg < 0.90) bucketCounts[3]++;
+        else if(avg <= 0.95) bucketCounts[4]++;
+        else bucketCounts[5]++;
+      }
+    });
+
+    return {
+      labels: bucketLabels,
+      counts: bucketCounts
     };
   },
 
@@ -670,7 +687,7 @@ const ChartModule = {
     this.renderAOMCount(filtered);
     this.renderCategoryCount(filtered);
     this.renderTrendOverall(filtered);
-    this.renderTrendVolume(filtered);
+    this.renderScoreBuckets(filtered);
   },
 
   /* 1. AOM-wise Assessment Score % */
@@ -850,7 +867,6 @@ const ChartModule = {
   /* 5. Overall Assessment Score Trend (Timeline - Only Conducted Assessments) */
   renderTrendOverall(records){
     const trends = Calc.weeklyTrends(records);
-    const data = trends.scoreTrend;
     const canvas = document.getElementById('chartTrendOverall');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -859,10 +875,10 @@ const ChartModule = {
     State.charts.trendOverall = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: data.labels.length ? data.labels : ['No Assessment Sessions'],
+        labels: trends.labels.length ? trends.labels : ['No Assessment Sessions'],
         datasets: [{
           label: 'Assessment Score %',
-          data: data.scores.length ? data.scores : [0],
+          data: trends.scores.length ? trends.scores : [0],
           borderColor: THEME_COLORS.barBlue,
           backgroundColor: 'rgba(2, 132, 199, 0.08)',
           fill: true,
@@ -899,32 +915,24 @@ const ChartModule = {
     });
   },
 
-  /* 6. Weekly Training Volume Trend */
-  renderTrendVolume(records){
-    const trends = Calc.weeklyTrends(records);
-    const data = trends.volumeTrend;
-    const canvas = document.getElementById('chartTrendVolume');
+  /* 6. Score Buckets Column Graph ("<60%", "60~70%", "70~80%", "80~90%", "90~95%", ">95%") */
+  renderScoreBuckets(records){
+    const buckets = Calc.scoreBuckets(records);
+    const canvas = document.getElementById('chartScoreBuckets');
     if(!canvas) return;
     const ctx = canvas.getContext('2d');
-    if(State.charts.trendVolume) State.charts.trendVolume.destroy();
+    if(State.charts.scoreBuckets) State.charts.scoreBuckets.destroy();
 
-    State.charts.trendVolume = new Chart(ctx, {
-      type: 'line',
+    State.charts.scoreBuckets = new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: data.labels,
+        labels: buckets.labels,
         datasets: [{
-          label: 'Trainings Conducted',
-          data: data.sessions,
-          borderColor: THEME_COLORS.lineOrange,
-          backgroundColor: 'rgba(249, 115, 22, 0.08)',
-          fill: true,
-          pointBackgroundColor: THEME_COLORS.lineOrange,
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 1.5,
-          pointRadius: 4.5,
-          pointHoverRadius: 6.5,
-          borderWidth: 2.5,
-          tension: 0.3
+          label: 'Employees Count',
+          data: buckets.counts,
+          backgroundColor: THEME_COLORS.barBlue,
+          hoverBackgroundColor: THEME_COLORS.barBlueHover,
+          borderRadius: 5
         }]
       },
       options: {
@@ -932,17 +940,17 @@ const ChartModule = {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: c => `Sessions: ${c.raw}` } }
+          tooltip: { callbacks: { label: c => `${c.raw} Employees (${c.label})` } }
         },
         scales: {
           y: {
             min: 0,
-            ticks: { precision: 0, color: THEME_COLORS.axisOrange },
+            ticks: { precision: 0, color: this.getFontColor() },
             grid: { color: this.getGridColor() },
-            title: { display: true, text: 'Sessions Count', color: THEME_COLORS.axisOrange, font: { size: 11 } }
+            title: { display: true, text: 'Employees Count', color: this.getFontColor(), font: { size: 11 } }
           },
           x: {
-            ticks: { color: this.getFontColor(), font: { size: 9.5 } },
+            ticks: { color: this.getFontColor(), font: { size: 11, weight: '600' } },
             grid: { display: false }
           }
         }
@@ -1045,14 +1053,18 @@ const UI = {
     }
   },
 
+  /* Filter table to only list those present in training but did not attempt assessment */
   renderTable(filtered){
     const tbody = document.getElementById('trainingTableBody');
     const countEl = document.getElementById('tableRecordCount');
     const searchVal = (document.getElementById('tableSearchInput')?.value || '').toLowerCase().trim();
 
-    let displayRecords = filtered;
+    // Only include records where employee was Present but did not attempt assessment
+    const unattemptedRecords = filtered.filter(r => r.isUnattempted);
+
+    let displayRecords = unattemptedRecords;
     if(searchVal){
-      displayRecords = filtered.filter(r => 
+      displayRecords = unattemptedRecords.filter(r => 
         (r.empName && r.empName.toLowerCase().includes(searchVal)) ||
         (r.empCode && r.empCode.toLowerCase().includes(searchVal)) ||
         (r.rh && r.rh.toLowerCase().includes(searchVal)) ||
@@ -1062,23 +1074,19 @@ const UI = {
       );
     }
 
-    if(countEl) countEl.textContent = `Showing ${displayRecords.length} of ${filtered.length} records`;
+    if(countEl) countEl.textContent = `Showing ${displayRecords.length} unattempted instance${displayRecords.length === 1 ? '' : 's'}`;
 
     if(!tbody) return;
 
     if(!displayRecords.length){
-      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:var(--ink-faint); padding:24px;">No training records found matching search / filter criteria</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:var(--ink-faint); padding:24px;">No unattempted assessment records found matching active filters</td></tr>';
       return;
     }
 
-    tbody.innerHTML = displayRecords.slice(0, 200).map((r, i) => {
-      const scoreBadge = r.scorePct != null ? 
-        `<span class="badge ${r.scorePct >= 0.8 ? 'badge-pass' : 'badge-fail'}">${Utils.pct(r.scorePct)}</span>` : 
-        '<span style="color:var(--ink-faint);">—</span>';
-
-      const attBadge = r.attendance.toLowerCase().includes('present') ?
-        `<span class="badge badge-pass">${r.attendance}</span>` :
-        `<span class="badge badge-na">${r.attendance}</span>`;
+    tbody.innerHTML = displayRecords.map((r, i) => {
+      const scoreBadge = `<span class="badge badge-fail">0.0%</span>`;
+      const attBadge = `<span class="badge badge-pass">${r.attendance}</span>`;
+      const attemptBadge = `<span class="badge badge-fail">${r.attempted}</span>`;
 
       return `
         <tr>
@@ -1091,7 +1099,7 @@ const UI = {
           <td><b>${r.category}</b></td>
           <td style="font-size:12px; max-width:240px;" title="${r.topic}">${r.topic}</td>
           <td>${attBadge}</td>
-          <td style="font-size:12px;">${r.attempted}</td>
+          <td>${attemptBadge}</td>
           <td style="text-align:center; font-family:var(--font-mono);">${r.totalPoints > 0 ? `${r.achievedPoints} / ${r.totalPoints}` : '—'}</td>
           <td>${scoreBadge}</td>
         </tr>
