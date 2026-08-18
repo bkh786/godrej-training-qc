@@ -788,3 +788,91 @@ footer.foot {
     break-inside: avoid;
   }
 }
+
+/* Compact Rejection Table Layout */
+.rejection-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.rejection-table th, .rejection-table td {
+  padding: 8px 10px;
+  vertical-align: top;
+  word-break: break-word;
+}
+.rejection-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.col-outlet { width: 14%; }
+.col-vm { width: 11%; }
+.col-aom { width: 10%; }
+.col-date { width: 8.5%; }
+.col-display { width: 14%; }
+.col-campaign { width: 14.5%; }
+.col-score { width: 7%; }
+.col-remarks { width: 21%; }
+
+.param-badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.param-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.param-badge.pass {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.param-badge.fail {
+  background: rgba(228, 0, 43, 0.12);
+  color: #e4002b;
+  border: 1px solid rgba(228, 0, 43, 0.3);
+}
+
+.remarks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.remark-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.remark-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.remark-tag.mistake {
+  background: rgba(228, 0, 43, 0.15);
+  color: #e4002b;
+  border: 1px solid rgba(228, 0, 43, 0.3);
+}
+.remark-tag.trainer {
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+.remark-text {
+  color: var(--ink-base);
+  word-break: break-word;
+}

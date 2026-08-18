@@ -222,17 +222,17 @@
       </div>
       <div class="card" style="padding:14px;">
         <div class="table-wrap">
-          <table id="qcAuditTable">
+          <table id="qcAuditTable" class="rejection-table">
             <thead>
               <tr>
-                <th>Outlet</th>
-                <th>VM Name</th>
-                <th>AOM / Branch</th>
-                <th>QC Date</th>
-                <th style="min-width:180px;">Display Audit Parameters</th>
-                <th style="min-width:190px;">Campaign Audit Parameters</th>
-                <th>Final Score</th>
-                <th style="min-width:240px;">Trainer's Original Remarks</th>
+                <th class="col-outlet">Outlet</th>
+                <th class="col-vm">VM Name</th>
+                <th class="col-aom">AOM / Branch</th>
+                <th class="col-date">QC Date</th>
+                <th class="col-display">Display Parameters</th>
+                <th class="col-campaign">Campaign Parameters</th>
+                <th class="col-score">Score</th>
+                <th class="col-remarks">Mistakes &amp; Trainer Remarks</th>
               </tr>
             </thead>
             <tbody id="qcAuditTableBody"></tbody>
@@ -350,7 +350,7 @@ const IDENTITY_SYNONYMS = {
   qcDate: ['qc date','qc_date','audit date','qc audit date'],
   visitDate: ['visit date','plan date','visit_date'],
   aom: ['aom','aom name','area manager','sales manager'],
-  mistakes: ['mistakes reported','remarks','qc remarks'],
+  mistakes: ['mistakes reported'],
   trainerRemarks: ['trainer remarks','other observations','observations'],
   qcCount: ['qc approved count','approved count'],
   qcPct: ['qc approved %','overall qc score','qc score','qc %']
@@ -360,7 +360,8 @@ function matchSynonym(header, dict){
   const h = String(header||'').trim().toLowerCase();
   for(const key in dict){
     for(const syn of dict[key]){
-      if(h === syn || h.includes(syn)) return key;
+      // Exact equality or word match, preventing 'Correct Remarks Captured' from matching 'mistakes'
+      if(h === syn || (h.startsWith(syn) && !h.includes('correct remarks'))) return key;
     }
   }
   return null;
@@ -385,6 +386,13 @@ const DataParser = {
       const key = matchSynonym(h, IDENTITY_SYNONYMS);
       if(key && colMap[key]===undefined) colMap[key] = idx;
     });
+
+    // Explicit fallback for exact columns to guarantee 100% precision
+    const mistakesIdx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === 'mistakes reported');
+    if(mistakesIdx !== -1) colMap['mistakes'] = mistakesIdx;
+
+    const trainerIdx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === 'trainer remarks');
+    if(trainerIdx !== -1) colMap['trainerRemarks'] = trainerIdx;
 
     const dispParamIndices = DISPLAY_PARAM_NAMES.map(name => {
       const idx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === name.toLowerCase());
@@ -420,6 +428,12 @@ const DataParser = {
       const visitDateRaw = get('visitDate');
       const resolvedDate = Utils.toDateObj(qcDateRaw || visitDateRaw);
 
+      const rawMistakes = get('mistakes');
+      const rawTrainerRemarks = get('trainerRemarks');
+
+      const cleanMistakes = (rawMistakes && String(rawMistakes).trim().toLowerCase()!=='none') ? String(rawMistakes).trim() : '';
+      const cleanTrainerRemarks = (rawTrainerRemarks && String(rawTrainerRemarks).trim().toLowerCase()!=='none') ? String(rawTrainerRemarks).trim() : '';
+
       records.push({
         outletCode: get('outletCode'),
         store: get('store') || 'Unknown Store',
@@ -435,11 +449,11 @@ const DataParser = {
         aom: get('aom') || 'Unassigned',
         display: dispVals,
         campaign: campVals,
-        mistakes: get('mistakes'),
-        trainerRemarks: get('trainerRemarks'),
+        mistakes: cleanMistakes,
+        trainerRemarks: cleanTrainerRemarks,
         qcCount: get('qcCount'),
         qcPct: qcPct,
-        // Mark as rejection if score < 80% or any parameter failed
+        // Mark as rejection if score < 80% or any individual parameter failed
         isRejection: (qcPct!=null && qcPct < 0.8) || dispVals.some(x=>!x.ok) || campVals.some(x=>!x.ok)
       });
     }
@@ -569,7 +583,6 @@ const Calc = {
     return { top5, bottom5 };
   },
 
-  /* Extract Trainer Remarks for Highlights (High Scores) & Lowlights (Rejection Cases) */
   trainerInsights(records){
     const highlights = [];
     const lowlights = [];
@@ -577,13 +590,13 @@ const Calc = {
     const seenLow = new Set();
 
     records.forEach(r => {
-      const tr = (r.trainerRemarks || '').trim();
-      const ms = (r.mistakes || '').trim();
+      const tr = r.trainerRemarks;
+      const ms = r.mistakes;
 
-      // Collect Lowlights for rejected / low-scoring audits
+      // Collect Lowlights from rejected / low-scoring audits
       if(r.qcPct != null && r.qcPct < 0.8) {
         const text = tr || ms;
-        if(text && text.toLowerCase() !== 'ok' && text.toLowerCase() !== 'none' && !seenLow.has(text)) {
+        if(text && text.toLowerCase() !== 'ok' && !seenLow.has(text)) {
           seenLow.add(text);
           lowlights.push({
             remark: text,
@@ -596,9 +609,9 @@ const Calc = {
         }
       }
 
-      // Collect Highlights for top-performing audits (>= 80%)
+      // Collect Highlights from top-performing audits (>= 80%)
       if(r.qcPct != null && r.qcPct >= 0.8) {
-        if(tr && tr.toLowerCase() !== 'none' && tr.toLowerCase() !== 'ok' && !seenHigh.has(tr)) {
+        if(tr && tr.toLowerCase() !== 'ok' && !seenHigh.has(tr)) {
           seenHigh.add(tr);
           highlights.push({
             remark: tr,
@@ -927,7 +940,6 @@ const UI = {
     `).join('') : `<tr><td colspan="6" style="text-align:center; color:var(--ink-faint);">No data matching current filters</td></tr>`;
   },
 
-  /* Render Management Insights: Highlights & Lowlights strictly from Trainer Remarks */
   renderManagementInsights(filtered){
     const { highlights, lowlights } = Calc.trainerInsights(filtered);
 
@@ -936,7 +948,7 @@ const UI = {
           <li>
             <div>
               <b>${h.remark}</b>
-              <div style="font-size:11.5px; color:var(--ink-faint); margin-top:2px;">
+              <div style="font-size:11px; color:var(--ink-faint); margin-top:2px;">
                 VM: <b>${h.vm}</b> · Store: ${h.store} · AOM: ${h.aom} (${h.branch}) · Score: <b>${Utils.pct(h.score)}</b>
               </div>
             </div>
@@ -949,7 +961,7 @@ const UI = {
           <li>
             <div>
               <b style="color:var(--godrej-red);">${l.remark}</b>
-              <div style="font-size:11.5px; color:var(--ink-faint); margin-top:2px;">
+              <div style="font-size:11px; color:var(--ink-faint); margin-top:2px;">
                 VM: <b>${l.vm}</b> · Store: ${l.store} · AOM: ${l.aom} (${l.branch}) · Score: <b style="color:var(--godrej-red);">${Utils.pct(l.score)}</b>
               </div>
             </div>
@@ -1026,12 +1038,11 @@ const UI = {
     State.filters.empName = populate('fEmp', getValidOptions('empName', 'empName'), State.filters.empName, 'All VMs');
   },
 
-  /* Render Table: Rejection Cases Only with Display & Campaign parameters and Trainer Remarks */
+  /* Render Table: Rejection Cases Only with Display/Campaign micro badges and BOTH Mistakes Reported & Trainer Remarks */
   renderTable(records){
     const tbody = document.getElementById('qcAuditTableBody');
     const searchVal = (document.getElementById('tableSearchInput').value || '').toLowerCase().trim();
 
-    // Filter to ONLY rejection cases (score < 80% or failed parameters)
     let rejections = records.filter(r => r.isRejection);
 
     if(searchVal){
@@ -1054,36 +1065,48 @@ const UI = {
 
     tbody.innerHTML = rejections.slice(0, 100).map(r=>{
       const score = r.qcPct!=null ? (r.qcPct*100).toFixed(0)+'%' : '—';
-      const trainerNotes = [r.trainerRemarks, r.mistakes].filter(Boolean).join(' | ') || '—';
 
-      // Build parameter badges
+      // Build compact parameter badges
       const dispBadges = r.display.map(p => {
         const short = DISPLAY_SHORT_NAMES[p.name] || p.name;
         return p.ok 
-          ? `<span class="badge green" title="${p.name}: Pass" style="margin:2px 1px; font-size:10.5px;">${short} ✓</span>`
-          : `<span class="badge red" title="${p.name}: Rejected" style="margin:2px 1px; font-size:10.5px;">${short} ✗</span>`;
-      }).join(' ');
+          ? `<span class="param-badge pass" title="${p.name}: Pass">${short} ✓</span>`
+          : `<span class="param-badge fail" title="${p.name}: Rejected">${short} ✗</span>`;
+      }).join('');
 
       const campBadges = r.campaign.map(p => {
         const short = CAMPAIGN_SHORT_NAMES[p.name] || p.name;
         return p.ok 
-          ? `<span class="badge green" title="${p.name}: Pass" style="margin:2px 1px; font-size:10.5px;">${short} ✓</span>`
-          : `<span class="badge red" title="${p.name}: Rejected" style="margin:2px 1px; font-size:10.5px;">${short} ✗</span>`;
-      }).join(' ');
+          ? `<span class="param-badge pass" title="${p.name}: Pass">${short} ✓</span>`
+          : `<span class="param-badge fail" title="${p.name}: Rejected">${short} ✗</span>`;
+      }).join('');
+
+      // Build remarks container with BOTH Mistakes Reported and Trainer Remarks clearly demarcated
+      let remarksHTML = '';
+      if(r.mistakes || r.trainerRemarks){
+        remarksHTML = `
+          <div class="remarks-container">
+            ${r.mistakes ? `<div class="remark-row"><span class="remark-tag mistake">Mistakes</span><span class="remark-text">${r.mistakes}</span></div>` : ''}
+            ${r.trainerRemarks ? `<div class="remark-row"><span class="remark-tag trainer">Trainer</span><span class="remark-text">${r.trainerRemarks}</span></div>` : ''}
+          </div>
+        `;
+      } else {
+        remarksHTML = `<span style="font-size:11px; color:var(--ink-faint);">No remarks recorded</span>`;
+      }
 
       return `
         <tr>
-          <td><b>${r.store}</b><br><span style="font-size:11px; color:var(--ink-faint);">Code: ${r.outletCode||'—'} (${r.category})</span></td>
-          <td><b>${r.empName}</b><br><span style="font-size:11px; color:var(--ink-faint);">${r.empCode||''}</span></td>
-          <td>${r.aom}<br><span style="font-size:11px; color:var(--ink-faint);">${r.branch}</span></td>
-          <td>${Utils.fmtDate(r.date)}</td>
-          <td><div style="display:flex; flex-wrap:wrap; gap:2px;">${dispBadges || '—'}</div></td>
-          <td><div style="display:flex; flex-wrap:wrap; gap:2px;">${campBadges || '—'}</div></td>
+          <td><b style="font-size:12px;">${r.store}</b><br><span style="font-size:10.5px; color:var(--ink-faint);">${r.outletCode||''} · ${r.category}</span></td>
+          <td><b style="font-size:12px;">${r.empName}</b><br><span style="font-size:10.5px; color:var(--ink-faint);">${r.empCode||''}</span></td>
+          <td><span style="font-size:12px;">${r.aom}</span><br><span style="font-size:10.5px; color:var(--ink-faint);">${r.branch}</span></td>
+          <td style="font-size:11.5px; white-space:nowrap;">${Utils.fmtDate(r.date)}</td>
+          <td><div class="param-badge-grid">${dispBadges || '—'}</div></td>
+          <td><div class="param-badge-grid">${campBadges || '—'}</div></td>
           <td>
-            <b style="color:var(--godrej-red); font-size:13.5px;">${score}</b><br>
-            <span class="badge red" style="font-size:10px;">Rejected</span>
+            <b style="color:var(--godrej-red); font-size:13px;">${score}</b><br>
+            <span class="badge red" style="font-size:9.5px; padding:1px 5px;">Rejected</span>
           </td>
-          <td style="font-size:12px; line-height:1.4; color:var(--ink-soft);">${trainerNotes}</td>
+          <td>${remarksHTML}</td>
         </tr>
       `;
     }).join('');
@@ -1134,7 +1157,6 @@ const UI = {
 };
 
 /* ---------------------- HIGH-PERFORMANCE LIVE SYNC & DATA LOADER ---------------------- */
-// Fast helper: Fetch with timeout
 async function fetchWithTimeout(url, timeoutMs=3000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -1156,7 +1178,6 @@ async function syncFromSharePoint(){
   statusBadge.className = 'live-status-pill syncing';
   statusText.textContent = 'Syncing...';
 
-  // 1. Parallel race: Try fast CORS proxy + direct fetch simultaneously with 3s timeout
   const proxyPromises = CORS_PROXIES.map(gen => fetchWithTimeout(gen(SHAREPOINT_EXCEL_URL), 3500));
   proxyPromises.push(fetchWithTimeout(SHAREPOINT_EXCEL_URL, 2000));
 
@@ -1173,7 +1194,6 @@ async function syncFromSharePoint(){
     console.warn('Background sync error:', e);
   }
 
-  // 2. Process buffer if fetched
   if(buffer && buffer.byteLength > 1000) {
     try {
       const wb = XLSX.read(buffer, { type:'array', cellDates:true });
@@ -1193,7 +1213,6 @@ async function syncFromSharePoint(){
     }
   }
 
-  // 3. Fallback: Keep already loaded data and confirm status
   statusBadge.className = 'live-status-pill';
   statusText.textContent = 'Live data connected';
   syncMeta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -1249,12 +1268,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     ChartModule.renderAll(getFilteredRecords());
   };
 
-  // 1. INSTANT ZERO-LATENCY RENDER from local/cached data
+  // 1. INSTANT ZERO-LATENCY RENDER
   loadSampleFallback();
 
-  // 2. Non-blocking parallel background sync
+  // 2. Parallel Background sync
   syncFromSharePoint();
 });
+
 </script>
 </body>
 </html>
