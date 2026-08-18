@@ -474,27 +474,20 @@ const TrainingUI = {
     `;
   },
 
-  renderFilters(){
-    const emps = TrainingState.employees;
-    const unique = key => Array.from(new Set(emps.map(e=>e[key]).filter(Boolean))).sort();
-
-    const regions = unique('region');
-    const branches = unique('branch');
-    const rhs = unique('rh');
-
+  initFiltersHTML(){
     const bar = document.getElementById('filterBar');
     bar.innerHTML = `
       <div class="filter-field">
         <label>Region</label>
-        <select id="fRegion"><option value="">All Regions</option>${regions.map(r=>`<option value="${r}">${r}</option>`).join('')}</select>
+        <select id="fRegion"><option value="">All Regions</option></select>
       </div>
       <div class="filter-field">
         <label>Branch</label>
-        <select id="fBranch"><option value="">All Branches</option>${branches.map(b=>`<option value="${b}">${b}</option>`).join('')}</select>
+        <select id="fBranch"><option value="">All Branches</option></select>
       </div>
       <div class="filter-field">
         <label>Regional Head (RH / AOM)</label>
-        <select id="fRH"><option value="">All Managers</option>${rhs.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
+        <select id="fRH"><option value="">All Managers</option></select>
       </div>
     `;
 
@@ -503,9 +496,38 @@ const TrainingUI = {
     document.getElementById('fRH').onchange = (e) => { TrainingState.filters.rh = e.target.value; TrainingUI.onFilterChange(); };
   },
 
+  updateFilterDropdowns(){
+    const emps = TrainingState.employees;
+    const f = TrainingState.filters;
+
+    function getValidOptions(key, excludeKey){
+      const subset = emps.filter(e => {
+        if(excludeKey!=='region' && f.region && e.region !== f.region) return false;
+        if(excludeKey!=='branch' && f.branch && e.branch !== f.branch) return false;
+        if(excludeKey!=='rh' && f.rh && e.rh !== f.rh) return false;
+        return true;
+      });
+      return Array.from(new Set(subset.map(e => e[key]).filter(Boolean))).sort();
+    }
+
+    function populate(selectId, options, currentVal, defaultLabel){
+      const el = document.getElementById(selectId);
+      if(!el) return;
+      let selectedVal = currentVal;
+      if(selectedVal && !options.includes(selectedVal)) selectedVal = '';
+      el.innerHTML = `<option value="">${defaultLabel}</option>` + 
+        options.map(opt => `<option value="${opt}" ${opt===selectedVal ? 'selected':''}>${opt}</option>`).join('');
+      return selectedVal;
+    }
+
+    TrainingState.filters.region = populate('fRegion', getValidOptions('region', 'region'), TrainingState.filters.region, 'All Regions');
+    TrainingState.filters.branch = populate('fBranch', getValidOptions('branch', 'branch'), TrainingState.filters.branch, 'All Branches');
+    TrainingState.filters.rh = populate('fRH', getValidOptions('rh', 'rh'), TrainingState.filters.rh, 'All Managers');
+  },
+
   renderTable(employees){
     const tbody = document.getElementById('empMasterTableBody');
-    document.getElementById('tableRecordCount').textContent = `Showing ${employees.length} of ${TrainingState.employees.length} staff`;
+    document.getElementById('tableRecordCount').textContent = `Showing ${employees.length} of ${TrainingState.employees.length} VMs`;
 
     tbody.innerHTML = employees.map(emp => `
       <tr>
@@ -523,6 +545,7 @@ const TrainingUI = {
 
   renderActiveChips(){
     const chipsBox = document.getElementById('activeChips');
+    const labelMap = { region:'Region', branch:'Branch', rh:'RH / AOM' };
     const active = Object.entries(TrainingState.filters).filter(([k,v])=>Boolean(v) && k!=='search');
     if(!active.length){
       chipsBox.innerHTML = '';
@@ -530,7 +553,7 @@ const TrainingUI = {
     }
     chipsBox.innerHTML = active.map(([k,v])=>`
       <span class="filter-chip" onclick="TrainingUI.clearFilter('${k}')">
-        ${k}: <b>${v}</b> ✕
+        ${labelMap[k]||k}: <b>${v}</b> ✕
       </span>
     `).join('') + `<span class="filter-chip" style="background:rgba(228,0,43,0.12); color:#e4002b; border-color:rgba(228,0,43,0.3);" onclick="TrainingUI.resetAllFilters()">Clear All ✕</span>`;
   },
@@ -553,6 +576,7 @@ const TrainingUI = {
   },
 
   onFilterChange(){
+    TrainingUI.updateFilterDropdowns();
     const filtered = getFilteredEmployees();
     TrainingUI.renderKPIs(filtered);
     TrainingCharts.renderAll(filtered);
@@ -603,7 +627,7 @@ async function syncTrainingData(){
       statusText.textContent = 'Live data connected';
       syncMeta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
       
-      TrainingUI.renderFilters();
+      TrainingUI.initFiltersHTML();
       TrainingUI.onFilterChange();
       return;
     } catch(e) {
@@ -621,7 +645,7 @@ async function syncTrainingData(){
   statusBadge.className = 'live-status-pill';
   statusText.textContent = 'Live data connected (Cached)';
   syncMeta.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  TrainingUI.renderFilters();
+  TrainingUI.initFiltersHTML();
   TrainingUI.onFilterChange();
 }
 

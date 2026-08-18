@@ -191,11 +191,11 @@
             <thead>
               <tr>
                 <th>Outlet</th>
-                <th>Staff (VM)</th>
-                <th>AOM</th>
-                <th>Branch / City</th>
+                <th>VM Name</th>
+                <th>AOM Name</th>
+                <th>Branch</th>
                 <th>Category</th>
-                <th>Date</th>
+                <th>QC Date</th>
                 <th>QC Score</th>
                 <th>Status</th>
                 <th>Mistakes / Remarks</th>
@@ -270,18 +270,19 @@ const Utils = {
   debounce(fn, ms){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a), ms);}; }
 };
 
-/* ---------------------- DATA PARSER ---------------------- */
+/* ---------------------- DATA PARSER (REFERENCING QC DATE) ---------------------- */
 const IDENTITY_SYNONYMS = {
   outletCode: ['outlet code','store code'],
   store: ['outlet name','store name','store'],
-  empCode: ['emp code','employee code','staff code'],
-  empName: ['emp name','employee name','staff name','name'],
+  empCode: ['emp code','employee code','staff code','vm code'],
+  empName: ['emp name','employee name','vm name','staff name','name'],
   branch: ['outlet branch','branch'],
   category: ['outlet category','category'],
   classification: ['outlet classification','classification'],
   city: ['outlet city','city'],
-  date: ['visit date','plan date','audit date','date'],
-  aom: ['aom','area manager','sales manager'],
+  qcDate: ['qc date','qc_date','audit date','qc audit date'],
+  visitDate: ['visit date','plan date','visit_date'],
+  aom: ['aom','aom name','area manager','sales manager'],
   mistakes: ['mistakes reported','remarks','qc remarks'],
   trainerRemarks: ['trainer remarks','other observations','observations'],
   qcCount: ['qc approved count','approved count'],
@@ -361,6 +362,11 @@ const DataParser = {
         qcPct = all.length ? all.filter(x=>x.ok).length/all.length : null;
       }
 
+      // Explicitly prioritize QC Date for date filtering and display
+      const qcDateRaw = get('qcDate');
+      const visitDateRaw = get('visitDate');
+      const resolvedDate = Utils.toDateObj(qcDateRaw || visitDateRaw);
+
       records.push({
         outletCode: get('outletCode'),
         store: get('store') || 'Unknown Store',
@@ -370,7 +376,9 @@ const DataParser = {
         category: get('category') || 'Uncategorized',
         classification: get('classification') || 'Standard',
         city: get('city') || 'General',
-        date: Utils.toDateObj(get('date')),
+        date: resolvedDate, // QC Date used as primary date
+        qcDate: Utils.toDateObj(qcDateRaw),
+        visitDate: Utils.toDateObj(visitDateRaw),
         aom: get('aom') || 'Unassigned',
         display: dispVals,
         campaign: campVals,
@@ -384,10 +392,10 @@ const DataParser = {
   }
 };
 
-/* ---------------------- STATE ---------------------- */
+/* ---------------------- STATE & FILTER MATCHING ---------------------- */
 const State = {
   raw: null,
-  filters: { aom:'', empName:'', category:'', store:'', classification:'', city:'', dateFrom:'', dateTo:'' },
+  filters: { aom:'', branch:'', category:'', classification:'', empName:'', dateFrom:'', dateTo:'' },
   fileName: 'QC Tracker',
   isLive: false,
   charts: {}
@@ -395,13 +403,12 @@ const State = {
 
 function recordMatches(r, f, excludeKey){
   if(excludeKey!=='aom' && f.aom && r.aom!==f.aom) return false;
-  if(excludeKey!=='empName' && f.empName && r.empName!==f.empName) return false;
+  if(excludeKey!=='branch' && f.branch && r.branch!==f.branch) return false;
   if(excludeKey!=='category' && f.category && r.category!==f.category) return false;
-  if(excludeKey!=='store' && f.store && r.store!==f.store) return false;
   if(excludeKey!=='classification' && f.classification && r.classification!==f.classification) return false;
-  if(excludeKey!=='city' && f.city && r.city!==f.city) return false;
-  if(f.dateFrom && r.date && r.date < new Date(f.dateFrom)) return false;
-  if(f.dateTo && r.date && r.date > new Date(f.dateTo+'T23:59:59')) return false;
+  if(excludeKey!=='empName' && f.empName && r.empName!==f.empName) return false;
+  if(excludeKey!=='date' && f.dateFrom && r.date && r.date < new Date(f.dateFrom)) return false;
+  if(excludeKey!=='date' && f.dateTo && r.date && r.date > new Date(f.dateTo+'T23:59:59')) return false;
   return true;
 }
 
@@ -701,7 +708,7 @@ const ChartModule = {
   }
 };
 
-/* ---------------------- UI & RENDERING ---------------------- */
+/* ---------------------- UI & CASCADING FILTERS ---------------------- */
 const UI = {
   renderKPIs(filtered){
     const k = Calc.kpis(filtered);
@@ -773,62 +780,90 @@ const UI = {
       : `<li>No recurring mistakes recorded.</li>`;
   },
 
-  renderFilters(){
-    if(!State.raw) return;
-    const records = State.raw.records;
-
-    const unique = key => Array.from(new Set(records.map(r=>r[key]).filter(Boolean))).sort();
-
-    const aoms = unique('aom');
-    const emps = unique('empName');
-    const cats = unique('category');
-    const stores = unique('store');
-    const classes = unique('classification');
-    const cities = unique('city');
-
+  /* Build Static Filter HTML Structure */
+  initFiltersHTML(){
     const bar = document.getElementById('filterBar');
     bar.innerHTML = `
       <div class="filter-field">
-        <label>AOM</label>
-        <select id="fAOM"><option value="">All AOMs</option>${aoms.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+        <label>AOM Name</label>
+        <select id="fAOM"><option value="">All AOMs</option></select>
       </div>
       <div class="filter-field">
-        <label>Staff (VM)</label>
-        <select id="fEmp"><option value="">All Staff</option>${emps.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+        <label>Branch</label>
+        <select id="fBranch"><option value="">All Branches</option></select>
       </div>
       <div class="filter-field">
         <label>Category</label>
-        <select id="fCat"><option value="">All Categories</option>${cats.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
-      </div>
-      <div class="filter-field">
-        <label>Store / Outlet</label>
-        <select id="fStore"><option value="">All Stores</option>${stores.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+        <select id="fCat"><option value="">All Categories</option></select>
       </div>
       <div class="filter-field">
         <label>Classification</label>
-        <select id="fClass"><option value="">All Classifications</option>${classes.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+        <select id="fClass"><option value="">All Classifications</option></select>
       </div>
       <div class="filter-field">
-        <label>City</label>
-        <select id="fCity"><option value="">All Cities</option>${cities.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+        <label>VM Name</label>
+        <select id="fEmp"><option value="">All VMs</option></select>
       </div>
       <div class="filter-field">
-        <label>From Date</label>
+        <label>From Date (QC Date)</label>
         <input type="date" id="fDateFrom">
       </div>
       <div class="filter-field">
-        <label>To Date</label>
+        <label>To Date (QC Date)</label>
         <input type="date" id="fDateTo">
       </div>
     `;
 
-    ['fAOM','fEmp','fCat','fStore','fClass','fCity','fDateFrom','fDateTo'].forEach(id=>{
-      document.getElementById(id).addEventListener('change', e=>{
-        const keyMap = { fAOM:'aom', fEmp:'empName', fCat:'category', fStore:'store', fClass:'classification', fCity:'city', fDateFrom:'dateFrom', fDateTo:'dateTo' };
-        State.filters[keyMap[id]] = e.target.value;
-        UI.onFilterChange();
-      });
-    });
+    // Event listeners
+    document.getElementById('fAOM').addEventListener('change', e => { State.filters.aom = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fBranch').addEventListener('change', e => { State.filters.branch = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fCat').addEventListener('change', e => { State.filters.category = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fClass').addEventListener('change', e => { State.filters.classification = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fEmp').addEventListener('change', e => { State.filters.empName = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fDateFrom').addEventListener('change', e => { State.filters.dateFrom = e.target.value; UI.onFilterChange(); });
+    document.getElementById('fDateTo').addEventListener('change', e => { State.filters.dateTo = e.target.value; UI.onFilterChange(); });
+  },
+
+  /* Cascading / Dependent Dropdown Population */
+  updateFilterDropdowns(){
+    if(!State.raw) return;
+    const records = State.raw.records;
+
+    function getValidOptions(key, excludeKey){
+      const subset = records.filter(r => recordMatches(r, State.filters, excludeKey));
+      return Array.from(new Set(subset.map(r => r[key]).filter(Boolean))).sort();
+    }
+
+    function populate(selectId, options, currentVal, defaultLabel){
+      const el = document.getElementById(selectId);
+      if(!el) return;
+      
+      // If current selected value is no longer valid, clear it
+      let selectedVal = currentVal;
+      if(selectedVal && !options.includes(selectedVal)){
+        selectedVal = '';
+      }
+
+      el.innerHTML = `<option value="">${defaultLabel}</option>` + 
+        options.map(opt => `<option value="${opt}" ${opt===selectedVal ? 'selected':''}>${opt}</option>`).join('');
+
+      return selectedVal;
+    }
+
+    const aomOptions = getValidOptions('aom', 'aom');
+    State.filters.aom = populate('fAOM', aomOptions, State.filters.aom, 'All AOMs');
+
+    const branchOptions = getValidOptions('branch', 'branch');
+    State.filters.branch = populate('fBranch', branchOptions, State.filters.branch, 'All Branches');
+
+    const catOptions = getValidOptions('category', 'category');
+    State.filters.category = populate('fCat', catOptions, State.filters.category, 'All Categories');
+
+    const classOptions = getValidOptions('classification', 'classification');
+    State.filters.classification = populate('fClass', classOptions, State.filters.classification, 'All Classifications');
+
+    const empOptions = getValidOptions('empName', 'empName');
+    State.filters.empName = populate('fEmp', empOptions, State.filters.empName, 'All VMs');
   },
 
   renderTable(records){
@@ -840,7 +875,7 @@ const UI = {
       displayRecords = records.filter(r => 
         (r.store && r.store.toLowerCase().includes(searchVal)) ||
         (r.empName && r.empName.toLowerCase().includes(searchVal)) ||
-        (r.city && r.city.toLowerCase().includes(searchVal)) ||
+        (r.branch && r.branch.toLowerCase().includes(searchVal)) ||
         (r.aom && r.aom.toLowerCase().includes(searchVal)) ||
         (r.mistakes && r.mistakes.toLowerCase().includes(searchVal))
       );
@@ -859,7 +894,7 @@ const UI = {
           <td><b>${r.store}</b><br><span style="font-size:11px; color:var(--ink-faint);">Code: ${r.outletCode||'—'}</span></td>
           <td><b>${r.empName}</b><br><span style="font-size:11px; color:var(--ink-faint);">${r.empCode||''}</span></td>
           <td>${r.aom}</td>
-          <td>${r.branch} / ${r.city}</td>
+          <td>${r.branch}</td>
           <td>${r.category} (${r.classification})</td>
           <td>${Utils.fmtDate(r.date)}</td>
           <td><b style="color:${Utils.statusHex(r.qcPct||0)}">${score}</b></td>
@@ -872,6 +907,7 @@ const UI = {
 
   renderActiveChips(){
     const chipsBox = document.getElementById('activeChips');
+    const labelMap = { aom:'AOM Name', branch:'Branch', category:'Category', classification:'Classification', empName:'VM Name', dateFrom:'From QC Date', dateTo:'To QC Date' };
     const active = Object.entries(State.filters).filter(([k,v])=>Boolean(v));
     if(!active.length){
       chipsBox.innerHTML = '';
@@ -879,22 +915,22 @@ const UI = {
     }
     chipsBox.innerHTML = active.map(([k,v])=>`
       <span class="filter-chip" onclick="UI.clearFilter('${k}')">
-        ${k}: <b>${v}</b> ✕
+        ${labelMap[k]||k}: <b>${v}</b> ✕
       </span>
     `).join('') + `<span class="filter-chip" style="background:rgba(228,0,43,0.12); color:#e4002b; border-color:rgba(228,0,43,0.3);" onclick="UI.resetAllFilters()">Clear All ✕</span>`;
   },
 
   clearFilter(key){
     State.filters[key] = '';
-    const idMap = { aom:'fAOM', empName:'fEmp', category:'fCat', store:'fStore', classification:'fClass', city:'fCity', dateFrom:'fDateFrom', dateTo:'fDateTo' };
+    const idMap = { aom:'fAOM', branch:'fBranch', category:'fCat', classification:'fClass', empName:'fEmp', dateFrom:'fDateFrom', dateTo:'fDateTo' };
     const el = document.getElementById(idMap[key]);
     if(el) el.value = '';
     UI.onFilterChange();
   },
 
   resetAllFilters(){
-    State.filters = { aom:'', empName:'', category:'', store:'', classification:'', city:'', dateFrom:'', dateTo:'' };
-    ['fAOM','fEmp','fCat','fStore','fClass','fCity','fDateFrom','fDateTo'].forEach(id=>{
+    State.filters = { aom:'', branch:'', category:'', classification:'', empName:'', dateFrom:'', dateTo:'' };
+    ['fAOM','fBranch','fCat','fClass','fEmp','fDateFrom','fDateTo'].forEach(id=>{
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
@@ -902,6 +938,7 @@ const UI = {
   },
 
   onFilterChange(){
+    UI.updateFilterDropdowns();
     const filtered = getFilteredRecords();
     UI.renderKPIs(filtered);
     ChartModule.renderAll(filtered);
@@ -947,7 +984,6 @@ async function syncFromSharePoint(){
   if(buffer && buffer.byteLength > 1000) {
     try {
       const wb = XLSX.read(buffer, { type:'array', cellDates:true });
-      // Specifically target 'QC Tracker'
       const qcSheetName = wb.SheetNames.find(n => n.trim().toLowerCase() === 'qc tracker') || 
                           wb.SheetNames.find(n => n.toLowerCase().includes('qc')) || 
                           wb.SheetNames[0];
@@ -995,7 +1031,7 @@ function loadFromRows(rows, fileName, isLive){
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('errBanner').style.display = 'none';
 
-    UI.renderFilters();
+    UI.initFiltersHTML();
     UI.onFilterChange();
   } catch(e) {
     const err = document.getElementById('errBanner');
@@ -1007,8 +1043,6 @@ function loadFromRows(rows, fileName, isLive){
 /* ---------------------- EVENT LISTENERS ---------------------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('btnResetFilters').onclick = () => UI.resetAllFilters();
-  
-  // Clicking on liveStatusBadge triggers sync
   document.getElementById('liveStatusBadge').onclick = () => syncFromSharePoint();
 
   document.getElementById('tableSearchInput').addEventListener('input', Utils.debounce(()=>{
@@ -1026,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Auto-sync on load
   syncFromSharePoint();
 });
+
 </script>
 </body>
 </html>
