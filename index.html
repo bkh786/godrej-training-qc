@@ -44,11 +44,11 @@
 
       <!-- Center: Channelplay Logo ONLY -->
       <div class="center-pill-badge" title="Channelplay">
-        <svg class="channelplay-logo-svg" viewBox="0 0 150 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="1" y="1" width="26" height="26" rx="5" fill="#0284c7" />
-          <path d="M6 19L10 12L14 16L21 8" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="21" cy="8" r="1.8" fill="#38bdf8"/>
-          <text x="32" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-size="14.5" font-weight="700" fill="#1e293b">Channel<tspan fill="#0284c7">play</tspan></text>
+        <svg class="channelplay-logo-svg" viewBox="0 0 170 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="28" height="28" rx="6" fill="#0072ce" />
+          <path d="M7 20L11 14L15 17L22 9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="22" cy="9" r="2" fill="#38bdf8"/>
+          <text x="36" y="22" font-family="'Poppins', 'Plus Jakarta Sans', sans-serif" font-size="16" font-weight="700" fill="#1e293b" letter-spacing="-0.3">Channel<tspan fill="#0072ce">play</tspan></text>
         </svg>
       </div>
 
@@ -360,7 +360,6 @@ function matchSynonym(header, dict){
   const h = String(header||'').trim().toLowerCase();
   for(const key in dict){
     for(const syn of dict[key]){
-      // Exact equality or word match, preventing 'Correct Remarks Captured' from matching 'mistakes'
       if(h === syn || (h.startsWith(syn) && !h.includes('correct remarks'))) return key;
     }
   }
@@ -387,7 +386,6 @@ const DataParser = {
       if(key && colMap[key]===undefined) colMap[key] = idx;
     });
 
-    // Explicit fallback for exact columns to guarantee 100% precision
     const mistakesIdx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === 'mistakes reported');
     if(mistakesIdx !== -1) colMap['mistakes'] = mistakesIdx;
 
@@ -406,6 +404,8 @@ const DataParser = {
 
     const dataStart = headerRowIdx+1;
     const records = [];
+    let minDateObj = null, maxDateObj = null;
+
     for(let r=dataStart; r<rows.length; r++){
       const row = rows[r];
       if(!row || row.every(c=>c==null || String(c).trim()==='')) continue;
@@ -427,6 +427,11 @@ const DataParser = {
       const qcDateRaw = get('qcDate');
       const visitDateRaw = get('visitDate');
       const resolvedDate = Utils.toDateObj(qcDateRaw || visitDateRaw);
+
+      if(resolvedDate instanceof Date && !isNaN(resolvedDate)){
+        if(!minDateObj || resolvedDate < minDateObj) minDateObj = resolvedDate;
+        if(!maxDateObj || resolvedDate > maxDateObj) maxDateObj = resolvedDate;
+      }
 
       const rawMistakes = get('mistakes');
       const rawTrainerRemarks = get('trainerRemarks');
@@ -453,14 +458,17 @@ const DataParser = {
         trainerRemarks: cleanTrainerRemarks,
         qcCount: get('qcCount'),
         qcPct: qcPct,
-        // Mark as rejection if score < 80% or any individual parameter failed
         isRejection: (qcPct!=null && qcPct < 0.8) || dispVals.some(x=>!x.ok) || campVals.some(x=>!x.ok)
       });
     }
     return {
       records,
       displayParamNames: dispParamIndices.map(p=>p.name),
-      campaignParamNames: campParamIndices.map(p=>p.name)
+      campaignParamNames: campParamIndices.map(p=>p.name),
+      dateBounds: {
+        min: minDateObj ? Utils.fmtDate(minDateObj) : '',
+        max: maxDateObj ? Utils.fmtDate(maxDateObj) : ''
+      }
     };
   }
 };
@@ -469,6 +477,7 @@ const DataParser = {
 const State = {
   raw: null,
   filters: { aom:'', branch:'', category:'', classification:'', empName:'', dateFrom:'', dateTo:'' },
+  dateBounds: { min:'', max:'' },
   fileName: 'QC Tracker',
   isLive: false,
   charts: {}
@@ -494,7 +503,7 @@ function getFilteredRecords(){
 const Calc = {
   kpis(records){
     const total = records.length;
-    if(total===0) return { total:0, avgQC:null, dispScore:null, campScore:null, passCount:0, needsAttn:0, rejectionCount:0 };
+    if(total===0) return { total:0, avgQC:null, dispScore:null, campScore:null, uniqueVMCount:0, avgAuditsPerDay:0, rejectionCount:0 };
 
     const validQC = records.filter(r=>r.qcPct!=null);
     const avgQC = validQC.length ? validQC.reduce((s,r)=>s+r.qcPct,0)/validQC.length : null;
@@ -507,11 +516,18 @@ const Calc = {
     records.forEach(r=>r.campaign.forEach(p=>{ campTot++; if(p.ok) campOk++; }));
     const campScore = campTot ? campOk/campTot : null;
 
-    const passCount = records.filter(r=>r.qcPct!=null && r.qcPct>=0.8).length;
-    const needsAttn = records.filter(r=>r.qcPct!=null && r.qcPct<0.6).length;
+    // Unique VMs audited in active filtered range
+    const uniqueVMs = new Set(records.map(r=>r.empName).filter(Boolean));
+    const uniqueVMCount = uniqueVMs.size;
+
+    // Average audits per day calculation based on distinct audit dates
+    const uniqueDates = new Set(records.map(r=>r.date ? Utils.fmtDate(r.date) : null).filter(Boolean));
+    const dayCount = uniqueDates.size || 1;
+    const avgAuditsPerDay = (total / dayCount).toFixed(1);
+
     const rejectionCount = records.filter(r=>r.isRejection).length;
 
-    return { total, avgQC, dispScore, campScore, passCount, needsAttn, rejectionCount };
+    return { total, avgQC, dispScore, campScore, uniqueVMCount, avgAuditsPerDay, rejectionCount };
   },
 
   paramScores(records, paramList, getter){
@@ -593,7 +609,6 @@ const Calc = {
       const tr = r.trainerRemarks;
       const ms = r.mistakes;
 
-      // Collect Lowlights from rejected / low-scoring audits
       if(r.qcPct != null && r.qcPct < 0.8) {
         const text = tr || ms;
         if(text && text.toLowerCase() !== 'ok' && !seenLow.has(text)) {
@@ -609,7 +624,6 @@ const Calc = {
         }
       }
 
-      // Collect Highlights from top-performing audits (>= 80%)
       if(r.qcPct != null && r.qcPct >= 0.8) {
         if(tr && tr.toLowerCase() !== 'ok' && !seenHigh.has(tr)) {
           seenHigh.add(tr);
@@ -632,7 +646,14 @@ const Calc = {
   }
 };
 
-/* ---------------------- CHARTS ---------------------- */
+/* ---------------------- CHARTS (UNIFIED GODREJ THEME COLOR) ---------------------- */
+const THEME_COLORS = {
+  barRed: '#e4002b',
+  barRedHover: '#b90022',
+  lineBlue: '#0284c7',
+  lineDark: '#1e293b'
+};
+
 const ChartModule = {
   getFontColor(){
     return document.body.classList.contains('dark-theme') ? '#94a3b8' : '#475569';
@@ -648,6 +669,7 @@ const ChartModule = {
     this.renderCampaign(filtered);
   },
 
+  /* 1. AOM Combo: Score % (Theme Red) + Audit Count (Accent Line) */
   renderAOMCombo(records){
     const data = Calc.aomScores(records);
     const ctx = document.getElementById('chartAOMCombo').getContext('2d');
@@ -662,8 +684,9 @@ const ChartModule = {
             type: 'bar',
             label: 'QC Score %',
             data: data.map(d=>d.score*100),
-            backgroundColor: data.map(d=>Utils.statusHex(d.score)),
-            borderRadius: 4,
+            backgroundColor: THEME_COLORS.barRed,
+            hoverBackgroundColor: THEME_COLORS.barRedHover,
+            borderRadius: 5,
             yAxisID: 'y',
             order: 2
           },
@@ -671,13 +694,13 @@ const ChartModule = {
             type: 'line',
             label: 'Audit Count',
             data: data.map(d=>d.count),
-            borderColor: '#0284c7',
-            backgroundColor: '#0284c7',
-            pointBackgroundColor: '#0284c7',
+            borderColor: THEME_COLORS.lineBlue,
+            backgroundColor: THEME_COLORS.lineBlue,
+            pointBackgroundColor: THEME_COLORS.lineBlue,
             pointRadius: 5,
             pointHoverRadius: 7,
             borderWidth: 2.2,
-            tension: 0.2,
+            tension: 0.25,
             yAxisID: 'y1',
             order: 1
           }
@@ -713,8 +736,8 @@ const ChartModule = {
             position: 'right',
             min: 0,
             grid: { drawOnChartArea: false },
-            ticks: { color: '#0284c7', precision: 0 },
-            title: { display: true, text: 'Audit Count', color: '#0284c7', font: { size: 11 } }
+            ticks: { color: THEME_COLORS.lineBlue, precision: 0 },
+            title: { display: true, text: 'Audit Count', color: THEME_COLORS.lineBlue, font: { size: 11 } }
           },
           x: {
             ticks: { color: this.getFontColor(), font: { size: 11 } },
@@ -725,6 +748,7 @@ const ChartModule = {
     });
   },
 
+  /* 2. Branch Combo: Score % (Theme Red) + Audit Count (Accent Line) */
   renderBranchCombo(records){
     const data = Calc.branchScores(records).slice(0, 10);
     const ctx = document.getElementById('chartBranchCombo').getContext('2d');
@@ -739,8 +763,9 @@ const ChartModule = {
             type: 'bar',
             label: 'QC Score %',
             data: data.map(d=>d.score*100),
-            backgroundColor: data.map(d=>Utils.statusHex(d.score)),
-            borderRadius: 4,
+            backgroundColor: THEME_COLORS.barRed,
+            hoverBackgroundColor: THEME_COLORS.barRedHover,
+            borderRadius: 5,
             yAxisID: 'y',
             order: 2
           },
@@ -748,13 +773,13 @@ const ChartModule = {
             type: 'line',
             label: 'Audit Count',
             data: data.map(d=>d.count),
-            borderColor: '#e4002b',
-            backgroundColor: '#e4002b',
-            pointBackgroundColor: '#e4002b',
+            borderColor: THEME_COLORS.lineBlue,
+            backgroundColor: THEME_COLORS.lineBlue,
+            pointBackgroundColor: THEME_COLORS.lineBlue,
             pointRadius: 5,
             pointHoverRadius: 7,
             borderWidth: 2.2,
-            tension: 0.2,
+            tension: 0.25,
             yAxisID: 'y1',
             order: 1
           }
@@ -790,8 +815,8 @@ const ChartModule = {
             position: 'right',
             min: 0,
             grid: { drawOnChartArea: false },
-            ticks: { color: '#e4002b', precision: 0 },
-            title: { display: true, text: 'Audit Count', color: '#e4002b', font: { size: 11 } }
+            ticks: { color: THEME_COLORS.lineBlue, precision: 0 },
+            title: { display: true, text: 'Audit Count', color: THEME_COLORS.lineBlue, font: { size: 11 } }
           },
           x: {
             ticks: { color: this.getFontColor(), font: { size: 10.5 } },
@@ -802,6 +827,7 @@ const ChartModule = {
     });
   },
 
+  /* 3. Display Parameter Chart in Theme Red */
   renderDisplay(records){
     const data = Calc.paramScores(records, DISPLAY_PARAM_NAMES, r=>r.display);
     const ctx = document.getElementById('chartDisplay').getContext('2d');
@@ -814,8 +840,9 @@ const ChartModule = {
         datasets: [{
           label: 'QC Approved %',
           data: data.map(d=>d.score!=null ? d.score*100 : 0),
-          backgroundColor: data.map(d=>Utils.statusHex(d.score||0)),
-          borderRadius: 4
+          backgroundColor: THEME_COLORS.barRed,
+          hoverBackgroundColor: THEME_COLORS.barRedHover,
+          borderRadius: 5
         }]
       },
       options: {
@@ -833,6 +860,7 @@ const ChartModule = {
     });
   },
 
+  /* 4. Campaign Parameter Chart in Theme Red */
   renderCampaign(records){
     const data = Calc.paramScores(records, CAMPAIGN_PARAM_NAMES, r=>r.campaign);
     const ctx = document.getElementById('chartCampaign').getContext('2d');
@@ -845,8 +873,9 @@ const ChartModule = {
         datasets: [{
           label: 'QC Approved %',
           data: data.map(d=>d.score!=null ? d.score*100 : 0),
-          backgroundColor: data.map(d=>Utils.statusHex(d.score||0)),
-          borderRadius: 4
+          backgroundColor: THEME_COLORS.barRed,
+          hoverBackgroundColor: THEME_COLORS.barRedHover,
+          borderRadius: 5
         }]
       },
       options: {
@@ -869,7 +898,6 @@ const ChartModule = {
 const UI = {
   renderKPIs(filtered){
     const k = Calc.kpis(filtered);
-    document.getElementById('totalRejectionCount').textContent = k.rejectionCount;
 
     const grid = document.getElementById('kpiGrid');
     grid.innerHTML = `
@@ -877,7 +905,7 @@ const UI = {
         <div class="kpi-icon-wrap">📋</div>
         <div class="kpi-label">Total Audits</div>
         <div class="kpi-value" id="kpiTotal">${k.total}</div>
-        <div class="kpi-sub">Across active filters</div>
+        <div class="kpi-sub">Average ${k.avgAuditsPerDay} audits per day</div>
       </div>
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:var(--godrej-red-soft); color:var(--godrej-red);">🎯</div>
@@ -898,16 +926,10 @@ const UI = {
         <div class="kpi-sub">POSM &amp; Branding deployment</div>
       </div>
       <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.12); color:#10b981;">✅</div>
-        <div class="kpi-label">Approved Audits (&ge;80%)</div>
-        <div class="kpi-value" id="kpiApproved">${k.passCount}</div>
-        <div class="kpi-sub">${k.total ? Math.round(k.passCount/k.total*100) : 0}% compliance rate</div>
-      </div>
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(228,0,43,0.12); color:#e4002b;">⚠️</div>
-        <div class="kpi-label">Rejection Cases (&lt;80%)</div>
-        <div class="kpi-value" id="kpiAttention" style="color:#e4002b;">${k.rejectionCount}</div>
-        <div class="kpi-sub">Requiring trainer coaching</div>
+        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.12); color:#10b981;">👥</div>
+        <div class="kpi-label">Unique Users Audited</div>
+        <div class="kpi-value" id="kpiUniqueVMs" style="color:#10b981;">${k.uniqueVMCount}</div>
+        <div class="kpi-sub">Active VMs in selected range</div>
       </div>
     `;
   },
@@ -1003,13 +1025,44 @@ const UI = {
       </div>
     `;
 
+    // Apply strict calendar min/max date bounds to prevent selecting future dates or dates beyond dataset
+    const fDateFrom = document.getElementById('fDateFrom');
+    const fDateTo = document.getElementById('fDateTo');
+
+    if(State.dateBounds.min) {
+      fDateFrom.min = State.dateBounds.min;
+      fDateTo.min = State.dateBounds.min;
+    }
+    if(State.dateBounds.max) {
+      fDateFrom.max = State.dateBounds.max;
+      fDateTo.max = State.dateBounds.max;
+    }
+
     document.getElementById('fAOM').addEventListener('change', e => { State.filters.aom = e.target.value; UI.onFilterChange(); });
     document.getElementById('fBranch').addEventListener('change', e => { State.filters.branch = e.target.value; UI.onFilterChange(); });
     document.getElementById('fCat').addEventListener('change', e => { State.filters.category = e.target.value; UI.onFilterChange(); });
     document.getElementById('fClass').addEventListener('change', e => { State.filters.classification = e.target.value; UI.onFilterChange(); });
     document.getElementById('fEmp').addEventListener('change', e => { State.filters.empName = e.target.value; UI.onFilterChange(); });
-    document.getElementById('fDateFrom').addEventListener('change', e => { State.filters.dateFrom = e.target.value; UI.onFilterChange(); });
-    document.getElementById('fDateTo').addEventListener('change', e => { State.filters.dateTo = e.target.value; UI.onFilterChange(); });
+    
+    fDateFrom.addEventListener('change', e => { 
+      let val = e.target.value;
+      if(val && State.dateBounds.max && val > State.dateBounds.max) val = State.dateBounds.max;
+      if(val && State.dateBounds.min && val < State.dateBounds.min) val = State.dateBounds.min;
+      State.filters.dateFrom = val;
+      e.target.value = val;
+      if(val && fDateTo) fDateTo.min = val;
+      UI.onFilterChange(); 
+    });
+
+    fDateTo.addEventListener('change', e => { 
+      let val = e.target.value;
+      if(val && State.dateBounds.max && val > State.dateBounds.max) val = State.dateBounds.max;
+      if(val && State.dateBounds.min && val < State.dateBounds.min) val = State.dateBounds.min;
+      State.filters.dateTo = val;
+      e.target.value = val;
+      if(val && fDateFrom) fDateFrom.max = val;
+      UI.onFilterChange(); 
+    });
   },
 
   updateFilterDropdowns(){
@@ -1036,9 +1089,18 @@ const UI = {
     State.filters.category = populate('fCat', getValidOptions('category', 'category'), State.filters.category, 'All Categories');
     State.filters.classification = populate('fClass', getValidOptions('classification', 'classification'), State.filters.classification, 'All Classifications');
     State.filters.empName = populate('fEmp', getValidOptions('empName', 'empName'), State.filters.empName, 'All VMs');
+
+    // Keep date limits active
+    const fDateFrom = document.getElementById('fDateFrom');
+    const fDateTo = document.getElementById('fDateTo');
+    if(fDateFrom && fDateTo && State.dateBounds.min && State.dateBounds.max){
+      fDateFrom.min = State.dateBounds.min;
+      fDateFrom.max = State.filters.dateTo || State.dateBounds.max;
+      fDateTo.min = State.filters.dateFrom || State.dateBounds.min;
+      fDateTo.max = State.dateBounds.max;
+    }
   },
 
-  /* Render Table: Rejection Cases Only with Display/Campaign micro badges and BOTH Mistakes Reported & Trainer Remarks */
   renderTable(records){
     const tbody = document.getElementById('qcAuditTableBody');
     const searchVal = (document.getElementById('tableSearchInput').value || '').toLowerCase().trim();
@@ -1066,7 +1128,6 @@ const UI = {
     tbody.innerHTML = rejections.slice(0, 100).map(r=>{
       const score = r.qcPct!=null ? (r.qcPct*100).toFixed(0)+'%' : '—';
 
-      // Build compact parameter badges
       const dispBadges = r.display.map(p => {
         const short = DISPLAY_SHORT_NAMES[p.name] || p.name;
         return p.ok 
@@ -1081,7 +1142,6 @@ const UI = {
           : `<span class="param-badge fail" title="${p.name}: Rejected">${short} ✗</span>`;
       }).join('');
 
-      // Build remarks container with BOTH Mistakes Reported and Trainer Remarks clearly demarcated
       let remarksHTML = '';
       if(r.mistakes || r.trainerRemarks){
         remarksHTML = `
@@ -1234,6 +1294,7 @@ function loadFromRows(rows, fileName, isLive){
   try {
     const parsed = DataParser.parse(rows);
     State.raw = parsed;
+    State.dateBounds = parsed.dateBounds || { min:'', max:'' };
     State.fileName = fileName;
     State.isLive = isLive;
 
