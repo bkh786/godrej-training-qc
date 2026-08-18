@@ -38,7 +38,7 @@
 </svg>
         <div class="brand-text">
           <div class="brand-title">QC Performance Dashboard</div>
-          <div class="brand-subtitle">Promoter Program · Live &amp; fully interactive</div>
+          <div class="brand-subtitle">Visual Merchandising Program · Live &amp; fully interactive</div>
         </div>
       </div>
 
@@ -52,7 +52,7 @@
         </svg>
       </div>
 
-      <!-- Right: Controls (Download Report, Live Connected [Sync Trigger], Reset Filters, Export, Theme Toggle) -->
+      <!-- Right: Controls (Download Report, Live Connected [Sync Trigger], Reset Filters, Theme Toggle) -->
       <div class="header-controls">
         <a class="hdr-btn hdr-btn-download" id="btnDownloadReport" href="https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?e=4CVoYU&download=1" target="_blank" download="QC_Performance_Report.xlsx" title="Download Report from SharePoint">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -67,10 +67,6 @@
 
         <button class="hdr-btn hdr-btn-reset" id="btnResetFilters" title="Reset all active filters">
           <span>Reset filters</span>
-        </button>
-
-        <button class="hdr-btn hdr-btn-action" id="btnExportXlsx" title="Export filtered data to Excel">
-          <span>📊 Export</span>
         </button>
 
         <button class="hdr-btn hdr-btn-action" id="btnThemeToggle" title="Toggle Dark/Light Mode">
@@ -1025,31 +1021,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const isDark = document.body.classList.contains('dark-theme');
     document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
     ChartModule.renderAll(getFilteredRecords());
-  };
-
-  // Export Excel
-  document.getElementById('btnExportXlsx').onclick = () => {
-    if(!State.raw) return;
-    const filtered = getFilteredRecords();
-    const sheetData = filtered.map(r=>({
-      'Outlet Code': r.outletCode,
-      'Outlet Name': r.store,
-      'Emp Code': r.empCode,
-      'Emp Name': r.empName,
-      'Branch': r.branch,
-      'Category': r.category,
-      'Classification': r.classification,
-      'City': r.city,
-      'Date': Utils.fmtDate(r.date),
-      'AOM': r.aom,
-      'Overall QC %': Utils.pct(r.qcPct),
-      'Mistakes Reported': r.mistakes,
-      'Trainer Remarks': r.trainerRemarks
-    }));
-    const ws = XLSX.utils.json_to_sheet(sheetData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'QC Tracker Filtered');
-    XLSX.writeFile(wb, 'Godrej_QC_Tracker_Filtered.xlsx');
   };
 
   // Auto-sync on load

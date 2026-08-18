@@ -38,7 +38,7 @@
 </svg>
         <div class="brand-text">
           <div class="brand-title">Training Performance Dashboard</div>
-          <div class="brand-subtitle">Promoter Program · Live &amp; fully interactive</div>
+          <div class="brand-subtitle">Visual Merchandising Program · Live &amp; fully interactive</div>
         </div>
       </div>
 
@@ -67,10 +67,6 @@
 
         <button class="hdr-btn hdr-btn-reset" id="btnResetFilters" title="Reset all active filters">
           <span>Reset filters</span>
-        </button>
-
-        <button class="hdr-btn hdr-btn-action" id="btnExportXlsx" title="Export training data to Excel">
-          <span>📊 Export</span>
         </button>
 
         <button class="hdr-btn hdr-btn-action" id="btnThemeToggle" title="Toggle Dark/Light Mode">
@@ -644,22 +640,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const isDark = document.body.classList.contains('dark-theme');
     document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
     TrainingCharts.renderAll(getFilteredEmployees());
-  };
-
-  document.getElementById('btnExportXlsx').onclick = () => {
-    const data = getFilteredEmployees().map(e=>({
-      'Sr. No.': e.sr,
-      'Emp Code': e.empCode,
-      'Employee Name': e.empName,
-      'Designation': e.designation,
-      'RH / AOM': e.rh,
-      'Branch': e.branch,
-      'Region': e.region
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Training Emp Master');
-    XLSX.writeFile(wb, 'Godrej_Training_Emp_Master.xlsx');
   };
 
   syncTrainingData();
