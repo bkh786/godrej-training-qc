@@ -106,46 +106,88 @@
       <div class="kpi-grid" id="kpiGrid"></div>
     </div>
 
-    <!-- CORE COLUMN GRAPHS -->
+    <!-- 1. AOM & BRANCH-WISE QC PERFORMANCE (DUAL AXIS: SCORE % & COUNT) -->
     <div class="section">
       <div class="section-head">
-        <h2>Category &amp; AOM-wise QC Score</h2>
-        <span class="hint">Column graphs — dynamically responsive to active filters</span>
+        <h2>AOM &amp; Branch-wise QC Performance</h2>
+        <span class="hint">QC Score % (Column Bar) and Audit Count (Dot &amp; Line) — Dual Axis</span>
       </div>
-      <div class="grid-3">
+      <div class="grid-2">
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Display Category-wise QC Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">(Ref, WM, AC, MWO, 360 Snaps)</span></h3>
-          <div class="chart-box"><canvas id="chartDisplay"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">AOM-wise QC Score &amp; Audit Count<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Regional Area Operations Managers</span></h3>
+          <div class="chart-box"><canvas id="chartAOMCombo"></canvas></div>
         </div>
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Campaign / POSM Element-wise QC Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">(Proper Snaps, Rating Stars, Deployment)</span></h3>
-          <div class="chart-box"><canvas id="chartCampaign"></canvas></div>
-        </div>
-        <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">AOM-wise Overall QC Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">(Regional Area Operations Managers)</span></h3>
-          <div class="chart-box"><canvas id="chartAOM"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">Branch-wise QC Score &amp; Audit Count<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Territory &amp; Branch Operations</span></h3>
+          <div class="chart-box"><canvas id="chartBranchCombo"></canvas></div>
         </div>
       </div>
     </div>
 
-    <!-- FURTHER INSIGHTS -->
+    <!-- 2. PARAMETER-WISE QC SCORE (DISPLAY & CAMPAIGN) -->
     <div class="section">
       <div class="section-head">
-        <h2>Audit Distribution &amp; Quality Trends</h2>
-        <span class="hint">Supplementary analytical views &amp; recurring findings</span>
+        <h2>Parameter-wise QC Score</h2>
+        <span class="hint">Evaluation metrics compliance across Display and Campaign audits</span>
       </div>
-      <div class="grid-3">
+      <div class="grid-2">
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Audit Count by AOM</h3>
-          <div class="chart-box"><canvas id="chartAOMCount"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">Display Parameter-wise QC Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">(Ref, WM, AC, MWO, Inside Snap 360 Images)</span></h3>
+          <div class="chart-box"><canvas id="chartDisplay"></canvas></div>
         </div>
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">QC Score Trend Over Time</h3>
-          <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">Campaign Parameter-wise QC Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">(Proper Snaps, Rating Star, POSM Deploy, Remarks, POSM Condition)</span></h3>
+          <div class="chart-box"><canvas id="chartCampaign"></canvas></div>
         </div>
-        <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Top Recurring Findings / Mistakes</h3>
-          <div class="chart-box"><canvas id="chartMistakes"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 3. TOP & BOTTOM PERFORMING VMs -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Top &amp; Bottom Performing VMs</h2>
+        <span class="hint">VM performance rankings based on QC Score % and Audit Count</span>
+      </div>
+      <div class="grid-2">
+        <div class="card" style="padding:16px 20px;">
+          <h3 style="font-size:14px; margin-bottom:14px; color:#10b981; display:flex; align-items:center; gap:8px;">
+            <span>🏆 Top 5 Scorers (VMs)</span>
+          </h3>
+          <div class="table-wrap" style="max-height:none; border:none;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>VM Name</th>
+                  <th>AOM Name</th>
+                  <th>Branch</th>
+                  <th>QC Score</th>
+                  <th>Audits</th>
+                </tr>
+              </thead>
+              <tbody id="topScorersBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="padding:16px 20px;">
+          <h3 style="font-size:14px; margin-bottom:14px; color:#e4002b; display:flex; align-items:center; gap:8px;">
+            <span>⚠️ Bottom 5 Scorers (Coaching Focus)</span>
+          </h3>
+          <div class="table-wrap" style="max-height:none; border:none;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>VM Name</th>
+                  <th>AOM Name</th>
+                  <th>Branch</th>
+                  <th>QC Score</th>
+                  <th>Audits</th>
+                </tr>
+              </thead>
+              <tbody id="bottomScorersBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -181,7 +223,7 @@
       <div class="section-head">
         <h2>📋 Audit Records Table (QC Tracker)</h2>
         <div style="display:flex; align-items:center; gap:10px;">
-          <input type="text" class="search-input" id="tableSearchInput" placeholder="🔍 Search staff, store, city, mistakes...">
+          <input type="text" class="search-input" id="tableSearchInput" placeholder="🔍 Search VM name, store, branch, remarks...">
           <span class="hint" id="tableRecordCount">Showing 0 rows</span>
         </div>
       </div>
@@ -230,6 +272,22 @@ const CORS_PROXIES = [
   url => 'https://corsproxy.io/?' + encodeURIComponent(url)
 ];
 
+const DISPLAY_PARAM_NAMES = [
+  'Ref Section',
+  'WM Section',
+  'AC Section',
+  'MWO Section',
+  'Inside Snap (360 Images)'
+];
+
+const CAMPAIGN_PARAM_NAMES = [
+  'Proper Snaps Given',
+  'Rating Star Snap Given',
+  'POSM Deployment',
+  'Correct Remarks Captured',
+  'POSM Condition'
+];
+
 /* ---------------------- UTILS ---------------------- */
 const Utils = {
   pct(v){ return (v==null||isNaN(v)) ? '—' : (v*100).toFixed(1)+'%'; },
@@ -270,7 +328,7 @@ const Utils = {
   debounce(fn, ms){ let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a), ms);}; }
 };
 
-/* ---------------------- DATA PARSER (REFERENCING QC DATE) ---------------------- */
+/* ---------------------- DATA PARSER ---------------------- */
 const IDENTITY_SYNONYMS = {
   outletCode: ['outlet code','store code'],
   store: ['outlet name','store name','store'],
@@ -312,14 +370,6 @@ const DataParser = {
     if(bestScore < 3) throw new Error('Could not detect a valid QC Tracker header row.');
 
     const headerRow = rows[headerRowIdx];
-    const groupRow = headerRowIdx > 0 ? rows[headerRowIdx-1] : [];
-    const groups = [];
-    let lastGroup = null;
-    for(let c=0; c<headerRow.length; c++){
-      const g = groupRow[c];
-      if(g!=null && String(g).trim()!=='') lastGroup = String(g).trim();
-      groups.push(lastGroup);
-    }
 
     const colMap = {};
     headerRow.forEach((h,idx)=>{
@@ -327,20 +377,16 @@ const DataParser = {
       if(key && colMap[key]===undefined) colMap[key] = idx;
     });
 
-    const displayCols = [], campaignCols = [];
-    headerRow.forEach((h,idx)=>{
-      if(h==null || String(h).trim()==='') return;
-      if(Object.values(colMap).includes(idx)) return;
-      const g = (groups[idx]||'').toLowerCase();
-      const label = String(h).trim();
-      if(g.includes('display')) displayCols.push({idx,label});
-      else if(g.includes('campaign')) campaignCols.push({idx,label});
-      else {
-        const l = label.toLowerCase();
-        if(l.includes('section') || l.includes('snap') || l.includes('display')) displayCols.push({idx,label});
-        else campaignCols.push({idx,label});
-      }
-    });
+    // Find indices for exact 5 Display parameters and exact 5 Campaign parameters
+    const dispParamIndices = DISPLAY_PARAM_NAMES.map(name => {
+      const idx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === name.toLowerCase());
+      return { name, idx };
+    }).filter(p => p.idx !== -1);
+
+    const campParamIndices = CAMPAIGN_PARAM_NAMES.map(name => {
+      const idx = headerRow.findIndex(h => h && String(h).trim().toLowerCase() === name.toLowerCase());
+      return { name, idx };
+    }).filter(p => p.idx !== -1);
 
     const dataStart = headerRowIdx+1;
     const records = [];
@@ -349,11 +395,11 @@ const DataParser = {
       if(!row || row.every(c=>c==null || String(c).trim()==='')) continue;
       const get = k => colMap[k]!==undefined ? row[colMap[k]] : null;
 
-      const dispVals = displayCols.map(c=>({name:c.label, ok:Utils.isOk(row[c.idx])})).filter(x=>x.ok!==null);
-      const campVals = campaignCols.map(c=>({name:c.label, ok:Utils.isOk(row[c.idx])})).filter(x=>x.ok!==null);
-
       const empName = get('empName');
       if(!empName) continue;
+
+      const dispVals = dispParamIndices.map(p=>({ name: p.name, ok: Utils.isOk(row[p.idx]) })).filter(x=>x.ok!==null);
+      const campVals = campParamIndices.map(p=>({ name: p.name, ok: Utils.isOk(row[p.idx]) })).filter(x=>x.ok!==null);
 
       let qcPct = get('qcPct');
       if(typeof qcPct === 'number' && qcPct>1) qcPct = qcPct/100;
@@ -362,7 +408,6 @@ const DataParser = {
         qcPct = all.length ? all.filter(x=>x.ok).length/all.length : null;
       }
 
-      // Explicitly prioritize QC Date for date filtering and display
       const qcDateRaw = get('qcDate');
       const visitDateRaw = get('visitDate');
       const resolvedDate = Utils.toDateObj(qcDateRaw || visitDateRaw);
@@ -376,7 +421,7 @@ const DataParser = {
         category: get('category') || 'Uncategorized',
         classification: get('classification') || 'Standard',
         city: get('city') || 'General',
-        date: resolvedDate, // QC Date used as primary date
+        date: resolvedDate, // QC Date
         qcDate: Utils.toDateObj(qcDateRaw),
         visitDate: Utils.toDateObj(visitDateRaw),
         aom: get('aom') || 'Unassigned',
@@ -388,7 +433,11 @@ const DataParser = {
         qcPct: qcPct
       });
     }
-    return { records, displayParamNames: displayCols.map(c=>c.label), campaignParamNames: campaignCols.map(c=>c.label) };
+    return {
+      records,
+      displayParamNames: dispParamIndices.map(p=>p.name),
+      campaignParamNames: campParamIndices.map(p=>p.name)
+    };
   }
 };
 
@@ -466,25 +515,47 @@ const Calc = {
       if(r.qcPct!=null){ byAOM[k].sum += r.qcPct; byAOM[k].count++; }
     });
     return Object.keys(byAOM).map(k=>({
-      aom: k,
+      name: k,
       score: byAOM[k].count ? byAOM[k].sum/byAOM[k].count : 0,
       count: byAOM[k].count
     })).sort((a,b)=>b.score-a.score);
   },
 
-  trend(records){
-    const byDate = {};
+  branchScores(records){
+    const byBranch = {};
     records.forEach(r=>{
-      if(!r.date) return;
-      const dStr = Utils.fmtDate(r.date);
-      if(!byDate[dStr]) byDate[dStr] = { sum:0, count:0 };
-      if(r.qcPct!=null){ byDate[dStr].sum += r.qcPct; byDate[dStr].count++; }
+      const k = r.branch || 'General';
+      if(!byBranch[k]) byBranch[k] = { sum:0, count:0 };
+      if(r.qcPct!=null){ byBranch[k].sum += r.qcPct; byBranch[k].count++; }
     });
-    return Object.keys(byDate).sort().map(d=>({
-      date: d,
-      score: byDate[d].count ? byDate[d].sum/byDate[d].count : 0,
-      count: byDate[d].count
-    }));
+    return Object.keys(byBranch).map(k=>({
+      name: k,
+      score: byBranch[k].count ? byBranch[k].sum/byBranch[k].count : 0,
+      count: byBranch[k].count
+    })).sort((a,b)=>b.score-a.score);
+  },
+
+  vmRankings(records){
+    const byVM = {};
+    records.forEach(r=>{
+      const k = r.empName;
+      if(!byVM[k]) byVM[k] = { empName: k, aom: r.aom, branch: r.branch, sum: 0, count: 0 };
+      if(r.qcPct!=null){ byVM[k].sum += r.qcPct; byVM[k].count++; }
+    });
+    const ranked = Object.values(byVM).map(v=>({
+      empName: v.empName,
+      aom: v.aom || '—',
+      branch: v.branch || '—',
+      score: v.count ? v.sum/v.count : 0,
+      count: v.count
+    })).sort((a,b)=>{
+      if(b.score !== a.score) return b.score - a.score;
+      return b.count - a.count;
+    });
+
+    const top5 = ranked.slice(0, 5);
+    const bottom5 = ranked.length <= 5 ? [...ranked].reverse() : ranked.slice(-5).reverse();
+    return { top5, bottom5 };
   },
 
   recurringFindings(records){
@@ -514,16 +585,171 @@ const ChartModule = {
   },
 
   renderAll(filtered){
+    this.renderAOMCombo(filtered);
+    this.renderBranchCombo(filtered);
     this.renderDisplay(filtered);
     this.renderCampaign(filtered);
-    this.renderAOM(filtered);
-    this.renderAOMCount(filtered);
-    this.renderTrend(filtered);
-    this.renderMistakes(filtered);
   },
 
+  /* 1. AOM-wise QC Score & Audit Count (Dual Axis) */
+  renderAOMCombo(records){
+    const data = Calc.aomScores(records);
+    const ctx = document.getElementById('chartAOMCombo').getContext('2d');
+    if(State.charts.aomCombo) State.charts.aomCombo.destroy();
+
+    State.charts.aomCombo = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d=>d.name),
+        datasets: [
+          {
+            type: 'bar',
+            label: 'QC Score %',
+            data: data.map(d=>d.score*100),
+            backgroundColor: data.map(d=>Utils.statusHex(d.score)),
+            borderRadius: 4,
+            yAxisID: 'y',
+            order: 2
+          },
+          {
+            type: 'line',
+            label: 'Audit Count',
+            data: data.map(d=>d.count),
+            borderColor: '#0284c7',
+            backgroundColor: '#0284c7',
+            pointBackgroundColor: '#0284c7',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            borderWidth: 2.2,
+            tension: 0.2,
+            yAxisID: 'y1',
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: this.getFontColor(), boxWidth: 12 }
+          },
+          tooltip: {
+            callbacks: {
+              label: c => c.datasetIndex === 0 ? `Score: ${c.raw.toFixed(1)}%` : `Audits: ${c.raw}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            min: 0,
+            max: 100,
+            ticks: { callback: v=>v+'%', color: this.getFontColor() },
+            grid: { color: this.getGridColor() },
+            title: { display: true, text: 'QC Score %', color: this.getFontColor(), font: { size: 11 } }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#0284c7', precision: 0 },
+            title: { display: true, text: 'Audit Count', color: '#0284c7', font: { size: 11 } }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 11 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  },
+
+  /* 2. Branch-wise QC Score & Audit Count (Dual Axis) */
+  renderBranchCombo(records){
+    const data = Calc.branchScores(records).slice(0, 10);
+    const ctx = document.getElementById('chartBranchCombo').getContext('2d');
+    if(State.charts.branchCombo) State.charts.branchCombo.destroy();
+
+    State.charts.branchCombo = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d=>d.name),
+        datasets: [
+          {
+            type: 'bar',
+            label: 'QC Score %',
+            data: data.map(d=>d.score*100),
+            backgroundColor: data.map(d=>Utils.statusHex(d.score)),
+            borderRadius: 4,
+            yAxisID: 'y',
+            order: 2
+          },
+          {
+            type: 'line',
+            label: 'Audit Count',
+            data: data.map(d=>d.count),
+            borderColor: '#e4002b',
+            backgroundColor: '#e4002b',
+            pointBackgroundColor: '#e4002b',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            borderWidth: 2.2,
+            tension: 0.2,
+            yAxisID: 'y1',
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: this.getFontColor(), boxWidth: 12 }
+          },
+          tooltip: {
+            callbacks: {
+              label: c => c.datasetIndex === 0 ? `Score: ${c.raw.toFixed(1)}%` : `Audits: ${c.raw}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            min: 0,
+            max: 100,
+            ticks: { callback: v=>v+'%', color: this.getFontColor() },
+            grid: { color: this.getGridColor() },
+            title: { display: true, text: 'QC Score %', color: this.getFontColor(), font: { size: 11 } }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#e4002b', precision: 0 },
+            title: { display: true, text: 'Audit Count', color: '#e4002b', font: { size: 11 } }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 10.5 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  },
+
+  /* 3. Display Parameter-wise QC Score */
   renderDisplay(records){
-    const data = Calc.paramScores(records, State.raw.displayParamNames, r=>r.display);
+    const data = Calc.paramScores(records, DISPLAY_PARAM_NAMES, r=>r.display);
     const ctx = document.getElementById('chartDisplay').getContext('2d');
     if(State.charts.display) State.charts.display.destroy();
 
@@ -553,8 +779,9 @@ const ChartModule = {
     });
   },
 
+  /* 4. Campaign Parameter-wise QC Score */
   renderCampaign(records){
-    const data = Calc.paramScores(records, State.raw.campaignParamNames, r=>r.campaign);
+    const data = Calc.paramScores(records, CAMPAIGN_PARAM_NAMES, r=>r.campaign);
     const ctx = document.getElementById('chartCampaign').getContext('2d');
     if(State.charts.campaign) State.charts.campaign.destroy();
 
@@ -582,133 +809,10 @@ const ChartModule = {
         }
       }
     });
-  },
-
-  renderAOM(records){
-    const data = Calc.aomScores(records);
-    const ctx = document.getElementById('chartAOM').getContext('2d');
-    if(State.charts.aom) State.charts.aom.destroy();
-
-    State.charts.aom = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.map(d=>d.aom),
-        datasets: [{
-          label: 'AOM Score',
-          data: data.map(d=>d.score*100),
-          backgroundColor: data.map(d=>Utils.statusHex(d.score)),
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: c => `Score: ${c.raw.toFixed(1)}% (${data[c.dataIndex].count} audits)` } }
-        },
-        scales: {
-          y: { min: 0, max: 100, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
-          x: { ticks: { color: this.getFontColor() }, grid: { display: false } }
-        }
-      }
-    });
-  },
-
-  renderAOMCount(records){
-    const data = Calc.aomScores(records);
-    const ctx = document.getElementById('chartAOMCount').getContext('2d');
-    if(State.charts.aomCount) State.charts.aomCount.destroy();
-
-    State.charts.aomCount = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: data.map(d=>d.aom),
-        datasets: [{
-          data: data.map(d=>d.count),
-          backgroundColor: ['#e4002b','#0284c7','#10b981','#f59e0b','#6366f1','#8b5cf6','#0d9488'],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right', labels: { color: this.getFontColor(), boxWidth: 12 } }
-        }
-      }
-    });
-  },
-
-  renderTrend(records){
-    const data = Calc.trend(records);
-    const ctx = document.getElementById('chartTrend').getContext('2d');
-    if(State.charts.trend) State.charts.trend.destroy();
-
-    State.charts.trend = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.map(d=>d.date),
-        datasets: [{
-          label: 'QC Score %',
-          data: data.map(d=>d.score*100),
-          borderColor: '#e4002b',
-          backgroundColor: 'rgba(228,0,43,0.10)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4,
-          pointBackgroundColor: '#e4002b'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: c => `Score: ${c.raw.toFixed(1)}%` } }
-        },
-        scales: {
-          y: { min: 0, max: 100, ticks: { callback: v=>v+'%', color: this.getFontColor() }, grid: { color: this.getGridColor() } },
-          x: { ticks: { color: this.getFontColor() }, grid: { display: false } }
-        }
-      }
-    });
-  },
-
-  renderMistakes(records){
-    const data = Calc.recurringFindings(records);
-    const ctx = document.getElementById('chartMistakes').getContext('2d');
-    if(State.charts.mistakes) State.charts.mistakes.destroy();
-
-    State.charts.mistakes = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.map(d=>d.text.length>28 ? d.text.slice(0,26)+'…' : d.text),
-        datasets: [{
-          label: 'Occurrences',
-          data: data.map(d=>d.count),
-          backgroundColor: '#e4002b',
-          borderRadius: 4
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { title: (items) => data[items[0].dataIndex].text } }
-        },
-        scales: {
-          x: { ticks: { color: this.getFontColor(), stepSize: 1 }, grid: { color: this.getGridColor() } },
-          y: { ticks: { color: this.getFontColor(), font: { size: 10.5 } }, grid: { display: false } }
-        }
-      }
-    });
   }
 };
 
-/* ---------------------- UI & CASCADING FILTERS ---------------------- */
+/* ---------------------- UI & RENDERING ---------------------- */
 const UI = {
   renderKPIs(filtered){
     const k = Calc.kpis(filtered);
@@ -753,9 +857,37 @@ const UI = {
     `;
   },
 
+  renderRankings(filtered){
+    const { top5, bottom5 } = Calc.vmRankings(filtered);
+    const topBody = document.getElementById('topScorersBody');
+    const bottomBody = document.getElementById('bottomScorersBody');
+
+    topBody.innerHTML = top5.length ? top5.map((v, i) => `
+      <tr>
+        <td><b>#${i+1}</b></td>
+        <td><b>${v.empName}</b></td>
+        <td>${v.aom}</td>
+        <td>${v.branch}</td>
+        <td><span class="badge green" style="font-size:12px;">${(v.score*100).toFixed(1)}%</span></td>
+        <td><b>${v.count}</b></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6" style="text-align:center; color:var(--ink-faint);">No data matching current filters</td></tr>`;
+
+    bottomBody.innerHTML = bottom5.length ? bottom5.map((v, i) => `
+      <tr>
+        <td><b>#${i+1}</b></td>
+        <td><b>${v.empName}</b></td>
+        <td>${v.aom}</td>
+        <td>${v.branch}</td>
+        <td><span class="badge red" style="font-size:12px;">${(v.score*100).toFixed(1)}%</span></td>
+        <td><b>${v.count}</b></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6" style="text-align:center; color:var(--ink-faint);">No data matching current filters</td></tr>`;
+  },
+
   renderManagementInsights(filtered){
-    const disp = Calc.paramScores(filtered, State.raw.displayParamNames, r=>r.display);
-    const camp = Calc.paramScores(filtered, State.raw.campaignParamNames, r=>r.campaign);
+    const disp = Calc.paramScores(filtered, DISPLAY_PARAM_NAMES, r=>r.display);
+    const camp = Calc.paramScores(filtered, CAMPAIGN_PARAM_NAMES, r=>r.campaign);
     const all = disp.concat(camp).filter(x=>x.score!=null);
 
     const hl = all.filter(x=>x.score>=0.8);
@@ -780,7 +912,6 @@ const UI = {
       : `<li>No recurring mistakes recorded.</li>`;
   },
 
-  /* Build Static Filter HTML Structure */
   initFiltersHTML(){
     const bar = document.getElementById('filterBar');
     bar.innerHTML = `
@@ -814,7 +945,6 @@ const UI = {
       </div>
     `;
 
-    // Event listeners
     document.getElementById('fAOM').addEventListener('change', e => { State.filters.aom = e.target.value; UI.onFilterChange(); });
     document.getElementById('fBranch').addEventListener('change', e => { State.filters.branch = e.target.value; UI.onFilterChange(); });
     document.getElementById('fCat').addEventListener('change', e => { State.filters.category = e.target.value; UI.onFilterChange(); });
@@ -824,7 +954,6 @@ const UI = {
     document.getElementById('fDateTo').addEventListener('change', e => { State.filters.dateTo = e.target.value; UI.onFilterChange(); });
   },
 
-  /* Cascading / Dependent Dropdown Population */
   updateFilterDropdowns(){
     if(!State.raw) return;
     const records = State.raw.records;
@@ -837,33 +966,18 @@ const UI = {
     function populate(selectId, options, currentVal, defaultLabel){
       const el = document.getElementById(selectId);
       if(!el) return;
-      
-      // If current selected value is no longer valid, clear it
       let selectedVal = currentVal;
-      if(selectedVal && !options.includes(selectedVal)){
-        selectedVal = '';
-      }
-
+      if(selectedVal && !options.includes(selectedVal)) selectedVal = '';
       el.innerHTML = `<option value="">${defaultLabel}</option>` + 
         options.map(opt => `<option value="${opt}" ${opt===selectedVal ? 'selected':''}>${opt}</option>`).join('');
-
       return selectedVal;
     }
 
-    const aomOptions = getValidOptions('aom', 'aom');
-    State.filters.aom = populate('fAOM', aomOptions, State.filters.aom, 'All AOMs');
-
-    const branchOptions = getValidOptions('branch', 'branch');
-    State.filters.branch = populate('fBranch', branchOptions, State.filters.branch, 'All Branches');
-
-    const catOptions = getValidOptions('category', 'category');
-    State.filters.category = populate('fCat', catOptions, State.filters.category, 'All Categories');
-
-    const classOptions = getValidOptions('classification', 'classification');
-    State.filters.classification = populate('fClass', classOptions, State.filters.classification, 'All Classifications');
-
-    const empOptions = getValidOptions('empName', 'empName');
-    State.filters.empName = populate('fEmp', empOptions, State.filters.empName, 'All VMs');
+    State.filters.aom = populate('fAOM', getValidOptions('aom', 'aom'), State.filters.aom, 'All AOMs');
+    State.filters.branch = populate('fBranch', getValidOptions('branch', 'branch'), State.filters.branch, 'All Branches');
+    State.filters.category = populate('fCat', getValidOptions('category', 'category'), State.filters.category, 'All Categories');
+    State.filters.classification = populate('fClass', getValidOptions('classification', 'classification'), State.filters.classification, 'All Classifications');
+    State.filters.empName = populate('fEmp', getValidOptions('empName', 'empName'), State.filters.empName, 'All VMs');
   },
 
   renderTable(records){
@@ -942,6 +1056,7 @@ const UI = {
     const filtered = getFilteredRecords();
     UI.renderKPIs(filtered);
     ChartModule.renderAll(filtered);
+    UI.renderRankings(filtered);
     UI.renderManagementInsights(filtered);
     UI.renderTable(filtered);
     UI.renderActiveChips();
@@ -1060,7 +1175,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Auto-sync on load
   syncFromSharePoint();
 });
-
 </script>
 </body>
 </html>
