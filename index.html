@@ -645,8 +645,8 @@ const Calc = {
 const THEME_COLORS = {
   barBlue: '#0284c7',
   barBlueHover: '#0369a1',
-  lineDark: '#0f172a',
-  lineCyan: '#0284c7'
+  lineOrange: '#f97316',
+  axisOrange: '#ea580c'
 };
 
 const ChartModule = {
@@ -689,12 +689,14 @@ const ChartModule = {
             type: 'line',
             label: 'Audit Count',
             data: data.map(d=>d.count),
-            borderColor: THEME_COLORS.lineBlue,
-            backgroundColor: THEME_COLORS.lineBlue,
-            pointBackgroundColor: THEME_COLORS.lineBlue,
+            borderColor: THEME_COLORS.lineOrange,
+            backgroundColor: THEME_COLORS.lineOrange,
+            pointBackgroundColor: THEME_COLORS.lineOrange,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
             pointRadius: 5,
             pointHoverRadius: 7,
-            borderWidth: 2.2,
+            borderWidth: 2.4,
             tension: 0.25,
             yAxisID: 'y1',
             order: 1
@@ -731,8 +733,8 @@ const ChartModule = {
             position: 'right',
             min: 0,
             grid: { drawOnChartArea: false },
-            ticks: { color: THEME_COLORS.lineBlue, precision: 0 },
-            title: { display: true, text: 'Audit Count', color: THEME_COLORS.lineBlue, font: { size: 11 } }
+            ticks: { color: THEME_COLORS.axisOrange, precision: 0, font: { weight: '600' } },
+            title: { display: true, text: 'Audit Count', color: THEME_COLORS.axisOrange, font: { size: 11, weight: '600' } }
           },
           x: {
             ticks: { color: this.getFontColor(), font: { size: 11 } },
@@ -768,12 +770,14 @@ const ChartModule = {
             type: 'line',
             label: 'Audit Count',
             data: data.map(d=>d.count),
-            borderColor: THEME_COLORS.lineBlue,
-            backgroundColor: THEME_COLORS.lineBlue,
-            pointBackgroundColor: THEME_COLORS.lineBlue,
+            borderColor: THEME_COLORS.lineOrange,
+            backgroundColor: THEME_COLORS.lineOrange,
+            pointBackgroundColor: THEME_COLORS.lineOrange,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
             pointRadius: 5,
             pointHoverRadius: 7,
-            borderWidth: 2.2,
+            borderWidth: 2.4,
             tension: 0.25,
             yAxisID: 'y1',
             order: 1
@@ -810,8 +814,8 @@ const ChartModule = {
             position: 'right',
             min: 0,
             grid: { drawOnChartArea: false },
-            ticks: { color: THEME_COLORS.lineBlue, precision: 0 },
-            title: { display: true, text: 'Audit Count', color: THEME_COLORS.lineBlue, font: { size: 11 } }
+            ticks: { color: THEME_COLORS.axisOrange, precision: 0, font: { weight: '600' } },
+            title: { display: true, text: 'Audit Count', color: THEME_COLORS.axisOrange, font: { size: 11, weight: '600' } }
           },
           x: {
             ticks: { color: this.getFontColor(), font: { size: 10.5 } },
