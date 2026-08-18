@@ -44,12 +44,7 @@
 
       <!-- Center: Channelplay Logo ONLY -->
       <div class="center-pill-badge" title="Channelplay">
-        <svg class="channelplay-logo-svg" viewBox="0 0 170 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="28" height="28" rx="6" fill="#0072ce" />
-          <path d="M7 20L11 14L15 17L22 9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="22" cy="9" r="2" fill="#38bdf8"/>
-          <text x="36" y="22" font-family="'Poppins', 'Plus Jakarta Sans', sans-serif" font-size="16" font-weight="700" fill="#1e293b" letter-spacing="-0.3">Channel<tspan fill="#0072ce">play</tspan></text>
-        </svg>
+        <img src="logo.svg" alt="Channelplay" class="channelplay-logo-img" />
       </div>
 
       <!-- Right: Controls (Download Report, Live Connected [Sync Trigger], Reset Filters, Theme Toggle) -->
@@ -648,10 +643,10 @@ const Calc = {
 
 /* ---------------------- CHARTS (UNIFIED GODREJ THEME COLOR) ---------------------- */
 const THEME_COLORS = {
-  barRed: '#e4002b',
-  barRedHover: '#b90022',
-  lineBlue: '#0284c7',
-  lineDark: '#1e293b'
+  barBlue: '#0284c7',
+  barBlueHover: '#0369a1',
+  lineDark: '#0f172a',
+  lineCyan: '#0284c7'
 };
 
 const ChartModule = {
@@ -684,8 +679,8 @@ const ChartModule = {
             type: 'bar',
             label: 'QC Score %',
             data: data.map(d=>d.score*100),
-            backgroundColor: THEME_COLORS.barRed,
-            hoverBackgroundColor: THEME_COLORS.barRedHover,
+            backgroundColor: THEME_COLORS.barBlue,
+            hoverBackgroundColor: THEME_COLORS.barBlueHover,
             borderRadius: 5,
             yAxisID: 'y',
             order: 2
@@ -763,8 +758,8 @@ const ChartModule = {
             type: 'bar',
             label: 'QC Score %',
             data: data.map(d=>d.score*100),
-            backgroundColor: THEME_COLORS.barRed,
-            hoverBackgroundColor: THEME_COLORS.barRedHover,
+            backgroundColor: THEME_COLORS.barBlue,
+            hoverBackgroundColor: THEME_COLORS.barBlueHover,
             borderRadius: 5,
             yAxisID: 'y',
             order: 2
@@ -840,8 +835,8 @@ const ChartModule = {
         datasets: [{
           label: 'QC Approved %',
           data: data.map(d=>d.score!=null ? d.score*100 : 0),
-          backgroundColor: THEME_COLORS.barRed,
-          hoverBackgroundColor: THEME_COLORS.barRedHover,
+          backgroundColor: THEME_COLORS.barBlue,
+          hoverBackgroundColor: THEME_COLORS.barBlueHover,
           borderRadius: 5
         }]
       },
@@ -873,8 +868,8 @@ const ChartModule = {
         datasets: [{
           label: 'QC Approved %',
           data: data.map(d=>d.score!=null ? d.score*100 : 0),
-          backgroundColor: THEME_COLORS.barRed,
-          hoverBackgroundColor: THEME_COLORS.barRedHover,
+          backgroundColor: THEME_COLORS.barBlue,
+          hoverBackgroundColor: THEME_COLORS.barBlueHover,
           borderRadius: 5
         }]
       },

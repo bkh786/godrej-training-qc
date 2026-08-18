@@ -876,3 +876,19 @@ footer.foot {
   color: var(--ink-base);
   word-break: break-word;
 }
+
+.brand-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  display: block;
+}
+
+.channelplay-logo-img {
+  height: 28px;
+  width: auto;
+  max-width: 170px;
+  object-fit: contain;
+  display: block;
+}
