@@ -1656,7 +1656,7 @@ const ChartModule = {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { right: 95, left: 5, top: 5, bottom: 5 }
+          padding: { right: 80, left: 10, top: 5, bottom: 5 }
         },
         plugins: {
           legend: { display: false },
@@ -1686,13 +1686,18 @@ const ChartModule = {
           x: {
             display: false, // Primary numeric axis removed to declutter
             grid: { display: false },
-            suggestedMax: maxVal * 1.32
+            suggestedMax: maxVal * 1.15
           },
           y: {
             grid: { display: false },
+            afterFit(axis) {
+              axis.width = Math.max(axis.width, 225);
+            },
             ticks: {
+              autoSkip: false,
+              padding: 8,
               color: tc.textColor,
-              font: { family: 'var(--font-body)', size: 10.5, weight: '500' }
+              font: { family: 'var(--font-body)', size: 11, weight: '600' }
             }
           }
         }
