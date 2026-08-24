@@ -6,9 +6,10 @@
 <title>Merchandising Score Dashboard — Godrej Enterprises</title>
 <!-- Google Fonts & External CSS -->
 <link rel="stylesheet" href="style.css">
-<!-- SheetJS & Chart.js -->
+<!-- SheetJS, Chart.js & ChartDataLabels Plugin -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 /* Page-Specific Enhancements */
 .kpi-score-badge {
@@ -94,25 +95,24 @@
   color: var(--godrej-red);
 }
 
-.reason-summary-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  margin-top: 14px;
-}
-.reason-item-box {
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-hover);
-  border: 1px solid var(--surface-border-subtle);
+.chart-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
+  align-items: baseline;
+  margin-bottom: 12px;
 }
-.reason-item-box b {
-  font-family: var(--font-mono);
+.chart-card-title {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--ink);
+  margin: 0;
+}
+.chart-card-subtitle {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  font-weight: normal;
+  display: block;
+  margin-top: 2px;
 }
 </style>
 </head>
@@ -260,14 +260,18 @@
       </div>
       <div class="grid-2">
         <div class="card dark-line-card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="font-size:14px; margin:0;">Date-wise Merchandising Score Trend<br><span style="font-size:11.5px; color:#94a3b8; font-weight:normal;">Timeline of average merchandising score %</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Date-wise Merchandising Score Trend
+              <span class="chart-card-subtitle" style="color:#94a3b8;">Average score % across visit dates</span>
+            </h3>
           </div>
           <div class="chart-box"><canvas id="chartTrendDate"></canvas></div>
         </div>
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="font-size:14px; margin:0;">AOM-wise Merchandising Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Average score % across Area Operations Managers</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">AOM-wise Merchandising Score
+              <span class="chart-card-subtitle">Average compliance score % by Area Operations Manager</span>
+            </h3>
           </div>
           <div class="chart-box"><canvas id="chartAOM"></canvas></div>
         </div>
@@ -282,14 +286,18 @@
       </div>
       <div class="grid-2">
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="font-size:14px; margin:0;">Product Category-wise Merchandising Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Average score % per Godrej appliance line</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Product Category-wise Merchandising Score
+              <span class="chart-card-subtitle">Average score % across Godrej appliance categories</span>
+            </h3>
           </div>
           <div class="chart-box"><canvas id="chartProdCat"></canvas></div>
         </div>
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="font-size:14px; margin:0;">Store Category-wise Merchandising Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Average score % by retail outlet channel</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Store Category-wise Merchandising Score
+              <span class="chart-card-subtitle">Average score % across retail outlet formats</span>
+            </h3>
           </div>
           <div class="chart-box"><canvas id="chartStoreCat"></canvas></div>
         </div>
@@ -305,13 +313,21 @@
       <div class="grid-2">
         <!-- Branch-wise Score (Column Chart) -->
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Branch-wise Merchandising Score<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Average compliance score % across territory branches</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Branch-wise Merchandising Score
+              <span class="chart-card-subtitle">Average compliance score % across territory branches</span>
+            </h3>
+          </div>
           <div class="chart-box" style="height:270px;"><canvas id="chartBranch"></canvas></div>
         </div>
 
         <!-- Not Deployed Reason Breakup Chart (Count & %) -->
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Not Deployed Reason Breakup<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Breakup in count &amp; percentage of non-deployment reasons</span></h3>
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Not Deployed Reason Breakup
+              <span class="chart-card-subtitle">Breakup in count &amp; percentage of non-deployment reasons</span>
+            </h3>
+          </div>
           <div class="chart-box" style="height:270px;"><canvas id="chartReasons"></canvas></div>
         </div>
       </div>
@@ -340,7 +356,7 @@
                 <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('displayCount')">Display Count <span id="sort_displayCount" class="sort-indicator"></span></th>
                 <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('targetDeployment')">Target Deployment <span id="sort_targetDeployment" class="sort-indicator"></span></th>
                 <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('finalDeployed')">Final Deployed <span id="sort_finalDeployed" class="sort-indicator"></span></th>
-                <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('finalNotDeployed')">Final Not Deployed <span id="sort_finalNotDeployed" class="sort-indicator"></span></th>
+                <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('finalNotDeployed')">Final Not Deployed (% of Target) <span id="sort_finalNotDeployed" class="sort-indicator"></span></th>
                 <th class="th-sortable" style="text-align:right;" onclick="UI.sortTable('mScore')">Merchandising Score % <span id="sort_mScore" class="sort-indicator"></span></th>
               </tr>
             </thead>
@@ -381,6 +397,11 @@
 /* =====================================================================
    MERCHANDISING SCORE DASHBOARD JAVASCRIPT ENGINE
    ===================================================================== */
+
+// Register ChartDataLabels plugin globally
+if (typeof ChartDataLabels !== 'undefined') {
+  Chart.register(ChartDataLabels);
+}
 
 const SHAREPOINT_EXCEL_URL = 'https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQAaW2sHEFKnRrqPtppHxBH2ARgiE7222JHi46SCAbbXkQ8?e=LKeeih&download=1';
 
@@ -438,7 +459,6 @@ const Utils = {
   parseDate(val) {
     if (!val) return '';
     if (typeof val === 'number') {
-      // Excel serial date number
       const d = new Date(Math.round((val - 25569) * 86400 * 1000));
       if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
     }
@@ -465,7 +485,6 @@ const DataParser = {
       throw new Error('Sheet contains no data rows.');
     }
 
-    // Identify header row
     let headerRowIdx = 0;
     for (let r = 0; r < Math.min(5, rows.length); r++) {
       const rowStr = (rows[r] || []).join(' ').toLowerCase();
@@ -477,7 +496,6 @@ const DataParser = {
 
     const headers = (rows[headerRowIdx] || []).map(h => h ? String(h).trim() : '');
     
-    // Find column indexes dynamically
     const findCol = (terms) => {
       for (const t of terms) {
         const idx = headers.findIndex(h => h.toLowerCase() === t.toLowerCase());
@@ -660,7 +678,6 @@ const UI = {
       fDateTo.max = State.dateBounds.max;
     }
 
-    // Attach change listeners
     const bindSelect = (id, key) => {
       const el = document.getElementById(id);
       if (el) {
@@ -796,7 +813,6 @@ const UI = {
     let scoreCount = 0;
     let under100Count = 0;
 
-    // Total Visits Logic: Concatenate Store Code & Visit Date and find Unique Count
     const uniqueVisitsSet = new Set();
     const uniqueUnder100VisitsSet = new Set();
 
@@ -822,6 +838,7 @@ const UI = {
     const totalUniqueVisits = uniqueVisitsSet.size;
     const avgScore = scoreCount > 0 ? (sumScore / scoreCount) : 0;
     const executionRatio = sumTargetDeployment > 0 ? (sumFinalDeployed / sumTargetDeployment) : 0;
+    const notDeployedPct = sumTargetDeployment > 0 ? ((sumFinalNotDeployed / sumTargetDeployment) * 100).toFixed(1) + '% of target' : '0%';
 
     let scoreClass = 'good';
     if (avgScore >= 0.85) scoreClass = 'excellent';
@@ -869,7 +886,7 @@ const UI = {
         <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.12); color:#d97706;">⚠️</div>
         <div class="kpi-label">POSM Not Executed</div>
         <div class="kpi-value" style="color:#d97706;">${Utils.formatNum(sumFinalNotDeployed)}</div>
-        <div class="kpi-sub">Final Not Deployed</div>
+        <div class="kpi-sub">${notDeployedPct}</div>
       </div>
 
       <!-- KPI 6: Total Visits (Concatenate store code & visit date and find unique) -->
@@ -889,7 +906,6 @@ const UI = {
       </div>
     `;
 
-    // Update meta bar numbers
     document.getElementById('totalRecordCount').textContent = Utils.formatNum(totalUniqueVisits);
     document.getElementById('totalTargetMeta').textContent = Utils.formatNum(sumTargetDeployment);
     document.getElementById('under100CountMeta').textContent = Utils.formatNum(under100Count);
@@ -962,6 +978,8 @@ const UI = {
       if (r.mScore >= 0.90) pillClass = 'high';
       else if (r.mScore >= 0.70) pillClass = 'mid';
 
+      const notDepPctStr = r.targetDeployment > 0 ? ` (${((r.finalNotDeployed / r.targetDeployment) * 100).toFixed(0)}%)` : '';
+
       return `
         <tr>
           <td><span style="font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink);">${escapeHTML(r.vmCode || '-')}</span></td>
@@ -976,7 +994,9 @@ const UI = {
           <td style="text-align:right; font-family:var(--font-mono);">${Utils.formatNum(r.displayCount)}</td>
           <td style="text-align:right; font-family:var(--font-mono); font-weight:600;">${Utils.formatNum(r.targetDeployment)}</td>
           <td style="text-align:right; font-family:var(--font-mono); color:#10b981; font-weight:600;">${Utils.formatNum(r.finalDeployed)}</td>
-          <td style="text-align:right; font-family:var(--font-mono); color:#e4002b; font-weight:600;">${Utils.formatNum(r.finalNotDeployed)}</td>
+          <td style="text-align:right; font-family:var(--font-mono); color:#e4002b; font-weight:600;">
+            ${Utils.formatNum(r.finalNotDeployed)}<span style="font-size:11px; opacity:0.85; font-weight:normal; margin-left:2px;">${notDepPctStr}</span>
+          </td>
           <td style="text-align:right;">
             <span class="table-score-pill ${pillClass}">${Utils.formatPercent(r.mScore, 1)}</span>
           </td>
@@ -1058,12 +1078,7 @@ const ChartModule = {
       gridColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)',
       textColor: isDark ? '#94a3b8' : '#64748b',
       titleColor: isDark ? '#f8fafc' : '#0f172a',
-      accentRed: '#e4002b',
-      accentTeal: '#0d9488',
-      accentGreen: '#10b981',
-      accentBlue: '#0284c7',
-      accentAmber: '#f59e0b',
-      accentPurple: '#8b5cf6'
+      labelColor: isDark ? '#e2e8f0' : '#1e293b'
     };
   },
 
@@ -1083,7 +1098,7 @@ const ChartModule = {
     this.renderNotDeployedReasons(records);
   },
 
-  /* 1. Date-wise Score Trend in Line Chart */
+  /* 1. Date-wise Score Trend in Line Chart (Primary Y-axis removed, data labels shown) */
   renderDateTrend(records) {
     const canvas = document.getElementById('chartTrendDate');
     if (!canvas) return;
@@ -1127,15 +1142,27 @@ const ChartModule = {
           pointBackgroundColor: '#ffffff',
           pointBorderColor: '#38bdf8',
           pointBorderWidth: 2.5,
-          pointRadius: sortedDates.length > 20 ? 3 : 5,
+          pointRadius: 5,
           pointHoverRadius: 7
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 25, right: 15, left: 15, bottom: 5 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            align: 'top',
+            anchor: 'center',
+            offset: 6,
+            color: '#38bdf8',
+            font: { family: 'var(--font-mono)', size: 10.5, weight: 'bold' },
+            formatter: (v) => v > 0 ? v.toFixed(1) + '%' : ''
+          },
           tooltip: {
             backgroundColor: '#0f172a',
             titleColor: '#ffffff',
@@ -1160,25 +1187,20 @@ const ChartModule = {
         },
         scales: {
           x: {
-            grid: { color: 'rgba(255,255,255,0.06)' },
+            grid: { display: false },
             ticks: { color: '#94a3b8', font: { family: 'var(--font-mono)', size: 11 } }
           },
           y: {
-            min: 0,
-            max: 100,
-            grid: { color: 'rgba(255,255,255,0.08)' },
-            ticks: {
-              color: '#94a3b8',
-              font: { family: 'var(--font-mono)', size: 11 },
-              callback: v => v + '%'
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: 110
           }
         }
       }
     });
   },
 
-  /* 2. AOM-wise Score in Column Chart */
+  /* 2. AOM-wise Score in Column Chart (Primary Y-axis removed, data labels shown) */
   renderAOMScore(records) {
     const canvas = document.getElementById('chartAOM');
     if (!canvas) return;
@@ -1225,8 +1247,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 22, bottom: 0 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            offset: 2,
+            color: tc.labelColor,
+            font: { family: 'var(--font-mono)', size: 11, weight: 'bold' },
+            formatter: (v) => v > 0 ? v.toFixed(1) + '%' : ''
+          },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -1248,21 +1282,16 @@ const ChartModule = {
             ticks: { color: tc.textColor, font: { family: 'var(--font-body)', size: 11, weight: '600' } }
           },
           y: {
-            min: 0,
-            max: 100,
-            grid: { color: tc.gridColor },
-            ticks: {
-              color: tc.textColor,
-              font: { family: 'var(--font-mono)', size: 11 },
-              callback: v => v + '%'
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: 115
           }
         }
       }
     });
   },
 
-  /* 3. Product Category-wise Score in Column Chart */
+  /* 3. Product Category-wise Score in Column Chart (Primary Y-axis removed, data labels shown) */
   renderProdCatScore(records) {
     const canvas = document.getElementById('chartProdCat');
     if (!canvas) return;
@@ -1312,8 +1341,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 22, bottom: 0 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            offset: 2,
+            color: tc.labelColor,
+            font: { family: 'var(--font-mono)', size: 10.5, weight: 'bold' },
+            formatter: (v) => v > 0 ? v.toFixed(1) + '%' : ''
+          },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -1339,21 +1380,16 @@ const ChartModule = {
             }
           },
           y: {
-            min: 0,
-            max: 100,
-            grid: { color: tc.gridColor },
-            ticks: {
-              color: tc.textColor,
-              font: { family: 'var(--font-mono)', size: 11 },
-              callback: v => v + '%'
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: 115
           }
         }
       }
     });
   },
 
-  /* 4. Store Category-wise Score in Column Chart */
+  /* 4. Store Category-wise Score in Column Chart (Primary Y-axis removed, data labels shown) */
   renderStoreCatScore(records) {
     const canvas = document.getElementById('chartStoreCat');
     if (!canvas) return;
@@ -1404,8 +1440,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 22, bottom: 0 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            offset: 2,
+            color: tc.labelColor,
+            font: { family: 'var(--font-mono)', size: 10.5, weight: 'bold' },
+            formatter: (v) => v > 0 ? v.toFixed(1) + '%' : ''
+          },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -1432,21 +1480,16 @@ const ChartModule = {
             }
           },
           y: {
-            min: 0,
-            max: 100,
-            grid: { color: tc.gridColor },
-            ticks: {
-              color: tc.textColor,
-              font: { family: 'var(--font-mono)', size: 11 },
-              callback: v => v + '%'
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: 115
           }
         }
       }
     });
   },
 
-  /* 5. Branch-wise Score (Column Chart) */
+  /* 5. Branch-wise Score in Column Chart (Primary Y-axis removed, data labels shown) */
   renderBranchScore(records) {
     const canvas = document.getElementById('chartBranch');
     if (!canvas) return;
@@ -1498,8 +1541,20 @@ const ChartModule = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 22, bottom: 0 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            offset: 2,
+            color: tc.labelColor,
+            font: { family: 'var(--font-mono)', size: 9.5, weight: 'bold' },
+            formatter: (v) => v > 0 ? v.toFixed(1) + '%' : ''
+          },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -1521,27 +1576,22 @@ const ChartModule = {
             grid: { display: false },
             ticks: {
               color: tc.textColor,
-              font: { family: 'var(--font-body)', size: 10 },
-              maxRotation: 45,
-              minRotation: 25
+              font: { family: 'var(--font-body)', size: 9.5 },
+              maxRotation: 55,
+              minRotation: 35
             }
           },
           y: {
-            min: 0,
-            max: 100,
-            grid: { color: tc.gridColor },
-            ticks: {
-              color: tc.textColor,
-              font: { family: 'var(--font-mono)', size: 11 },
-              callback: v => v + '%'
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: 115
           }
         }
       }
     });
   },
 
-  /* 6. Not Deployed Reason Breakup (Counts & %) */
+  /* 6. Not Deployed Reason Breakup (Primary X-axis removed, % shown against Final Not Deployed column) */
   renderNotDeployedReasons(records) {
     const canvas = document.getElementById('chartReasons');
     if (!canvas) return;
@@ -1559,7 +1609,7 @@ const ChartModule = {
     ];
 
     const sums = {};
-    let totalCount = 0;
+    let totalFinalNotDeployed = 0;
 
     for (const item of reasonsConfig) {
       sums[item.key] = 0;
@@ -1572,16 +1622,21 @@ const ChartModule = {
       sums['spaceNotAvail'] += r.spaceNotAvail || 0;
       sums['qtyNotAvail'] += r.qtyNotAvail || 0;
       sums['demoNotAvail'] += r.demoNotAvail || 0;
+      totalFinalNotDeployed += r.finalNotDeployed || 0;
     }
 
-    totalCount = Object.values(sums).reduce((a, b) => a + b, 0);
+    // Fallback if finalNotDeployed is not set, use sum of reasons
+    if (totalFinalNotDeployed === 0) {
+      totalFinalNotDeployed = Object.values(sums).reduce((a, b) => a + b, 0);
+    }
 
-    // Sort reasons by count descending
     const sorted = [...reasonsConfig].sort((a, b) => sums[b.key] - sums[a.key]);
 
     const labels = sorted.map(s => s.label);
     const dataValues = sorted.map(s => sums[s.key]);
     const bgColors = sorted.map(s => s.color);
+
+    const maxVal = Math.max(...dataValues, 10);
 
     this.instances['chartReasons'] = new Chart(canvas, {
       type: 'bar',
@@ -1597,28 +1652,41 @@ const ChartModule = {
         }]
       },
       options: {
-        indexAxis: 'y', // Horizontal bar chart for clean readability of reason names
+        indexAxis: 'y', // Horizontal bar chart
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { right: 95, left: 5, top: 5, bottom: 5 }
+        },
         plugins: {
           legend: { display: false },
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'right',
+            offset: 8,
+            color: tc.labelColor,
+            font: { family: 'var(--font-mono)', size: 10.5, weight: 'bold' },
+            formatter: (val) => {
+              const pct = totalFinalNotDeployed > 0 ? ((val / totalFinalNotDeployed) * 100).toFixed(1) : '0.0';
+              return `${Utils.formatNum(val)} (${pct}%)`;
+            }
+          },
           tooltip: {
             callbacks: {
               label(ctx) {
                 const count = ctx.parsed.x;
-                const pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) + '%' : '0%';
-                return `Count: ${Utils.formatNum(count)} (${pct} of reasons)`;
+                const pct = totalFinalNotDeployed > 0 ? ((count / totalFinalNotDeployed) * 100).toFixed(1) + '%' : '0%';
+                return `Count: ${Utils.formatNum(count)} (${pct} of Final Not Deployed: ${Utils.formatNum(totalFinalNotDeployed)})`;
               }
             }
           }
         },
         scales: {
           x: {
-            grid: { color: tc.gridColor },
-            ticks: {
-              color: tc.textColor,
-              font: { family: 'var(--font-mono)', size: 10.5 }
-            }
+            display: false, // Primary numeric axis removed to declutter
+            grid: { display: false },
+            suggestedMax: maxVal * 1.32
           },
           y: {
             grid: { display: false },
