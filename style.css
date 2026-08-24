@@ -306,16 +306,7 @@ a {
   border-color: rgba(255, 255, 255, 0.45);
   transform: translateY(-1px);
 }
-.hdr-btn-upload {
-  background: rgba(16, 185, 129, 0.25);
-  border: 1px solid rgba(16, 185, 129, 0.45);
-  color: #ffffff;
-}
-.hdr-btn-upload:hover {
-  background: rgba(16, 185, 129, 0.40);
-  border-color: rgba(16, 185, 129, 0.70);
-  transform: translateY(-1px);
-}
+
 .hdr-btn-reset {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.20);
