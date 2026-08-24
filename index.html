@@ -118,8 +118,8 @@
           <div class="chart-box"><canvas id="chartAOMCombo"></canvas></div>
         </div>
         <div class="card">
-          <h3 style="font-size:14px; margin-bottom:12px;">Branch-wise QC Score &amp; Audit Count<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Territory &amp; Branch Operations</span></h3>
-          <div class="chart-box"><canvas id="chartBranchCombo"></canvas></div>
+          <h3 style="font-size:14px; margin-bottom:12px;">Week-wise QC Done (Past 8 Weeks)<br><span style="font-size:11.5px; color:var(--ink-faint); font-weight:normal;">Weekly QC audit volume &amp; compliance based on QC Date</span></h3>
+          <div class="chart-box"><canvas id="chartWeekQC"></canvas></div>
         </div>
       </div>
     </div>
@@ -620,6 +620,58 @@ const Calc = {
     return { top5, bottom5 };
   },
 
+  qcWeekScores(records){
+    const weekMap = {};
+    records.forEach(r => {
+      const d = r.qcDate || r.date;
+      if(!d || !(d instanceof Date) || isNaN(d)) return;
+
+      const dateObj = new Date(d);
+      const day = dateObj.getDay();
+      const diff = dateObj.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(dateObj.setDate(diff));
+      mon.setHours(0,0,0,0);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+
+      const tempD = new Date(mon);
+      tempD.setDate(tempD.getDate() + 4 - (tempD.getDay() || 7));
+      const yearStart = new Date(tempD.getFullYear(), 0, 1);
+      const weekNo = Math.ceil((((tempD - yearStart) / 86400000) + 1) / 7);
+
+      const monStr = mon.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const sunStr = sun.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      const label = `Wk ${weekNo} (${monStr})`;
+
+      const key = `${mon.getFullYear()}_${weekNo}`;
+      if(!weekMap[key]){
+        weekMap[key] = {
+          key: key,
+          label: label,
+          range: `${monStr} – ${sunStr}`,
+          time: mon.getTime(),
+          auditCount: 0,
+          qcSum: 0,
+          qcCount: 0
+        };
+      }
+
+      weekMap[key].auditCount++;
+      if(r.qcPct != null){
+        weekMap[key].qcSum += r.qcPct;
+        weekMap[key].qcCount++;
+      }
+    });
+
+    const sorted = Object.values(weekMap).sort((a,b) => a.time - b.time);
+    const last8 = sorted.slice(-8);
+    return last8.map(w => ({
+      label: w.label,
+      range: w.range,
+      count: w.auditCount,
+      score: w.qcCount ? (w.qcSum / w.qcCount) : 0
+    }));
+  },
   weeklyTrends(records){
     const weeksMap = {};
 
@@ -804,7 +856,7 @@ const ChartModule = {
 
   renderAll(filtered){
     this.renderAOMCombo(filtered);
-    this.renderBranchCombo(filtered);
+    this.renderWeekQC(filtered);
     this.renderDisplay(filtered);
     this.renderCampaign(filtered);
     this.renderTrendOverall(filtered);
@@ -895,32 +947,37 @@ const ChartModule = {
     });
   },
 
-  /* 2. Branch Combo */
-  renderBranchCombo(records){
-    const data = Calc.branchScores(records).slice(0, 10);
-    const ctx = document.getElementById('chartBranchCombo').getContext('2d');
-    if(State.charts.branchCombo) State.charts.branchCombo.destroy();
+    /* 2. Week-wise QC Done (Past 8 Weeks based on QC Date) */
+  renderWeekQC(records){
+    const data = Calc.qcWeekScores(records);
+    const canvas = document.getElementById('chartWeekQC');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(State.charts.weekQC) State.charts.weekQC.destroy();
 
-    State.charts.branchCombo = new Chart(ctx, {
+    const maxCount = Math.max(...data.map(d => d.count), 10);
+
+    State.charts.weekQC = new Chart(ctx, {
       type: 'bar',
       plugins: [AlwaysShowDataLabelsPlugin],
       data: {
-        labels: data.map(d=>d.name),
+        labels: data.map(d => d.label),
         datasets: [
           {
             type: 'bar',
-            label: 'QC Score %',
-            data: data.map(d=>d.score*100),
+            label: 'QC Done (Audits)',
+            data: data.map(d => d.count),
             backgroundColor: THEME_COLORS.barBlue,
             hoverBackgroundColor: THEME_COLORS.barBlueHover,
-            borderRadius: 5,
+            borderRadius: 6,
             yAxisID: 'y',
-            order: 2
+            order: 2,
+            maxBarThickness: 36
           },
           {
             type: 'line',
-            label: 'Audit Count',
-            data: data.map(d=>d.count),
+            label: 'Avg QC Score %',
+            data: data.map(d => Number((d.score * 100).toFixed(1))),
             borderColor: THEME_COLORS.lineOrange,
             backgroundColor: THEME_COLORS.lineOrange,
             pointBackgroundColor: THEME_COLORS.lineOrange,
@@ -939,6 +996,50 @@ const ChartModule = {
         responsive: true,
         maintainAspectRatio: false,
         layout: { padding: { top: 16 } },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: this.getFontColor(), boxWidth: 12, font: { family: 'var(--font-body)', size: 11 } }
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const idx = items[0].dataIndex;
+                return `${data[idx].label} [${data[idx].range}]`;
+              },
+              label: (c) => c.datasetIndex === 0 ? `QC Done: ${c.raw} audits` : `Avg Score: ${c.raw}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            min: 0,
+            suggestedMax: Math.ceil(maxCount * 1.25),
+            ticks: { precision: 0, color: this.getFontColor(), font: { size: 10.5 } },
+            grid: { color: this.getGridColor() },
+            title: { display: true, text: 'QC Audits Done', color: this.getFontColor(), font: { size: 11, weight: '600' } }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            max: 105,
+            grid: { drawOnChartArea: false },
+            ticks: { callback: v => v + '%', color: THEME_COLORS.axisOrange, font: { weight: '600', size: 10.5 } },
+            title: { display: true, text: 'QC Score %', color: THEME_COLORS.axisOrange, font: { size: 11, weight: '600' } }
+          },
+          x: {
+            ticks: { color: this.getFontColor(), font: { size: 10.5, weight: '500' } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  },
+
         plugins: {
           legend: {
             display: true,

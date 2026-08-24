@@ -333,7 +333,72 @@
       </div>
     </div>
 
-    <!-- 4. <100% MERCHANDISING SCORE TABLE -->
+    <!-- 4. VM PERFORMANCE QUADRANTS MATRIX -->
+    <div class="section">
+      <div class="section-head">
+        <h2>VM Performance Quadrants Matrix</h2>
+        <span class="hint">Categorization of Visual Merchandisers across 4 execution score bands with aggregate scores</span>
+      </div>
+      <div class="quadrant-grid">
+        <!-- Quadrant 1: >= 95% -->
+        <div class="card quadrant-card q-benchmark">
+          <div class="quadrant-header">
+            <div class="quadrant-title-group">
+              <span class="quadrant-tag tag-green">Quadrant I (≥ 95%)</span>
+              <h3 class="quadrant-title">Benchmark &amp; Top Performers</h3>
+            </div>
+            <span class="quadrant-count-badge badge-green" id="q1Count">0 VMs</span>
+          </div>
+          <div class="quadrant-vm-list" id="q1List">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Quadrant 2: >= 85% & < 94.9% -->
+        <div class="card quadrant-card q-good">
+          <div class="quadrant-header">
+            <div class="quadrant-title-group">
+              <span class="quadrant-tag tag-blue">Quadrant II (85% – 94.9%)</span>
+              <h3 class="quadrant-title">Strong Compliance</h3>
+            </div>
+            <span class="quadrant-count-badge badge-blue" id="q2Count">0 VMs</span>
+          </div>
+          <div class="quadrant-vm-list" id="q2List">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Quadrant 3: >= 75% & < 84.9% -->
+        <div class="card quadrant-card q-moderate">
+          <div class="quadrant-header">
+            <div class="quadrant-title-group">
+              <span class="quadrant-tag tag-amber">Quadrant III (75% – 84.9%)</span>
+              <h3 class="quadrant-title">Needs Improvement</h3>
+            </div>
+            <span class="quadrant-count-badge badge-amber" id="q3Count">0 VMs</span>
+          </div>
+          <div class="quadrant-vm-list" id="q3List">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Quadrant 4: < 75% -->
+        <div class="card quadrant-card q-critical">
+          <div class="quadrant-header">
+            <div class="quadrant-title-group">
+              <span class="quadrant-tag tag-red">Quadrant IV (&lt; 75%)</span>
+              <h3 class="quadrant-title">Critical Coaching Focus</h3>
+            </div>
+            <span class="quadrant-count-badge badge-red" id="q4Count">0 VMs</span>
+          </div>
+          <div class="quadrant-vm-list" id="q4List">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. <100% MERCHANDISING SCORE TABLE -->
     <div class="section">
       <div class="section-head">
         <h2>📋 Audit Records Table — &lt;100% Merchandising Score</h2>
@@ -801,6 +866,92 @@ const UI = {
     UI.onFilterChange();
   },
 
+    renderQuadrants(records) {
+    const q1List = document.getElementById('q1List');
+    const q2List = document.getElementById('q2List');
+    const q3List = document.getElementById('q3List');
+    const q4List = document.getElementById('q4List');
+    const q1Count = document.getElementById('q1Count');
+    const q2Count = document.getElementById('q2Count');
+    const q3Count = document.getElementById('q3Count');
+    const q4Count = document.getElementById('q4Count');
+    if (!q1List) return;
+
+    // Aggregate by VM
+    const vmMap = {};
+    for (const r of records) {
+      const vmName = (r.vmName || 'Unknown').trim();
+      if (!vmMap[vmName]) {
+        vmMap[vmName] = {
+          name: vmName,
+          code: r.vmCode || '—',
+          aom: r.aom || 'Unassigned',
+          branch: r.branch || 'General',
+          sumScore: 0,
+          count: 0,
+          disp: 0,
+          tgt: 0,
+          dep: 0
+        };
+      }
+      if (r.mScore !== null && r.mScore !== undefined) {
+        vmMap[vmName].sumScore += r.mScore;
+        vmMap[vmName].count++;
+      }
+      vmMap[vmName].disp += r.displayCount || 0;
+      vmMap[vmName].tgt += r.targetDeployment || 0;
+      vmMap[vmName].dep += r.finalDeployed || 0;
+    }
+
+    const q1 = [], q2 = [], q3 = [], q4 = [];
+
+    Object.values(vmMap).forEach(v => {
+      const score = v.count > 0 ? (v.sumScore / v.count) * 100 : 0;
+      const item = { ...v, scorePct: score };
+      if (score >= 94.95) q1.append ? q1.push(item) : q1.push(item);
+      else if (score >= 84.95) q2.push(item);
+      else if (score >= 74.95) q3.push(item);
+      else q4.push(item);
+    });
+
+    const sortFn = (a, b) => b.scorePct - a.scorePct || b.count - a.count;
+    q1.sort(sortFn);
+    q2.sort(sortFn);
+    q3.sort(sortFn);
+    q4.sort(sortFn);
+
+    q1Count.textContent = `${q1.length} VM${q1.length === 1 ? '' : 's'}`;
+    q2Count.textContent = `${q2.length} VM${q2.length === 1 ? '' : 's'}`;
+    q3Count.textContent = `${q3.length} VM${q3.length === 1 ? '' : 's'}`;
+    q4Count.textContent = `${q4.length} VM${q4.length === 1 ? '' : 's'}`;
+
+    const renderList = (items, badgeClass) => {
+      if (!items || items.length === 0) {
+        return '<div class="quadrant-empty-state">No VMs in this score range</div>';
+      }
+      return items.map(vm => `
+        <div class="vm-item-card" title="VM: ${Utils.escapeHtml(vm.name)} | Branch: ${Utils.escapeHtml(vm.branch)} | AOM: ${Utils.escapeHtml(vm.aom)}">
+          <div class="vm-item-top">
+            <span class="vm-item-name">${Utils.escapeHtml(vm.name)}</span>
+            <span class="vm-score-badge ${badgeClass}">${vm.scorePct.toFixed(1)}%</span>
+          </div>
+          <div class="vm-item-meta">
+            <span class="vm-item-meta-pill">🏢 ${Utils.escapeHtml(vm.branch)}</span>
+            <span>·</span>
+            <span class="vm-item-meta-pill">👤 ${Utils.escapeHtml(vm.aom)}</span>
+            <span>·</span>
+            <span class="vm-item-meta-pill">📊 ${vm.count} audits</span>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    q1List.innerHTML = renderList(q1, 'vm-score-green');
+    q2List.innerHTML = renderList(q2, 'vm-score-blue');
+    q3List.innerHTML = renderList(q3, 'vm-score-amber');
+    q4List.innerHTML = renderList(q4, 'vm-score-red');
+  },
+
   renderKPIs(records) {
     const kpiGrid = document.getElementById('kpiGrid');
     if (!kpiGrid) return;
@@ -811,10 +962,8 @@ const UI = {
     let sumFinalNotDeployed = 0;
     let sumScore = 0;
     let scoreCount = 0;
-    let under100Count = 0;
 
     const uniqueVisitsSet = new Set();
-    const uniqueUnder100VisitsSet = new Set();
 
     for (const r of records) {
       sumDisplayCount += r.displayCount || 0;
@@ -828,87 +977,73 @@ const UI = {
       if (r.mScore !== null && r.mScore !== undefined) {
         sumScore += r.mScore;
         scoreCount++;
-        if (r.mScore < 0.9999) {
-          under100Count++;
-          uniqueUnder100VisitsSet.add(visitKey);
-        }
       }
     }
 
     const totalUniqueVisits = uniqueVisitsSet.size;
     const avgScore = scoreCount > 0 ? (sumScore / scoreCount) : 0;
-    const executionRatio = sumTargetDeployment > 0 ? (sumFinalDeployed / sumTargetDeployment) : 0;
-    const notDeployedPct = sumTargetDeployment > 0 ? ((sumFinalNotDeployed / sumTargetDeployment) * 100).toFixed(1) + '% of target' : '0%';
-
-    let scoreClass = 'good';
-    if (avgScore >= 0.85) scoreClass = 'excellent';
-    else if (avgScore >= 0.70) scoreClass = 'good';
-    else if (avgScore >= 0.50) scoreClass = 'warning';
-    else scoreClass = 'danger';
+    
+    // Exact requested calculations:
+    // 1. Average product display = total products captured / total visits
+    const avgProdPerVisit = totalUniqueVisits > 0 ? (sumDisplayCount / totalUniqueVisits).toFixed(1) : '0';
+    // 2. Average target posm = target deployment / products captured
+    const avgTargetPerProd = sumDisplayCount > 0 ? (sumTargetDeployment / sumDisplayCount).toFixed(1) : '0';
+    // 3. % of target deployment = posm executed / target deployment
+    const execPct = sumTargetDeployment > 0 ? ((sumFinalDeployed / sumTargetDeployment) * 100).toFixed(1) : '0';
+    // 4. POSM not executed % = posm not executed / target deployment
+    const notExecPct = sumTargetDeployment > 0 ? ((sumFinalNotDeployed / sumTargetDeployment) * 100).toFixed(1) : '0';
 
     kpiGrid.innerHTML = `
-      <!-- KPI 1: Overall Merchandising Score -->
+      <!-- KPI 1: Overall Merchandising Score (No second line text) -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(228,0,43,0.12); color:#e4002b;">🎯</div>
         <div class="kpi-label">Overall Merchandising Score</div>
         <div class="kpi-value" style="color:var(--godrej-red);">${Utils.formatPercent(avgScore, 1)}</div>
-        <div class="kpi-sub">
-          <span class="kpi-score-badge ${scoreClass}">Target Exec Ratio: ${Utils.formatPercent(executionRatio, 1)}</span>
-        </div>
       </div>
 
-      <!-- KPI 2: Products Captured (Display Count) -->
+      <!-- KPI 2: Products Captured (Second line: Average product display) -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(2,132,199,0.12); color:#0284c7;">📦</div>
         <div class="kpi-label">Products Captured</div>
         <div class="kpi-value">${Utils.formatNum(sumDisplayCount)}</div>
-        <div class="kpi-sub">Sum of Display Count</div>
+        <div class="kpi-sub">Avg ${avgProdPerVisit} / visit</div>
       </div>
 
-      <!-- KPI 3: Target Deployment -->
+      <!-- KPI 3: Target Deployment (Second line: Average target POSM) -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(99,102,241,0.12); color:#6366f1;">📋</div>
         <div class="kpi-label">Target Deployment</div>
         <div class="kpi-value">${Utils.formatNum(sumTargetDeployment)}</div>
-        <div class="kpi-sub">Planned POSM Targets</div>
+        <div class="kpi-sub">Avg ${avgTargetPerProd} / product</div>
       </div>
 
-      <!-- KPI 4: POSM Executed (Final Deployed) -->
+      <!-- KPI 4: POSM Executed (Second line: % of Target Deployment) -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.12); color:#10b981;">✅</div>
         <div class="kpi-label">POSM Executed</div>
         <div class="kpi-value" style="color:#10b981;">${Utils.formatNum(sumFinalDeployed)}</div>
-        <div class="kpi-sub">Final POSM Deployed</div>
+        <div class="kpi-sub">${execPct}% of Target</div>
       </div>
 
-      <!-- KPI 5: POSM Not Executed (Final Not Deployed) -->
+      <!-- KPI 5: POSM Not Executed (Second line: % of Target) -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.12); color:#d97706;">⚠️</div>
         <div class="kpi-label">POSM Not Executed</div>
         <div class="kpi-value" style="color:#d97706;">${Utils.formatNum(sumFinalNotDeployed)}</div>
-        <div class="kpi-sub">${notDeployedPct}</div>
+        <div class="kpi-sub">${notExecPct}% of Target</div>
       </div>
 
-      <!-- KPI 6: Total Visits (Concatenate store code & visit date and find unique) -->
+      <!-- KPI 6: Total Visits -->
       <div class="card kpi-card">
         <div class="kpi-icon-wrap" style="background:rgba(13,148,136,0.12); color:#0d9488;">🏬</div>
         <div class="kpi-label">Total Visits</div>
         <div class="kpi-value">${Utils.formatNum(totalUniqueVisits)}</div>
         <div class="kpi-sub">Unique Store + Date Visits</div>
       </div>
-
-      <!-- KPI 7: Under 100% Score Visits -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(228,0,43,0.12); color:#e4002b;">⚡</div>
-        <div class="kpi-label">&lt;100% Score Visits</div>
-        <div class="kpi-value" style="color:#e4002b;">${Utils.formatNum(under100Count)}</div>
-        <div class="kpi-sub">${records.length > 0 ? ((under100Count / records.length) * 100).toFixed(1) + '% of records' : '0%'}</div>
-      </div>
     `;
 
     document.getElementById('totalRecordCount').textContent = Utils.formatNum(totalUniqueVisits);
     document.getElementById('totalTargetMeta').textContent = Utils.formatNum(sumTargetDeployment);
-    document.getElementById('under100CountMeta').textContent = Utils.formatNum(under100Count);
   },
 
   renderTable(records) {
@@ -1061,6 +1196,7 @@ const UI = {
     UI.updateFilterDropdowns();
     const filtered = getFilteredRecords();
     UI.renderKPIs(filtered);
+    UI.renderQuadrants(filtered);
     ChartModule.renderAll(filtered);
     UI.renderTable(filtered);
     UI.renderActiveChips();
