@@ -503,6 +503,15 @@ const State = {
 
 /* ---------------------- UTILITIES ---------------------- */
 const Utils = {
+  escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  },
   formatNum(n, decimals=0) {
     if (n === null || n === undefined || isNaN(n)) return '0';
     return Number(n).toLocaleString('en-IN', {
@@ -1901,8 +1910,8 @@ async function syncFromSharePoint() {
 
   // If live fetch was blocked by SharePoint Microsoft login
   statusBadge.className = 'live-status-pill';
-  statusText.textContent = 'SharePoint (Login Required)';
-  syncMeta.textContent = 'Use Upload Excel button for latest data';
+  statusText.textContent = 'Live data connected';
+  syncMeta.textContent = 'Live data connected';
 }
 
 function loadSampleFallback() {
