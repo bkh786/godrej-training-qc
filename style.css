@@ -234,10 +234,12 @@ a {
   gap: 14px;
 }
 .brand-logo-svg {
-  height: 32px;
+  height: 34px;
   width: auto;
+  max-width: 110px;
   color: #ffffff;
   display: block;
+  flex-shrink: 0;
 }
 .brand-text {
   display: flex;
