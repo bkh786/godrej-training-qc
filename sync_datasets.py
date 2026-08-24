@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Automated Data Synchronizer for Godrej Training & Merchandising Dashboards
-Downloads latest live datasets directly from SharePoint public export URLs
-and embeds them into index.html, training.html, and m_score.html.
+Downloads latest live datasets directly from SharePoint public export URLs,
+embeds them into index.html, training.html, and m_score.html, and automatically
+pushes changes to GitHub.
 """
 
 import urllib.request
@@ -13,7 +14,8 @@ import io
 import json
 import datetime
 import os
-import re
+import subprocess
+import sys
 
 SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
@@ -104,6 +106,22 @@ def sync_m_score(opener):
                 rows.append(r_vals)
             embed_sample_data("m_score.html", rows)
 
+def auto_push_to_github():
+    print("\n--- Pushing updates to GitHub ---")
+    try:
+        subprocess.run(["git", "add", "index.html", "training.html", "m_score.html"], check=True)
+        # Check if there are changes to commit
+        res = subprocess.run(["git", "diff", "--staged", "--quiet"])
+        if res.returncode != 0:
+            msg = f"chore(data): auto-sync latest live SharePoint datasets ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"
+            subprocess.run(["git", "commit", "-m", msg], check=True)
+            subprocess.run(["git", "push", "origin", "main"], check=True)
+            print("🚀 Successfully pushed updated datasets to GitHub main branch!")
+        else:
+            print("No data changes detected. Remote repository is already up-to-date.")
+    except Exception as e:
+        print("Note: Could not push to git automatically:", e)
+
 def main():
     print("Starting SharePoint Data Sync...")
     opener = get_opener()
@@ -111,6 +129,7 @@ def main():
     sync_training(opener)
     sync_m_score(opener)
     print("\nAll datasets synchronized successfully!")
+    auto_push_to_github()
 
 if __name__ == "__main__":
     main()
