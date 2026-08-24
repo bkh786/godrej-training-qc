@@ -64,6 +64,12 @@
           <span id="liveStatusText">Live data connected</span>
         </div>
 
+                <label class="hdr-btn hdr-btn-upload" for="fileUploadInput" title="Upload and parse updated Excel/XLSB report">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span>Upload Excel</span>
+        </label>
+        <input type="file" id="fileUploadInput" accept=".xlsx,.xlsb,.xls,.csv" style="display:none;" />
+
         <button class="hdr-btn hdr-btn-reset" id="btnResetFilters" title="Reset all active filters">
           <span>Reset filters</span>
         </button>
@@ -360,17 +366,17 @@ const Utils = {
 
 /* ---------------------- DATA PARSER ---------------------- */
 const IDENTITY_SYNONYMS = {
-  outletCode: ['outlet code','store code'],
-  store: ['outlet name','store name','store'],
-  empCode: ['emp code','employee code','staff code','vm code'],
-  empName: ['emp name','employee name','vm name','staff name','name'],
-  branch: ['outlet branch','branch'],
-  category: ['outlet category','category'],
-  classification: ['outlet classification','classification'],
-  city: ['outlet city','city'],
+  outletCode: ['outlet code','store code','store_code','shop code','client_store_code'],
+  store: ['outlet name','store name','store','store_name'],
+  empCode: ['emp code','employee code','staff code','vm code','1channel_code','vm user code'],
+  empName: ['emp name','employee name','vm name','staff name','name','user_name'],
+  branch: ['outlet branch','branch','store_channel_name','location'],
+  category: ['outlet category','category','store category','store_category_name'],
+  classification: ['outlet classification','classification','store classification (vm)','store_classification_name'],
+  city: ['outlet city','city','city_name','store city'],
   qcDate: ['qc date','qc_date','audit date','qc audit date'],
-  visitDate: ['visit date','plan date','visit_date'],
-  aom: ['aom','aom name','area manager','sales manager'],
+  visitDate: ['visit date','plan date','visit_date','date'],
+  aom: ['aom','aom name','area manager','sales manager','rh_name','regional head'],
   mistakes: ['mistakes reported'],
   trainerRemarks: ['trainer remarks','other observations','observations'],
   qcCount: ['qc approved count','approved count'],
@@ -1634,6 +1640,70 @@ function loadFromRows(rows, fileName, isLive){
   }
 }
 
+
+function isExcelBuffer(buf) {
+  if (!buf || buf.byteLength < 500) return false;
+  const arr = new Uint8Array(buf.slice(0, 16));
+  if (arr[0] === 0x50 && arr[1] === 0x4B && arr[2] === 0x03 && arr[3] === 0x04) return true;
+  if (arr[0] === 0xD0 && arr[1] === 0xCF && arr[2] === 0x11 && arr[3] === 0xE0) return true;
+  return false;
+}
+
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const qcSheetName = wb.SheetNames.find(n => n.trim().toLowerCase().includes('qc tracker')) ||
+                          wb.SheetNames.find(n => n.toLowerCase().includes('qc')) ||
+                          wb.SheetNames.find(n => n.toLowerCase().includes('audit')) ||
+                          wb.SheetNames[0];
+      const targetSheet = wb.Sheets[qcSheetName];
+      const rows = XLSX.utils.sheet_to_json(targetSheet, { header: 1, defval: null, raw: true });
+
+      loadFromRows(rows, `${file.name} (${qcSheetName})`, true);
+
+      try {
+        sessionStorage.setItem('godrej_qc_cache', JSON.stringify({
+          name: `${file.name} (${qcSheetName})`,
+          rows: rows,
+          time: new Date().toISOString()
+        }));
+      } catch(err) { console.warn('Storage quota warning:', err); }
+
+      const statusBadge = document.getElementById('liveStatusBadge');
+      const statusText = document.getElementById('liveStatusText');
+      if (statusBadge && statusText) {
+        statusBadge.className = 'live-status-pill';
+        statusText.textContent = 'File Loaded';
+      }
+      const syncMeta = document.getElementById('lastUpdatedMeta');
+      if (syncMeta) syncMeta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch(err) {
+      alert('Error parsing uploaded file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function checkSavedCache() {
+  try {
+    const cached = sessionStorage.getItem('godrej_qc_cache');
+    if (cached) {
+      const obj = JSON.parse(cached);
+      if (obj && obj.rows && obj.rows.length > 1) {
+        loadFromRows(obj.rows, obj.name || 'Uploaded File (Cached)', true);
+        const syncMeta = document.getElementById('lastUpdatedMeta');
+        if (syncMeta && obj.time) syncMeta.textContent = new Date(obj.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
 /* ---------------------- EVENT LISTENERS ---------------------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('btnResetFilters').onclick = () => UI.resetAllFilters();
@@ -1652,7 +1722,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
   };
 
   // 1. INSTANT ZERO-LATENCY RENDER
-  loadSampleFallback();
+    const fileIn = document.getElementById('fileUploadInput');
+  if (fileIn) fileIn.onchange = (e) => { if (e.target.files[0]) handleFileUpload(e.target.files[0]); };
+
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  });
+
+  // 1. Check session cache or fallback sample
+  if (!checkSavedCache()) {
+    loadSampleFallback();
+  }
 
   // 2. Parallel Background sync
   syncFromSharePoint();
