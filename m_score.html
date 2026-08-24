@@ -1453,11 +1453,8 @@ const ChartModule = {
       map[cat].dispCount += r.displayCount || 0;
     }
 
-    const cats = Object.keys(map).sort((a, b) => {
-      const sa = map[a].count > 0 ? (map[a].sumScore / map[a].count) : 0;
-      const sb = map[b].count > 0 ? (map[b].sumScore / map[b].count) : 0;
-      return sb - sa;
-    });
+    // Sorted alphabetically by Product Category name
+    const cats = Object.keys(map).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
     const scores = cats.map(c => map[c].count > 0 ? (map[c].sumScore / map[c].count) * 100 : 0);
 
@@ -1692,10 +1689,11 @@ const ChartModule = {
           datalabels: {
             display: true,
             anchor: 'end',
-            align: 'top',
-            offset: 2,
-            color: tc.labelColor,
-            font: { family: 'var(--font-mono)', size: 9.5, weight: 'bold' },
+            align: 'start',
+            offset: 6,
+            rotation: -90, // 90-degree vertical orientation inside column
+            color: '#ffffff',
+            font: { family: 'var(--font-mono)', size: 10, weight: 'bold' },
             formatter: (v) => v > 0 ? Math.round(v) + '%' : ''
           },
           tooltip: {
