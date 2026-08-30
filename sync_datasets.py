@@ -20,7 +20,8 @@ import sys
 SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
     "training": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBRmCEH6nI8TLFuK-RVqPu0ATXbidF7rGfITZvpZH7PyAA?download=1",
-    "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQAaW2sHEFKnRrqPtppHxBH2ARgiE7222JHi46SCAbbXkQ8?download=1"
+    "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQAaW2sHEFKnRrqPtppHxBH2ARgiE7222JHi46SCAbbXkQ8?download=1",
+    "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
 }
 
 def get_opener():
@@ -106,10 +107,28 @@ def sync_m_score(opener):
                 rows.append(r_vals)
             embed_sample_data("m_score.html", rows)
 
+def sync_program_performance(opener):
+    print("\n--- Syncing program_performance.html (Program Performance) ---")
+    req = urllib.request.Request(SHAREPOINT_URLS["program_performance"], headers={"User-Agent": "Mozilla/5.0"})
+    data = opener.open(req, timeout=45).read()
+    with open_workbook(io.BytesIO(data)) as wb:
+        sheet_name = "Program Performance" if "Program Performance" in wb.sheets else wb.sheets[0]
+        with wb.get_sheet(sheet_name) as s:
+            rows = []
+            for i, row in enumerate(s.rows()):
+                r_vals = [c.v for c in row]
+                # convert Excel serial dates
+                if i == 0 and len(r_vals) > 5 and isinstance(r_vals[5], (int, float)) and r_vals[5] > 20000:
+                    r_vals[5] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[5]))).strftime("%Y-%m-%d")
+                if i >= 2 and len(r_vals) > 0 and isinstance(r_vals[0], (int, float)) and r_vals[0] > 20000:
+                    r_vals[0] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[0]))).strftime("%Y-%m-%d")
+                rows.append(r_vals)
+            embed_sample_data("program_performance.html", rows)
+
 def auto_push_to_github():
     print("\n--- Pushing updates to GitHub ---")
     try:
-        subprocess.run(["git", "add", "index.html", "training.html", "m_score.html"], check=True)
+        subprocess.run(["git", "add", "index.html", "training.html", "m_score.html", "program_performance.html"], check=True)
         # Check if there are changes to commit
         res = subprocess.run(["git", "diff", "--staged", "--quiet"])
         if res.returncode != 0:
@@ -128,6 +147,7 @@ def main():
     sync_index(opener)
     sync_training(opener)
     sync_m_score(opener)
+    sync_program_performance(opener)
     print("\nAll datasets synchronized successfully!")
     auto_push_to_github()
 

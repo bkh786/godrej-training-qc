@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Godrej Visual Merchandising — Program Performance Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- SheetJS & Chart.js -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    /* Dedicated Program Performance Dashboard Enhancements */
+    .kpi-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--surface-border);
+    }
+    .kpi-section-title h3 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kpi-badge {
+      font-size: 10.5px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kpi-badge-overall { background: rgba(13, 148, 136, 0.12); color: var(--accent-teal); border: 1px solid rgba(13, 148, 136, 0.3); }
+    .kpi-badge-detailed { background: rgba(99, 102, 241, 0.12); color: var(--accent-indigo); border: 1px solid rgba(99, 102, 241, 0.3); }
+    .kpi-badge-manpower { background: rgba(245, 158, 11, 0.12); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Donut KPI Card */
+    .kpi-card-prog {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card-prog:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--godrej-red-soft);
+    }
+    .kpi-donut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .kpi-text-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .kpi-meta-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin-bottom: 4px;
+      white-space: normal;
+      line-height: 1.2;
+      min-height: 26px;
+    }
+    .kpi-meta-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    
+    /* SVG Donut Ring: Bold & Wide */
+    .kpi-donut-svg-wrap {
+      width: 82px;
+      height: 82px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .kpi-donut-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .donut-track {
+      fill: none;
+      stroke: var(--surface-border);
+      stroke-width: 13;
+    }
+    body.dark-theme .donut-track {
+      stroke: rgba(255, 255, 255, 0.08);
+    }
+    .donut-fill {
+      fill: none;
+      stroke-width: 13;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .donut-text-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      font-family: var(--font-body);
+      pointer-events: none;
+    }
+
+    /* Second Line styling */
+    .kpi-second-line {
+      border-top: 1px dashed var(--surface-border);
+      padding-top: 10px;
+      margin-top: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      line-height: 1.35;
+    }
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .stat-pill b {
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+    .stat-pill.highlight b {
+      color: var(--godrej-red);
+    }
+    .stat-pill.teal b {
+      color: var(--accent-teal);
+    }
+
+    /* Stacked Chart Card */
+    .chart-container-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chart-head-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .chart-head-wrap h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .chart-head-wrap .chart-hint {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-family: var(--font-mono);
+    }
+    .chart-interactive-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--godrej-red);
+      background: var(--godrej-red-soft);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* Performance Tables Section */
+    .perf-tables-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 960px) {
+      .perf-tables-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .perf-table-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .perf-table-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+    .perf-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .perf-mini-table th {
+      text-align: left;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-faint);
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+    .perf-mini-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid var(--surface-border-subtle);
+      color: var(--ink);
+    }
+    .perf-mini-table tr:last-child td {
+      border-bottom: none;
+    }
+    .perf-mini-table tr:hover td {
+      background: var(--surface-hover);
+    }
+    .rank-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+    }
+    .rank-gold { background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }
+    .rank-silver { background: #f1f5f9; color: #475569; border: 1px solid #94a3b8; }
+    .rank-bronze { background: #ffedd5; color: #9a3412; border: 1px solid #f97316; }
+    .rank-top { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid #10b981; }
+    .rank-bottom { background: rgba(228, 0, 43, 0.12); color: var(--godrej-red); border: 1px solid rgba(228, 0, 43, 0.35); }
+    
+    /* Progress bar in tables */
+    .mini-progress-track {
+      width: 60px;
+      height: 6px;
+      background: var(--surface-border);
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+    .mini-progress-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--accent-teal);
+    }
+
+    /* Search and Pagination */
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+    }
+    .search-input-wrap input {
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--surface-border);
+      background: var(--surface-solid);
+      color: var(--ink);
+      font-size: 12.5px;
+      outline: none;
+    }
+    .search-input-wrap input:focus {
+      border-color: var(--godrej-red);
+    }
+    .search-icon-svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      pointer-events: none;
+    }
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+    .page-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+    .page-btn {
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--surface-border);
+      background: var(--surface-solid);
+      color: var(--ink);
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: var(--surface-hover);
+      border-color: var(--godrej-red);
+      color: var(--godrej-red);
+    }
+    .page-btn.active {
+      background: var(--godrej-red);
+      border-color: var(--godrej-red);
+      color: #fff;
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STICKY HEADER WRAPPER -->
+  <div class="sticky-header-wrapper">
+    
+    <!-- 1. BROWSER TABS BAR (TOP) -->
+    <nav class="nav-tabs-bar">
+      <a href="index.html" class="nav-tab-item" id="tabQC">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span>QC Performance Dashboard</span>
+      </a>
+      <a href="training.html" class="nav-tab-item" id="tabTraining">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        <span>Training Performance Dashboard</span>
+      </a>
+      <a href="m_score.html" class="nav-tab-item" id="tabMScore">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>Merchandising Score</span>
+      </a>
+      <a href="program_performance.html" class="nav-tab-item active" id="tabProgPerf">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>Program Performance</span>
+      </a>
+    </nav>
+
+    <!-- 2. MAIN GODREJ ENTERPRISES BRAND HEADER -->
+    <header class="main-header">
+      <!-- Left: Godrej Brand Logo -->
+      <div class="brand-section">
+        <svg class="brand-logo-svg" viewBox="13.07 7.14 2537.01 1216.27" fill="none" xmlns="http://www.w3.org/2000/svg" title="Godrej"><path d="M 1058 7.650 C 1056.075 7.831, 1048.875 8.457, 1042 9.042 C 991.802 13.310, 922.211 29.241, 858.517 51.045 C 725.891 96.446, 596.891 170.706, 477.500 270.381 C 425 314.211, 373.814 365.443, 338.506 409.500 C 288.613 471.755, 257.805 530.347, 246.298 584.867 C 243.965 595.918, 243.624 599.880, 243.574 616.500 C 243.525 633.076, 243.808 636.648, 245.791 644.500 C 254.187 677.738, 278.797 700.730, 316.389 710.457 C 334.104 715.040, 347.803 716.287, 373.500 715.653 C 404.401 714.890, 423.936 712.012, 450.500 704.308 C 468.276 699.153, 482.769 693.146, 509.402 679.893 C 522.548 673.352, 534.361 668, 535.652 668 C 538.800 668, 538.697 670.339, 535.250 677.157 C 528.687 690.138, 512.506 709.107, 499.382 719.206 C 496.081 721.746, 480.807 731.444, 465.440 740.757 C 249.110 871.858, 145.747 945.630, 79.130 1016.473 C 43.340 1054.534, 20.498 1094.112, 14.543 1128.381 C 12.617 1139.465, 12.579 1158.349, 14.464 1167.246 C 18.046 1184.150, 29.167 1198.188, 45 1205.793 C 58.780 1212.412, 72.744 1215.229, 98 1216.484 C 167.692 1219.947, 254.841 1176.757, 355 1089.119 C 373.949 1072.539, 424.415 1022.280, 443.983 1000.500 C 507.655 929.634, 562.528 857.831, 627.781 760 C 642.271 738.275, 656.118 718.173, 658.553 715.329 C 664.318 708.594, 678.255 697.569, 701.083 681.686 C 711.212 674.638, 730.170 661.363, 743.211 652.186 C 784.756 622.949, 806.558 610, 814.237 610 C 820.446 610, 820.415 611.481, 813.681 637.081 C 807.032 662.360, 806.947 676.858, 813.371 690.500 C 821.687 708.163, 838.826 721.440, 860.500 727.010 C 866.734 728.613, 871.599 729.063, 882.538 729.053 C 913.139 729.023, 939.998 722.454, 970.500 707.542 C 1012.948 686.790, 1044.598 660.195, 1108.604 591.500 C 1157.748 538.755, 1176.954 522.468, 1196.932 516.596 C 1204.498 514.373, 1213.643 514.451, 1214.845 516.750 C 1215.475 517.954, 1214.538 523.647, 1211.843 535 C 1201.700 577.731, 1197.716 603.122, 1197.722 625 C 1197.740 689.984, 1235.159 724.900, 1305 725.104 C 1333.114 725.185, 1353.206 720.318, 1380.116 706.908 C 1439.398 677.365, 1497.835 609.398, 1542.082 518.531 C 1558.384 485.050, 1571.493 450.641, 1578.548 422.811 C 1581.966 409.325, 1585 391, 1585 383.835 C 1585 374.757, 1585.711 374, 1594.233 374 C 1598.172 374, 1611.094 374.925, 1622.948 376.055 C 1645.993 378.251, 1650.785 379.538, 1657.699 385.386 C 1665.993 392.401, 1668.850 406.696, 1665.096 422.393 C 1660.732 440.642, 1647.015 471.116, 1627.012 507 C 1602.746 550.530, 1576.957 591.892, 1518.672 680.761 C 1511.725 691.354, 1505.356 701.344, 1504.520 702.961 C 1501.162 709.455, 1503.922 716.051, 1510.795 717.960 C 1513.151 718.614, 1536.903 718.987, 1576 718.985 L 1637.500 718.980 1642.556 716.626 C 1645.360 715.320, 1649.277 712.326, 1651.354 709.900 C 1653.412 707.495, 1677.648 670.871, 1705.212 628.514 C 1764.295 537.721, 1759.746 544.428, 1763.500 542.573 C 1767.443 540.624, 1768.242 541.519, 1771.026 551 C 1776.929 571.098, 1787.030 581.021, 1806.715 586.055 C 1824.506 590.605, 1842.614 589.535, 1864.250 582.655 L 1875 579.236 1875 581.629 C 1875 582.946, 1873.465 589.086, 1871.589 595.275 C 1866.508 612.040, 1864.893 621.047, 1864.290 636 C 1862.482 680.867, 1876.062 713.164, 1902.062 725.826 C 1916.475 732.846, 1931.087 734.480, 1953.155 731.542 C 2011.937 723.717, 2081.133 684.587, 2167.837 610.140 C 2176.254 602.913, 2183.323 597, 2183.545 597 C 2184.320 597, 2181.871 602.570, 2175.915 614.357 C 2157.151 651.491, 2115.980 711.033, 2058.615 784 C 2028.018 822.919, 1983.480 876.779, 1911.010 962.500 C 1826.177 1062.844, 1808.886 1084.303, 1791.597 1110.699 C 1775.281 1135.611, 1770.285 1150.489, 1772.128 1168.676 C 1774.617 1193.228, 1791.168 1213.189, 1816 1221.583 C 1823.173 1224.007, 1837.101 1224.020, 1846 1221.611 C 1872.081 1214.548, 1907.159 1188.154, 1942.623 1148.906 C 2019.126 1064.241, 2096.083 943.362, 2261.520 648 C 2311.231 559.250, 2332.283 525.932, 2370.834 475 C 2390.433 449.107, 2399.146 438.889, 2419.015 418.500 C 2454.794 381.785, 2471.214 360.419, 2477.038 343 C 2484.080 321.940, 2470.962 299.893, 2449.918 297.420 C 2431.102 295.209, 2388.904 318.242, 2347.500 353.324 C 2321.673 375.208, 2306.148 390.983, 2248.430 453.989 C 2184.799 523.451, 2148.174 556.495, 2110.357 578.564 C 2087.124 592.122, 2067.599 598.288, 2047.480 598.421 C 2035.822 598.498, 2035.258 598.400, 2028.737 595.191 C 2020.825 591.296, 2016.834 586.298, 2014.509 577.373 C 2011.416 565.498, 2013.028 558.899, 2020.961 550.951 C 2026.818 545.082, 2029.541 543.727, 2050 536.497 C 2090.144 522.311, 2140.023 489.419, 2178.881 451.506 C 2210.294 420.858, 2229.275 393.834, 2238.239 367 C 2241.163 358.247, 2241.416 356.439, 2241.456 344 C 2241.493 332.555, 2241.173 329.637, 2239.354 324.832 C 2234.855 312.945, 2226.751 304.774, 2216.149 301.435 C 2208.820 299.127, 2187.562 299.883, 2173 302.970 C 2125.751 312.984, 2074.424 341.697, 2024.500 386.043 C 2010.059 398.871, 1982.136 427.310, 1968.577 443 C 1946.958 468.016, 1936.341 477.259, 1927.594 478.678 C 1924.605 479.163, 1923.444 478.830, 1921.362 476.887 C 1909.299 465.637, 1904.564 425.326, 1911.389 392 C 1914.331 377.639, 1919.162 364.685, 1928.647 345.723 C 1937.165 328.697, 1939.329 321.767, 1938.429 314.395 C 1937.177 304.141, 1931.531 298.082, 1921.233 295.945 C 1901.632 291.876, 1881.550 303.870, 1833.960 348.067 C 1810.481 369.872, 1807.142 372.574, 1805.167 371.364 C 1804.250 370.803, 1799 361.341, 1793.500 350.338 C 1782.597 328.525, 1777.652 321.143, 1769.772 314.914 C 1759.922 307.128, 1749.474 303.223, 1730.762 300.334 C 1718.499 298.440, 1686.380 298.079, 1614.500 299.026 C 1579.983 299.480, 1578.336 299.418, 1574.515 297.500 C 1570.730 295.601, 1570.120 294.585, 1562.372 277.303 C 1520.389 183.651, 1463.705 114.103, 1396.749 74.093 C 1339.463 39.863, 1263.501 27.812, 1216.422 45.486 C 1189.994 55.408, 1171.821 77.055, 1166.577 104.860 C 1164.585 115.421, 1164.553 134.432, 1166.506 147.500 C 1176.094 211.670, 1223.215 265.736, 1302.579 303.628 C 1316.466 310.258, 1340.255 320.009, 1352 323.885 C 1355.575 325.065, 1359.082 326.400, 1359.793 326.851 C 1362.597 328.629, 1338.682 358.318, 1316.983 379.996 C 1290.151 406.803, 1264.805 424.445, 1242.352 431.945 C 1230.726 435.828, 1226.747 435.934, 1225.138 432.404 C 1224.146 430.227, 1224.430 428.092, 1226.899 419.154 C 1231.383 402.923, 1233.108 393.561, 1233.836 381.500 C 1236.914 330.501, 1218.239 299.578, 1179.493 291.519 C 1169.081 289.353, 1147.715 289.370, 1133.906 291.556 C 1071.007 301.511, 999.114 351.862, 865.286 479.688 C 837.332 506.388, 824.967 516.464, 808.785 525.729 C 799.633 530.969, 786.646 535.980, 785.414 534.747 C 784.668 534.002, 783.452 535.758, 811.903 496.500 C 870.857 415.153, 904.143 370.954, 921.479 351 C 941.749 327.670, 944.987 321.491, 941.598 312.617 C 939.484 307.083, 934.556 302.761, 927 299.815 C 909.125 292.846, 869.142 302.367, 837.298 321.176 C 822.615 329.849, 812.874 338.122, 790.001 361.345 C 725.229 427.107, 658.185 490.220, 613.528 527.469 C 569.044 564.574, 536.855 587.065, 507.500 601.550 C 488.582 610.885, 477.654 614.224, 465.500 614.383 C 457.531 614.487, 455.846 614.179, 450.796 611.699 C 440.096 606.445, 434.936 597.209, 434.235 582.058 C 433.700 570.510, 435.574 562.270, 443.204 542.625 C 449.289 526.958, 467.551 490.618, 478.444 472.500 C 548.042 356.743, 643.776 264.231, 757.843 202.506 C 797.715 180.931, 845.406 162.084, 884.163 152.588 C 930.626 141.203, 964.232 140.244, 1024.312 148.587 C 1034.783 150.041, 1044.622 150.918, 1046.502 150.566 C 1048.430 150.204, 1050.905 148.713, 1052.270 147.091 C 1053.585 145.529, 1070.037 116.982, 1088.830 83.655 C 1125.200 19.159, 1125.461 18.592, 1120.750 14.297 C 1117.785 11.595, 1113.578 10.331, 1101.500 8.515 C 1092.518 7.165, 1068.272 6.682, 1058 7.650 M 1302.909 118.896 C 1280.686 126.006, 1273.114 149.434, 1284.133 176.984 C 1295.073 204.333, 1328.600 234.784, 1374.703 259.245 C 1416.429 281.383, 1467.115 299, 1489.082 299 C 1495.286 299, 1495.912 297.754, 1493.535 290.142 C 1486.089 266.302, 1469.748 233.247, 1452.432 207 C 1423.769 163.555, 1389.560 134.257, 1353.974 122.678 C 1336.759 117.077, 1313.890 115.383, 1302.909 118.896 M 2505.471 162.336 C 2499.191 164.397, 2488.182 170.509, 2480.500 176.198 C 2470.508 183.597, 2451.590 203.027, 2444.149 213.533 C 2428.343 235.848, 2424.557 251.067, 2431.595 263.998 C 2439.480 278.485, 2463.197 292.188, 2477.779 290.683 C 2488.995 289.526, 2507.565 278.332, 2522.045 264 C 2540.486 245.748, 2550.017 225.487, 2550.086 204.390 C 2550.146 185.959, 2541.085 169.906, 2527.139 163.737 C 2521.457 161.224, 2510.932 160.543, 2505.471 162.336 M 1456.750 360.689 C 1455.609 360.987, 1455 362.121, 1455 363.945 C 1455 366.046, 1457.013 368.956, 1463.078 375.622 C 1472.652 386.144, 1476.530 393.359, 1475.517 398.762 C 1473.306 410.546, 1461.921 422.543, 1437.500 438.824 C 1428.281 444.970, 1421.446 450.547, 1414 457.997 C 1382.001 490.014, 1349.453 537.820, 1339.447 567.500 C 1337.702 572.676, 1336.582 578.500, 1336.273 584 C 1335.840 591.720, 1336.012 592.813, 1338.148 595.908 C 1342.151 601.708, 1345.094 603.242, 1353.219 603.764 C 1374.995 605.161, 1398.212 593.888, 1421.595 570.564 C 1441.804 550.406, 1459.006 525.166, 1476.142 490.525 C 1495.146 452.110, 1512 401.998, 1512 383.910 C 1512 372.596, 1508.656 370.430, 1481.177 363.947 C 1465.413 360.228, 1460.847 359.619, 1456.750 360.689 M 1137.892 387.300 C 1110.982 398.629, 1051.956 447.996, 1012.616 492.076 C 984.432 523.657, 966.965 549.770, 958.487 573 C 954.748 583.244, 953.896 598.752, 956.783 604 C 960.925 611.531, 972.255 614.685, 982.379 611.127 C 1010.572 601.218, 1072.914 542.811, 1088.922 511.309 C 1093.479 502.341, 1093.208 497.647, 1087.750 491.017 C 1080.470 482.174, 1079.293 480.235, 1078.609 475.958 C 1076.261 461.275, 1083.447 453.316, 1123.500 426.237 C 1141.518 414.055, 1149.118 407.466, 1153.042 400.624 C 1156.581 394.454, 1157.010 388.611, 1154.040 387.022 C 1149.797 384.751, 1143.699 384.856, 1137.892 387.300 M 2146.500 387.008 C 2131.400 390.369, 2090.898 423.826, 2069.032 451 C 2062.872 458.655, 2056 470.824, 2056 474.075 C 2056 483.453, 2078.375 472.322, 2104.079 450.157 C 2128.724 428.905, 2149.268 403.237, 2151.514 390.890 C 2152.265 386.756, 2151.231 385.955, 2146.500 387.008 M 350.261 904.477 C 318.046 920.603, 246.204 977.015, 202.808 1020.259 C 164.229 1058.702, 147.777 1084.523, 150.944 1101.656 C 152.183 1108.358, 153.979 1111.409, 158.197 1113.974 C 174.310 1123.772, 204.378 1107.771, 246.201 1067.140 C 288.572 1025.978, 332.654 968.738, 352.547 929.053 C 360.843 912.502, 364.309 900, 360.602 900 C 359.833 900, 355.179 902.015, 350.261 904.477" fill="currentColor" fill-rule="evenodd"/></svg>
+        <div class="brand-text">
+          <div class="brand-title">Program Performance Dashboard</div>
+          <div class="brand-subtitle">Godrej Visual Merchandising · Realtime Performance &amp; Coverage Intelligence</div>
+        </div>
+      </div>
+
+      <!-- Center: Channelplay Logo -->
+      <div class="center-pill-badge" title="Channelplay">
+        <img src="logo.svg" alt="Channelplay" class="channelplay-logo-img" />
+      </div>
+
+      <!-- Right: Controls -->
+      <div class="header-controls">
+        <a class="hdr-btn hdr-btn-download" id="btnDownloadReport" href="https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1" target="_blank" download="Program_Performance_Report.xlsb" title="Download Report from SharePoint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Download Report</span>
+        </a>
+
+        <!-- Live connected button (Clicking triggers manual sync) -->
+        <div class="live-status-pill" id="liveStatusBadge" title="Click to re-sync data directly from SharePoint">
+          <span class="live-dot"></span>
+          <span id="liveStatusText">Live data connected</span>
+        </div>
+
+        <button class="hdr-btn hdr-btn-reset" id="btnResetFilters" title="Reset all active filters">
+          <span>Reset filters</span>
+        </button>
+
+        <button class="hdr-btn hdr-btn-action" id="btnThemeToggle" title="Toggle Dark/Light Mode">
+          <span id="themeIcon">☀️</span>
+        </button>
+      </div>
+    </header>
+
+  </div> <!-- /sticky-header-wrapper -->
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="app-container">
+
+    <!-- DATA STATUS META BAR -->
+    <div class="data-status-meta">
+      <div class="sync-info">
+        <span>📁 Sheet: <b>Program Performance</b></span>
+        <span>🌐 Source: <b id="dataSourceLabel">SharePoint Live Sync</b></span>
+        <span>🕒 Data As Of: <b id="dataUpdatedTillMeta">2026-08-27</b></span>
+        <span>⚡ Sync Status: <b id="lastUpdatedMeta">Active</b></span>
+        <span>👥 Active Field Workforce: <b id="totalVMCount">76</b></span>
+        <span>📍 Branches Covered: <b id="totalBranchCount">28</b></span>
+      </div>
+      <div class="sync-actions">
+        <span style="font-size:12px; color:var(--ink-faint);">Real-time Auto Refresh: <b style="color:var(--accent-teal);">Enabled (60s)</b></span>
+      </div>
+    </div>
+
+    <div class="err-banner" id="errBanner"></div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div id="dashboard">
+
+      <!-- FILTERS BAR -->
+      <div class="filters-container" id="filterContainer">
+        <div class="filters-grid">
+          <div class="filter-field">
+            <label for="filterBranch">Branch</label>
+            <select id="filterBranch">
+              <option value="">All Branches</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="filterState">State</label>
+            <select id="filterState">
+              <option value="">All States</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="filterAOM">AOM Name</label>
+            <select id="filterAOM">
+              <option value="">All AOMs</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="filterVM">VM Name</label>
+            <select id="filterVM">
+              <option value="">All Field VMs</option>
+            </select>
+          </div>
+        </div>
+        <div class="active-filters-chips" id="activeChips"></div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- GROUP 1: OVERALL KPI -->
+      <!-- ============================================================ -->
+      <div class="section">
+        <div class="kpi-section-title">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Group 1 — Overall KPI
+          </h3>
+          <span class="kpi-badge kpi-badge-overall">Executive Scope</span>
+        </div>
+        <div class="grid-5" id="group1Grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
+          
+          <!-- Tile 1: Overall Coverage % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Overall Coverage %</div>
+                <div class="kpi-meta-num" id="kpi1_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_cov" cx="50" cy="50" r="38" stroke="var(--accent-teal)" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_cov_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpi1_sub">
+              <!-- Target, Achievement, Pending, Projection -->
+            </div>
+          </div>
+
+          <!-- Tile 2: Total Visit Achievement (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Total Visit Achievement</div>
+                <div class="kpi-meta-num" id="kpi2_val">--</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_visit" cx="50" cy="50" r="38" stroke="var(--accent-blue)" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_visit_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpi2_sub">
+              <!-- Target, Achievement, Pending, Projection -->
+            </div>
+          </div>
+
+          <!-- Tile 3: Productive Visit % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Productive Visit %</div>
+                <div class="kpi-meta-num" id="kpi3_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_prod" cx="50" cy="50" r="38" stroke="var(--accent-green)" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_prod_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpi3_sub">
+              <!-- Total visits, productive visits, unproductive visits, unproductive projection up to two decimal places -->
+            </div>
+          </div>
+
+          <!-- Tile 4: Display Reported -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Display Reported</div>
+                <div class="kpi-meta-num" id="kpi4_val">--</div>
+              </div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(99, 102, 241, 0.12); color:var(--accent-indigo);">
+                📺
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpi4_sub">
+              <!-- Average display per productive visit -->
+            </div>
+          </div>
+
+          <!-- Tile 5: POSM Deployed -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">POSM Deployed</div>
+                <div class="kpi-meta-num" id="kpi5_val">--</div>
+              </div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(228, 0, 43, 0.12); color:var(--godrej-red);">
+                🏷️
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpi5_sub">
+              <!-- POSM deployment per productive visit -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- GROUP 2: DETAILED KPI -->
+      <!-- ============================================================ -->
+      <div class="section">
+        <div class="kpi-section-title">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Group 2 — Detailed KPI (Store Categories)
+          </h3>
+          <span class="kpi-badge kpi-badge-detailed">Channel Segments</span>
+        </div>
+        <div class="grid-4" id="group2Grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+          
+          <!-- EBO Coverage % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">EBO Coverage %</div>
+                <div class="kpi-meta-num" id="kpiEBO_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_ebo" cx="50" cy="50" r="38" stroke="#8b5cf6" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_ebo_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiEBO_sub"></div>
+          </div>
+
+          <!-- Chain Stores Coverage % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Chain Stores Coverage %</div>
+                <div class="kpi-meta-num" id="kpiChain_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_chain" cx="50" cy="50" r="38" stroke="#0ea5e9" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_chain_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiChain_sub"></div>
+          </div>
+
+          <!-- Cool Studio Coverage % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Cool Studio Coverage %</div>
+                <div class="kpi-meta-num" id="kpiCool_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_cool" cx="50" cy="50" r="38" stroke="#10b981" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_cool_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiCool_sub"></div>
+          </div>
+
+          <!-- Others Coverage % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Others Coverage %</div>
+                <div class="kpi-meta-num" id="kpiOther_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_other" cx="50" cy="50" r="38" stroke="#f59e0b" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_other_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiOther_sub"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- GROUP 3: MANPOWER KPI -->
+      <!-- ============================================================ -->
+      <div class="section">
+        <div class="kpi-section-title">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Group 3 — Manpower KPI
+          </h3>
+          <span class="kpi-badge kpi-badge-manpower">Field Workforce Intelligence</span>
+        </div>
+        <div class="grid-4" id="group3Grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+          
+          <!-- Tile 1: Man-Days Achievement % (Donut) -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Man-Days Achievement %</div>
+                <div class="kpi-meta-num" id="kpiManDays_val">--%</div>
+              </div>
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_mandays" cx="50" cy="50" r="38" stroke="#e4002b" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_mandays_text">0%</div>
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiManDays_sub">
+              <!-- Target and achievement numbers (Target calculated till max day of month with 1 weekly off) -->
+            </div>
+          </div>
+
+          <!-- Tile 2: Average Productivity -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Average Productivity</div>
+                <div class="kpi-meta-num" id="kpiProd_val">--</div>
+              </div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(13, 148, 136, 0.12); color:var(--accent-teal);">
+                ⚡
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiProd_sub">
+              <!-- Target 5.0 -->
+            </div>
+          </div>
+
+          <!-- Tile 3: Market Working Hrs. -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Market Working Hrs.</div>
+                <div class="kpi-meta-num" id="kpiMktHrs_val">--</div>
+              </div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(245, 158, 11, 0.12); color:var(--amber);">
+                ⏱️
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiMktHrs_sub">
+              <!-- Target 6.0 hrs -->
+            </div>
+          </div>
+
+          <!-- Tile 4: Working Hrs. -->
+          <div class="kpi-card-prog">
+            <div class="kpi-donut-row">
+              <div class="kpi-text-meta">
+                <div class="kpi-meta-label">Working Hrs.</div>
+                <div class="kpi-meta-num" id="kpiTotHrs_val">--</div>
+              </div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(2, 132, 199, 0.12); color:var(--accent-blue);">
+                🏢
+              </div>
+            </div>
+            <div class="kpi-second-line" id="kpiTotHrs_sub">
+              <!-- Total cumulative working hours -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- STACKED COLUMN CHARTS (WITH CLICK INTERACTION) -->
+      <!-- ============================================================ -->
+      <div class="section">
+        <div class="section-head" style="margin-bottom:14px;">
+          <h2>Coverage Breakdown &amp; Performance Distribution</h2>
+          <span class="hint">Click any column bar to dynamically isolate and filter the entire dashboard view</span>
+        </div>
+
+        <div class="grid-2" style="display:grid; grid-template-columns: 1fr; gap:20px;">
+          <!-- 1. Branch-Wise Stacked Chart -->
+          <div class="chart-container-card">
+            <div class="chart-head-wrap">
+              <div>
+                <h3>Branch-Wise Coverage Distribution</h3>
+                <span class="chart-hint">EBO, Chain Store, Cool Studio &amp; Other Categories Coverage per Branch</span>
+              </div>
+              <span class="chart-interactive-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                Click Column to Filter
+              </span>
+            </div>
+            <div style="height:360px; position:relative;">
+              <canvas id="chartBranchCoverage"></canvas>
+            </div>
+          </div>
+
+          <!-- 2. AOM-Wise Stacked Chart -->
+          <div class="chart-container-card">
+            <div class="chart-head-wrap">
+              <div>
+                <h3>AOM-Wise Coverage Distribution</h3>
+                <span class="chart-hint">Regional Merchandising Operations Teams Coverage &amp; Store Mix</span>
+              </div>
+              <span class="chart-interactive-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                Click Column to Filter
+              </span>
+            </div>
+            <div style="height:320px; position:relative;">
+              <canvas id="chartAOMCoverage"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- PERFORMANCE SECTION - TABLES -->
+      <!-- ============================================================ -->
+      <div class="section">
+        <div class="section-head" style="margin-bottom:14px;">
+          <h2>Workforce Performance Intelligence</h2>
+          <span class="hint">Comparative rankings, leadership team metrics, and complete audit roster</span>
+        </div>
+
+        <!-- Subsection 1: Top 5 & Bottom 5 Side by Side -->
+        <div class="perf-tables-grid">
+          <!-- Top 5 Performers -->
+          <div class="perf-table-card">
+            <div class="perf-table-title">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">🏆</span>
+                <span>Top 5 Performers (Final Rank)</span>
+              </span>
+              <span class="kpi-badge" style="background:rgba(16, 185, 129, 0.15); color:var(--accent-green);">Highest Execution</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="perf-mini-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>VM Name</th>
+                    <th>Branch</th>
+                    <th>AOM</th>
+                    <th>Coverage %</th>
+                    <th>Visit %</th>
+                    <th>Final Ach %</th>
+                  </tr>
+                </thead>
+                <tbody id="topPerformersBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bottom 5 Performers -->
+          <div class="perf-table-card">
+            <div class="perf-table-title">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">⚠️</span>
+                <span>Bottom 5 Performers (Final Rank)</span>
+              </span>
+              <span class="kpi-badge" style="background:rgba(228, 0, 43, 0.15); color:var(--godrej-red);">Focus Attention</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="perf-mini-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>VM Name</th>
+                    <th>Branch</th>
+                    <th>AOM</th>
+                    <th>Coverage %</th>
+                    <th>Visit %</th>
+                    <th>Final Ach %</th>
+                  </tr>
+                </thead>
+                <tbody id="bottomPerformersBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subsection 2: AOMs Performance Table -->
+        <div class="perf-table-card" style="margin-bottom:24px;">
+          <div class="perf-table-title">
+            <span style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">👔</span>
+              <span>AOMs Performance Based on VM Achievement &amp; Rank</span>
+            </span>
+            <span class="kpi-badge" style="background:rgba(99, 102, 241, 0.12); color:var(--accent-indigo);">Operational Hierarchy</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="perf-mini-table" style="font-size:12.5px;">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>AOM Name</th>
+                  <th>Active VMs</th>
+                  <th>Avg Final Achievement %</th>
+                  <th>Avg Coverage %</th>
+                  <th>Avg Visit %</th>
+                  <th>Avg VM Rank</th>
+                  <th>Star Performer (Top VM)</th>
+                </tr>
+              </thead>
+              <tbody id="aomPerfBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subsection 3: Complete Rank Report (Bottom Master Table) -->
+        <div class="perf-table-card">
+          <div class="perf-table-title">
+            <span style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">📋</span>
+              <span>Complete Rank Report — Field Workforce Master Roster</span>
+            </span>
+            <button class="page-btn" id="btnExportCSV" style="display:inline-flex; align-items:center; gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>Export CSV</span>
+            </button>
+          </div>
+
+          <!-- Search & Controls -->
+          <div class="table-toolbar">
+            <div class="search-input-wrap">
+              <svg class="search-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" id="tableSearchInput" placeholder="Search VM, Code, Branch, Town, AOM...">
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-faint);">
+              <span>Rows per page:</span>
+              <select id="pageSizeSelect" style="padding:4px 8px; border-radius:4px; border:1px solid var(--surface-border); background:var(--surface-solid); color:var(--ink);">
+                <option value="15" selected>15</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="perf-mini-table" id="masterTable">
+              <thead>
+                <tr>
+                  <th style="cursor:pointer;" onclick="App.sortTable('rank')">Rank ⬍</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('vm')">VM Name ⬍</th>
+                  <th>User Code</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('aom')">AOM ⬍</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('branch')">Branch ⬍</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('state')">State ⬍</th>
+                  <th>Base Town</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('coverage')">Coverage (Ach/Tgt) ⬍</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('visits')">Visits (Ach/Tgt) ⬍</th>
+                  <th>Prod. Visits %</th>
+                  <th>Display</th>
+                  <th>POSM</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('mandays')">Man-Days (Ach/Tgt) ⬍</th>
+                  <th>Market Hrs</th>
+                  <th style="cursor:pointer;" onclick="App.sortTable('finalAch')">Final Ach % ⬍</th>
+                </tr>
+              </thead>
+              <tbody id="masterTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination controls -->
+          <div class="pagination-bar">
+            <span id="pageInfoText">Showing 1 to 15 of 76 records</span>
+            <div class="page-btn-group" id="paginationControls"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div> <!-- /#dashboard -->
+
+  </div> <!-- /.app-container -->
+
+  <!-- EMBEDDED SAMPLE DATA SNAPSHOT (Zero-Latency Load) -->
+  <script id="sample-data" type="application/json">[[null,null,null,null,"Data updated till","2026-08-27",null,null,null,null,6071.0,4991.0,0.8221050897710427,0.913450099745603,164.0,128.0,0.7804878048780488,2964.0,2223.0,0.75,2.0,2.0,1.0,2941.0,2638.0,0.8969738184291057,7203.0,5667.0,0.7867555185339442,0.8741727983710491,5648.0,0.9966472560437621,20.0,0.0035292041644609143,4.297530320406399,0.8595060640812798,136328.0,81059.0,0.034108418952296826,0.17813836910468248,0.8550641717024758,1465.0,0.8761961722488036,null,null],["START WORK","BRMM Name","Region","Branch","Branch","AOM","User Code","User Name","Base Town","VM Status","Coverage Target","Coverage Achievement","Coverage %","Projected Coverage","Targeted EBO","EBO Coverage","EBO Coverage %","Targeted Chain Store","Chain Store Coverage","Chain Store Coverage %","Targeted Cool Studio","Cool Studio Coverage","Cool Studio Coverage %","Targeted Other Categories","Other Categories Coverage","Other Category Coverage %","Visits Target","Visit Achievement","Visit Achievement %","Visits Projection","Productive Visits","Productive Visit %","Unproductive visits","Unpro Visit %","Avg. Productivity (Target 5.0)","Productivity Achievement %","POSM Deployment","Product Display","Avg. time spent/outlet","Market Working Hrs (Target 6 hrs.)","Market Working Hrs. Adherence%","Man-days achieved","Man-day achievement %","Final Achievement","Rank"],["2026-08-01","0x17",285429.0,"0x17","Ahmedabad","Akil",1016748.0,"Chavda Vikash","Surat","Active",87.0,70.0,0.8045977011494253,0.8939974457215836,3.0,2.0,0.6666666666666666,42.0,30.0,0.7142857142857143,0.0,0.0,1.0,42.0,38.0,0.9047619047619048,111.0,78.0,0.7027027027027027,0.7807807807807807,78.0,1.0,0.0,0.0,4.443037974683544,0.8886075949367088,1278.0,938.0,0.01808588255977496,0.157244761208577,0.7547748538011696,19.0,0.8636363636363636,0.8008527710434865,57.0],["2026-08-14","0x17",280896.0,"0x17","Ahmedabad","Akil",1052690.0,"Rathod Manishbhai Narandrasinh","Rajkot","Active",54.0,58.0,1.0,1.0,3.0,3.0,1.0,12.0,10.0,0.8333333333333334,0.0,0.0,1.0,39.0,45.0,1.1538461538461537,86.0,58.0,0.6744186046511628,0.7493540051679586,58.0,1.0,0.0,0.0,3.6551724137931036,0.7310344827586207,788.0,660.0,0.02869711845466157,0.12538377192982453,0.6018421052631577,19.0,0.8636363636363636,0.8458140858634886,50.0],["2026-08-03","0x17",282314.0,"0x17","Ahmedabad","Akil",1025231.0,"Chirag Darji","Ahmedabad","Active",129.0,95.0,0.7364341085271318,0.8182601205857019,3.0,2.0,0.6666666666666666,48.0,24.0,0.5,0.0,0.0,1.0,78.0,69.0,0.8846153846153846,130.0,95.0,0.7307692307692307,0.811965811965812,95.0,1.0,1.0,0.010526315789473684,4.583333333333333,0.9166666666666666,2619.0,832.0,0.021456042631172845,0.23132891414141407,1.1103787878787874,22.0,1.0,0.8050536672629696,54.0],["2026-08-11","0x17",287359.0,"0x17","Ahmedabad","Akil",1017617.0,"Rahul Verma","Ahmedabad","Active",93.0,90.0,0.967741935483871,1.0,1.0,1.0,1.0,41.0,21.0,0.5121951219512195,0.0,0.0,1.0,51.0,68.0,1.3333333333333333,93.0,90.0,0.967741935483871,1.0,89.0,0.9888888888888889,0.0,0.0,4.865168539325842,0.9730337078651685,1742.0,602.0,0.022761131918435297,0.228322337962963,1.0959472222222224,20.0,0.9090909090909091,0.9058661027481474,27.0],["2026-08-01","0x17",291170.0,"0x17","Aurangabad","Akil",1021648.0,"Hafizur Momin","Aurangabad","Active",72.0,69.0,0.9583333333333334,1.0,9.0,7.0,0.7777777777777778,13.0,12.0,0.9230769230769231,0.0,0.0,1.0,50.0,50.0,1.0,98.0,81.0,0.826530612244898,0.9183673469387756,77.0,0.9506172839506173,4.0,0.04938271604938271,4.432098765432099,0.8864197530864197,2166.0,1084.0,0.021253000685871055,0.14295469576719577,0.6861825396825397,21.0,0.9545454545454546,0.8838287445358873,42.0],["2026-08-03","0x17",310444.0,"0x17","Bengaluru","Rameez",1035361.0,"Deepak N","Bengaluru","InActive",78.0,37.0,0.47435897435897434,0.527065527065527,2.0,0.0,0.0,54.0,30.0,0.5555555555555556,0.0,0.0,1.0,22.0,7.0,0.3181818181818182,117.0,41.0,0.3504273504273504,0.389363722697056,18.0,0.43902439024390244,0.0,0.0,4.555555555555555,0.9111111111111111,242.0,364.0,0.023716563786008234,0.1349074074074074,0.6475555555555554,4.0,0.18181818181818182,0.4331024390243903,72.0],["2026-08-11","0x17",305519.0,"0x17","Bengaluru","Rameez",1035188.0,"Ganesh ","Bengaluru","Active",69.0,68.0,0.9855072463768116,1.0,1.0,1.0,1.0,57.0,52.0,0.9122807017543859,0.0,0.0,1.0,11.0,15.0,1.3636363636363635,101.0,76.0,0.7524752475247525,0.8360836083608361,84.0,1.105263157894737,0.0,0.0,4.142857142857143,0.8285714285714286,1449.0,1528.0,0.03429026124338626,0.12907617845117847,0.6195656565656567,22.0,1.0,0.8930778255432604,35.0],["2026-08-01","0x17",268135.0,"0x17","Bengaluru","Rameez",1017934.0,"Yogesh Kalinge","Mysore","Active",76.0,71.0,0.9342105263157895,1.0,3.0,3.0,1.0,20.0,16.0,0.8,0.0,0.0,1.0,53.0,52.0,0.9811320754716981,100.0,80.0,0.8,0.888888888888889,79.0,0.9875,1.0,0.0125,4.45,0.89,1680.0,1446.0,0.030775752314814813,0.1732930996472663,0.8318068783068782,21.0,0.9545454545454546,0.897919493463982,31.0],["2026-08-01","0x17",301459.0,"0x17","Bengaluru","Rameez",1041037.0,"Ramesha ","Bengaluru","Active",73.0,69.0,0.9452054794520548,1.0,2.0,2.0,1.0,53.0,50.0,0.9433962264150944,0.0,0.0,1.0,18.0,17.0,0.9444444444444444,112.0,83.0,0.7410714285714286,0.8234126984126985,86.0,1.036144578313253,0.0,0.0,4.744186046511628,0.9488372093023256,1239.0,1782.0,0.02844759366925064,0.18876215277777778,0.9060583333333333,20.0,0.9090909090909091,0.9180337858102853,22.0],["2026-08-03","0x17",311699.0,"0x17","Bengaluru","Rameez",1036205.0,"Kumar Yadav","Bengaluru","Active",73.0,70.0,0.958904109589041,1.0,0.0,0.0,1.0,52.0,50.0,0.9615384615384616,0.0,0.0,1.0,21.0,20.0,0.9523809523809523,116.0,77.0,0.6637931034482759,0.7375478927203065,89.0,1.155844155844156,0.0,0.0,4.730337078651686,0.9460674157303371,1542.0,1455.0,0.02020092072409488,0.20406580687830683,0.9795158730158727,21.0,0.9545454545454546,0.9229411152741763,18.0],["2026-08-02","0x17",287462.0,"0x17","Bengaluru","Rameez",1072518.0,"Yashwantha ","Davanagere","Active",68.0,66.0,0.9705882352941176,1.0,1.0,1.0,1.0,23.0,21.0,0.9130434782608695,0.0,0.0,1.0,44.0,44.0,1.0,77.0,84.0,1.0909090909090908,1.0,84.0,1.0,0.0,0.0,4.261904761904762,0.8523809523809524,1351.0,1655.0,0.03121927358906525,0.22233343397745572,1.0672004830917874,23.0,1.0454545454545454,0.9692534405066374,3.0],["2026-08-03","0x17",310445.0,"0x17","Bhopal","Akil",1091257.0,"Deepak Dewra","Indore","Active",58.0,47.0,0.8103448275862069,0.900383141762452,2.0,0.0,0.0,23.0,21.0,0.9130434782608695,0.0,0.0,1.0,33.0,26.0,0.7878787878787878,67.0,51.0,0.7611940298507462,0.845771144278607,48.0,0.9411764705882353,3.0,0.058823529411764705,3.549019607843137,0.7098039215686274,407.0,532.0,0.022088326071169204,0.09279571759259256,0.44541944444444426,20.0,0.9090909090909091,0.7115070623324634,66.0],["2026-08-01","0x17",307335.0,"0x17","Bhopal","Akil",1025184.0,"Ishwar Singh","Bhopal","Active",74.0,71.0,0.9594594594594594,1.0,2.0,2.0,1.0,20.0,19.0,0.95,0.0,0.0,1.0,52.0,50.0,0.9615384615384616,104.0,79.0,0.7596153846153846,0.844017094017094,82.0,1.0379746835443038,0.0,0.0,4.585365853658536,0.9170731707317072,1267.0,964.0,0.016635473125564588,0.1236563051146385,0.5935502645502648,21.0,0.9545454545454546,0.8950589887748424,32.0],["2026-08-03","0x17",303174.0,"0x17","Bhopal","Akil",1022709.0,"Aishwarya Bajpai","Gwalior","Active",58.0,55.0,0.9482758620689655,1.0,4.0,4.0,1.0,13.0,13.0,1.0,0.0,0.0,1.0,41.0,38.0,0.926829268292683,90.0,75.0,0.8333333333333334,0.9259259259259259,71.0,0.9466666666666667,1.0,0.013333333333333334,3.861111111111111,0.7722222222222223,3665.0,1457.0,0.027047164351851855,0.16939160628019326,0.8130797101449276,23.0,1.0454545454545454,0.9157073729395465,23.0],["2026-08-01","0x17",287358.0,"0x17","Bhubaneswar","Prawez",1037381.0,"Sukanta Khamari","Sambalpur","Active",54.0,51.0,0.9444444444444444,1.0,10.0,8.0,0.8,23.0,18.0,0.782608695652174,0.0,0.0,1.0,21.0,25.0,1.1904761904761905,57.0,58.0,1.0175438596491229,1.0,58.0,1.0,0.0,0.0,3.8620689655172415,0.7724137931034483,1317.0,1255.0,0.03688757183908045,0.1561446150097466,0.7494941520467837,19.0,0.8636363636363636,0.8803901796709301,44.0],["2026-08-01","0x17",293300.0,"0x17","Bhubaneswar","Prawez",1016553.0,"Badri Sahu","Bhubaneswar","Active",77.0,65.0,0.8441558441558441,0.937950937950938,8.0,7.0,0.875,50.0,40.0,0.8,0.0,0.0,1.0,19.0,18.0,0.9473684210526315,98.0,85.0,0.8673469387755102,0.963718820861678,85.0,1.0,0.0,0.0,3.847058823529412,0.7694117647058824,2999.0,2070.0,0.04873897058823528,0.20495265151515155,0.9837727272727274,22.0,1.0,0.8920729165350351,37.0],["2026-08-01","0x17",288388.0,"0x17","Calicut","Imran",1037556.0,"Pradeesh V","Calicut","Active",71.0,22.0,0.30985915492957744,0.3442879499217527,0.0,0.0,1.0,29.0,6.0,0.20689655172413793,0.0,0.0,1.0,42.0,16.0,0.38095238095238093,76.0,22.0,0.2894736842105263,0.32163742690058483,22.0,1.0,0.0,0.0,3.727272727272727,0.7454545454545454,307.0,242.0,0.05895833333333333,0.2623524305555555,1.2592916666666665,6.0,0.2727272727272727,0.5453548707965773,70.0],["2026-08-01","0x17",291213.0,"0x17","Calicut","Imran",1042401.0,"Akash Mohan","Thrissur","Active",90.0,29.0,0.32222222222222224,0.3580246913580247,2.0,0.0,0.0,38.0,9.0,0.23684210526315788,0.0,0.0,1.0,50.0,20.0,0.4,90.0,29.0,0.32222222222222224,0.3580246913580247,29.0,1.0,0.0,0.0,3.2758620689655173,0.6551724137931034,1376.0,351.0,0.03708333333333333,0.14108854166666668,0.6772250000000001,9.0,0.4090909090909091,0.4302307036334305,73.0],["2026-08-03","0x17",268143.0,"0x17","Chandigarh","Sitaram",1016845.0,"Amanjit Singh","Amritsar","Active",86.0,50.0,0.5813953488372093,0.6459948320413437,2.0,1.0,0.5,7.0,2.0,0.2857142857142857,0.0,0.0,1.0,77.0,47.0,0.6103896103896104,86.0,58.0,0.6744186046511628,0.7493540051679586,58.0,1.0,0.0,0.0,3.8620689655172415,0.7724137931034483,567.0,842.0,0.02150363186462324,0.1483585239651416,0.7121209150326796,17.0,0.7727272727272727,0.6389246275638393,68.0],["2026-08-01","0x17",287944.0,"0x17","Chandigarh","Sitaram",1016507.0,"Kanwaljit Singh","Patiala","Active",106.0,79.0,0.7452830188679245,0.8280922431865827,3.0,3.0,1.0,8.0,4.0,0.5,0.0,0.0,1.0,95.0,72.0,0.7578947368421053,106.0,82.0,0.7735849056603774,0.859538784067086,82.0,1.0,0.0,0.0,4.146341463414634,0.8292682926829269,1358.0,947.0,0.023400519421860878,0.13961489898989898,0.670151515151515,22.0,1.0,0.7912974922035036,60.0],["2026-08-01","0x17",270551.0,"0x17","Chandigarh","Sitaram",1072719.0,"Manoj Kumar","Kangra","Active",66.0,52.0,0.7878787878787878,0.8754208754208754,2.0,2.0,1.0,0.0,0.0,1.0,0.0,0.0,1.0,64.0,50.0,0.78125,66.0,52.0,0.7878787878787878,0.8754208754208754,52.0,1.0,0.0,0.0,2.8461538461538463,0.5692307692307692,1337.0,1014.0,0.0422820957977208,0.17212037037037037,0.8261777777777777,20.0,0.9090909090909091,0.8555446425796427,48.0],["2026-08-01","0x17",299824.0,"0x17","Chennai","Imran",1034704.0,"Praveen Kumar","Chennai","Active",106.0,56.0,0.5283018867924528,0.5870020964360587,0.0,0.0,1.0,92.0,46.0,0.5,0.0,0.0,1.0,14.0,10.0,0.7142857142857143,134.0,61.0,0.4552238805970149,0.5058043117744611,62.0,1.0163934426229508,0.0,0.0,5.741935483870968,1.1483870967741936,423.0,685.0,0.017217928614097967,0.11215633903133905,0.5383504273504274,12.0,0.5454545454545454,0.6759228394778662,67.0],["2026-08-01","0x17",287796.0,"0x17","Chennai","Imran",1028989.0,"Prem Kumar","Chennai","Active",106.0,73.0,0.6886792452830188,0.7651991614255764,0.0,0.0,1.0,95.0,61.0,0.6421052631578947,0.0,0.0,1.0,11.0,12.0,1.0909090909090908,131.0,83.0,0.6335877862595419,0.7039864291772688,82.0,0.9879518072289156,0.0,0.0,4.7682926829268295,0.9536585365853659,1416.0,923.0,0.02723224367660342,0.16407085905349794,0.78754012345679,18.0,0.8181818181818182,0.8149551104862063,52.0],["2026-08-01","0x17",296830.0,"0x17","Chennai","Imran",1034694.0,"Vinoth Kumar","Chennai","Active",101.0,89.0,0.8811881188118812,0.9790979097909792,2.0,1.0,0.5,104.0,68.0,0.6538461538461539,0.0,0.0,1.0,-5.0,20.0,-4.0,106.0,93.0,0.8773584905660378,0.9748427672955976,93.0,1.0,0.0,0.0,5.967741935483871,1.1935483870967742,1979.0,1313.0,0.025064715252887296,0.19489261831275717,0.9354845679012344,18.0,0.8181818181818182,0.34316614715132215,76.0],["2026-08-01","0x17",311301.0,"0x17","Cochin","Imran",1035220.0,"Smijo Mm","Cochin","Active",91.0,34.0,0.37362637362637363,0.41514041514041516,0.0,0.0,1.0,68.0,25.0,0.36764705882352944,0.0,0.0,1.0,23.0,9.0,0.391304347826087,103.0,34.0,0.3300970873786408,0.3667745415318231,34.0,1.0,0.0,0.0,3.3823529411764706,0.6764705882352942,1866.0,598.0,0.03668198529411765,0.16636437908496732,0.7985490196078431,10.0,0.45454545454545453,0.5741112003144306,69.0],["2026-08-01","0x17",0.0,"0x17","Cochin","Imran",1035125.0,"Reepu Kumar Rajan","Thiruvananthapuram","Active",89.0,30.0,0.33707865168539325,0.3745318352059925,4.0,3.0,0.75,49.0,13.0,0.2653061224489796,0.0,0.0,1.0,36.0,14.0,0.3888888888888889,89.0,30.0,0.33707865168539325,0.3745318352059925,29.0,0.9666666666666667,1.0,0.03333333333333333,2.8666666666666667,0.5733333333333334,499.0,237.0,0.07099768518518519,0.23864372895622896,1.145489898989899,11.0,0.5,0.5419544701775842,71.0],["2026-08-04","0x17",294190.0,"0x17","Coimbatore","Imran",1034699.0,"Jaffar Akbar","Coimbatore","Active",84.0,66.0,0.7857142857142857,0.873015873015873,1.0,1.0,1.0,64.0,49.0,0.765625,0.0,0.0,1.0,19.0,16.0,0.8421052631578947,91.0,74.0,0.8131868131868132,0.9035409035409036,74.0,1.0,0.0,0.0,4.243243243243243,0.8486486486486486,1150.0,855.0,0.02283580455455457,0.13245431286549708,0.635780701754386,19.0,0.8636363636363636,0.8344102982691799,51.0],["2026-08-01","0x17",268121.0,"0x17","Coimbatore","Imran",1031768.0,"Mohan ","Coimbatore","Active",98.0,86.0,0.8775510204081632,0.9750566893424037,0.0,0.0,1.0,87.0,73.0,0.8390804597701149,0.0,0.0,1.0,11.0,13.0,1.1818181818181819,111.0,98.0,0.8828828828828829,0.980980980980981,98.0,1.0,0.0,0.0,5.040816326530612,1.0081632653061223,1736.0,1486.0,0.028771140400604692,0.1878871527777778,0.9018583333333333,20.0,0.9090909090909091,0.9271445276811902,15.0],["2026-08-03","0x17",311344.0,"0x17","Coimbatore","Imran",1052828.0,"Eswaramoorthy M","Salem","Active",80.0,75.0,0.9375,1.0,0.0,0.0,1.0,74.0,67.0,0.9054054054054054,0.0,0.0,1.0,6.0,8.0,1.3333333333333333,105.0,90.0,0.8571428571428571,0.9523809523809523,90.0,1.0,0.0,0.0,4.488888888888889,0.8977777777777778,1514.0,1392.0,0.02636934156378601,0.164704335016835,0.790580808080808,21.0,0.9545454545454546,0.9224226434226432,19.0],["2026-08-17","0x17",309218.0,"0x17","Delhi","Sitaram",1016862.0,"Sanjeev Kumar","Delhi","Active",124.0,103.0,0.8306451612903226,0.9229390681003584,0.0,0.0,1.0,45.0,42.0,0.9333333333333333,0.0,0.0,1.0,79.0,61.0,0.7721518987341772,136.0,118.0,0.8676470588235294,0.9640522875816994,118.0,1.0,0.0,0.0,6.203389830508475,1.240677966101695,2431.0,1267.0,0.02691864799121156,0.19347111992945326,0.9286613756613756,21.0,0.9545454545454546,0.9187474478466624,21.0],["2026-08-01","0x17",271773.0,"0x17","Delhi","Sitaram",1038372.0,"Nikhil Kumar","Delhi","Active",111.0,89.0,0.8018018018018018,0.8908908908908909,0.0,0.0,1.0,39.0,33.0,0.8461538461538461,0.0,0.0,1.0,72.0,56.0,0.7777777777777778,129.0,114.0,0.8837209302325582,0.9819121447028424,110.0,0.9649122807017544,0.0,0.0,6.863636363636363,1.3727272727272726,1338.0,1149.0,0.025738531144781134,0.18575636574074075,0.8916305555555556,20.0,0.9090909090909091,0.8940025489507405,34.0],["2026-08-03","0x17",303010.0,"0x17","Delhi","Sitaram",1016861.0,"Deepak ","Delhi","Active",111.0,91.0,0.8198198198198198,0.9109109109109109,1.0,0.0,0.0,52.0,45.0,0.8653846153846154,0.0,0.0,1.0,58.0,46.0,0.7931034482758621,134.0,106.0,0.7910447761194029,0.87893864013267,107.0,1.009433962264151,1.0,0.009433962264150943,6.175925925925926,1.2351851851851852,2696.0,1248.0,0.02573677554869683,0.19733674463937625,0.947216374269006,19.0,0.8636363636363636,0.790842009325708,61.0],["2026-08-01","0x17",310208.0,"0x17","Durgapur","Prawez",1040166.0,"Palash Barman","Malda","Active",65.0,62.0,0.9538461538461539,1.0,2.0,2.0,1.0,31.0,30.0,0.967741935483871,0.0,0.0,1.0,32.0,30.0,0.9375,71.0,69.0,0.971830985915493,1.0,69.0,1.0,0.0,0.0,3.9855072463768115,0.7971014492753623,1463.0,1231.0,0.04006189613526571,0.170380291005291,0.8178253968253968,21.0,0.9545454545454546,0.9370177836591413,11.0],["2026-08-07","0x17",287504.0,"0x17","Durgapur","Prawez",1023811.0,"Bikash Barman","Maldah","Active",55.0,54.0,0.9818181818181818,1.0,2.0,2.0,1.0,24.0,22.0,0.9166666666666666,0.0,0.0,1.0,29.0,30.0,1.0344827586206897,59.0,54.0,0.9152542372881356,1.0,54.0,1.0,0.0,0.0,2.8518518518518516,0.5703703703703703,1173.0,930.0,0.04601594650205761,0.15266699735449732,0.7328015873015871,21.0,0.9545454545454546,0.8987416949967797,30.0],["2026-08-01","0x17",287588.0,"0x17","Durgapur","Prawez",1019238.0,"Prasenjit Karmakar","Asansol","Active",66.0,56.0,0.8484848484848485,0.9427609427609428,1.0,1.0,1.0,22.0,18.0,0.8181818181818182,0.0,0.0,1.0,43.0,37.0,0.8604651162790697,72.0,69.0,0.9583333333333334,1.0,69.0,1.0,0.0,0.0,3.3333333333333335,0.6666666666666667,1968.0,1177.0,0.04436409688674183,0.2039614898989899,0.9790151515151515,22.0,1.0,0.9019404510218464,29.0],["2026-08-03","0x17",287945.0,"0x17","Ghaziabad","Sitaram",1021953.0,"Gurpreet Singh","Bareilly","Active",106.0,95.0,0.8962264150943396,0.9958071278825995,0.0,0.0,1.0,5.0,4.0,0.8,0.0,0.0,1.0,101.0,91.0,0.900990099009901,106.0,95.0,0.8962264150943396,0.9958071278825995,95.0,1.0,0.0,0.0,4.91578947368421,0.983157894736842,2734.0,1059.0,0.022064692982456155,0.17525352733686067,0.8412169312169312,21.0,0.9545454545454546,0.9120476417244979,24.0],["2026-08-01","0x17",307336.0,"0x17","Ghaziabad","Sitaram",1044293.0,"Nitin Kumar","Muzaffarnagar","Active",82.0,65.0,0.7926829268292683,0.8807588075880759,1.0,1.0,1.0,14.0,11.0,0.7857142857142857,0.0,0.0,1.0,67.0,53.0,0.7910447761194029,87.0,65.0,0.7471264367816092,0.8301404853128991,64.0,0.9846153846153847,1.0,0.015384615384615385,3.3692307692307693,0.6738461538461539,1412.0,1210.0,0.023548611111111114,0.10680996472663139,0.5126878306878306,21.0,0.9545454545454546,0.8008683610387337,56.0],["2026-08-01","0x17",287354.0,"0x17","Ghaziabad","Sitaram",1019236.0,"Mukesh  Babu","Ghaziabad","Active",86.0,76.0,0.8837209302325582,0.9819121447028424,3.0,3.0,1.0,29.0,26.0,0.896551724137931,0.0,0.0,1.0,54.0,47.0,0.8703703703703703,86.0,77.0,0.8953488372093024,0.9948320413436692,76.0,0.987012987012987,1.0,0.012987012987012988,3.8051948051948052,0.7610389610389611,3113.0,1221.0,0.03246738215488216,0.15646569865319868,0.7510353535353536,22.0,1.0,0.894102944421108,33.0],["2026-08-01","0x17",303302.0,"0x17","Ghaziabad","Sitaram",1069519.0,"Mahesh Singh","Agra","Active",74.0,67.0,0.9054054054054054,1.0,1.0,1.0,1.0,18.0,15.0,0.8333333333333334,0.0,0.0,1.0,55.0,51.0,0.9272727272727272,81.0,67.0,0.8271604938271605,0.9190672153635117,67.0,1.0,0.0,0.0,3.985074626865672,0.7970149253731343,3748.0,1541.0,0.033239358761746815,0.1761202485380117,0.8453771929824561,19.0,0.8636363636363636,0.8829447355410827,43.0],["2026-08-01","0x17",293222.0,"0x17","Ghaziabad","Sitaram",1103039.0,"Kailash Negi","Moradabad","Active",43.0,46.0,1.0,1.0,3.0,3.0,1.0,5.0,5.0,1.0,0.0,0.0,1.0,35.0,38.0,1.0857142857142856,52.0,67.0,1.2884615384615385,1.0,67.0,1.0,0.0,0.0,3.537313432835821,0.7074626865671643,919.0,550.0,0.029437880044223326,0.14559689153439154,0.6988650793650794,21.0,0.9545454545454546,0.9360873220477698,12.0],["2026-08-01","0x17",272312.0,"0x17","Guwahati","Prawez",1071392.0,"Rajeev Boruha","Jorhat","Active",73.0,62.0,0.8493150684931506,0.943683409436834,5.0,3.0,0.6,0.0,0.0,1.0,0.0,0.0,1.0,68.0,59.0,0.8676470588235294,73.0,62.0,0.8493150684931506,0.943683409436834,61.0,0.9838709677419355,1.0,0.016129032258064516,3.870967741935484,0.7741935483870968,2292.0,681.0,0.031133325866188763,0.15709795321637426,0.7540701754385964,19.0,0.8636363636363636,0.8466705785260398,49.0],["2026-08-01","0x17",286975.0,"0x17","Guwahati","Prawez",1023800.0,"Tanmoy Paul","Agartala","Active",72.0,67.0,0.9305555555555556,1.0,3.0,3.0,1.0,0.0,0.0,1.0,0.0,0.0,1.0,69.0,64.0,0.927536231884058,75.0,69.0,0.92,1.0,69.0,1.0,0.0,0.0,4.101449275362318,0.8202898550724637,1376.0,803.0,0.037979904723564134,0.15065586419753085,0.7231481481481481,21.0,0.9545454545454546,0.923607524520568,16.0],["2026-08-03","0x17",286954.0,"0x17","Guwahati","Prawez",1043482.0,"Pranjit Das","Guwahati","Active",76.0,60.0,0.7894736842105263,0.8771929824561404,6.0,3.0,0.5,10.0,8.0,0.8,1.0,1.0,1.0,59.0,48.0,0.8135593220338984,87.0,61.0,0.7011494252873564,0.7790549169859515,61.0,1.0,0.0,0.0,3.5245901639344264,0.7049180327868853,1618.0,1100.0,0.05224461141469339,0.21600633528265104,1.0368304093567249,19.0,0.8636363636363636,0.7923311540598708,59.0],["2026-08-03","0x17",283526.0,"0x17","Hubli","Rameez",1041036.0,"Sachin","Hubli","InActive",39.0,7.0,0.1794871794871795,0.19943019943019943,2.0,0.0,0.0,25.0,5.0,0.2,0.0,0.0,1.0,12.0,2.0,0.16666666666666666,57.0,7.0,0.12280701754385964,0.1364522417153996,7.0,1.0,0.0,0.0,3.0,0.6,141.0,141.0,0.09174107142857145,0.22478395061728398,1.0789629629629631,3.0,0.13636363636363635,0.35667280088332715,75.0],["2026-08-01","0x17",288418.0,"0x17","Hubli","Rameez",1034707.0,"Malik Bepari","Hubli","Active",66.0,48.0,0.7272727272727273,0.8080808080808082,5.0,4.0,0.8,29.0,17.0,0.5862068965517241,0.0,0.0,1.0,32.0,27.0,0.84375,81.0,58.0,0.7160493827160493,0.7956104252400549,58.0,1.0,0.0,0.0,3.2711864406779663,0.6542372881355932,4279.0,1112.0,0.06169648462021344,0.20256338183421524,0.9723042328042331,21.0,0.9545454545454546,0.7905494121659669,63.0],["2026-08-01","0x17",285486.0,"0x17","Hubli","Rameez",1017931.0,"Tajuddin ","Gulbarga","Active",43.0,39.0,0.9069767441860465,1.0,5.0,5.0,1.0,9.0,9.0,1.0,0.0,0.0,1.0,29.0,25.0,0.8620689655172413,61.0,47.0,0.7704918032786885,0.8561020036429872,47.0,1.0,0.0,0.0,3.382978723404255,0.676595744680851,1838.0,1053.0,0.07150980102442869,0.2200450102880659,1.0562160493827162,18.0,0.8181818181818182,0.8919560977483989,38.0],["2026-08-01","0x17",310546.0,"0x17","Hyderabad","Rameez",1018589.0,"Nagaraju ","Hyderabad","Active",72.0,69.0,0.9583333333333334,1.0,0.0,0.0,1.0,60.0,58.0,0.9666666666666667,0.0,0.0,1.0,12.0,11.0,0.9166666666666666,97.0,88.0,0.9072164948453608,1.0,89.0,1.0113636363636365,0.0,0.0,4.404494382022472,0.8808988764044944,2144.0,1562.0,0.03622217020391176,0.1911100088183422,0.9173280423280425,21.0,0.9545454545454546,0.9438597115546032,9.0],["2026-08-01","0x17",310057.0,"0x17","Hyderabad","Rameez",1044424.0,"Souvik Karmakar","Hyderabad","Active",97.0,93.0,0.9587628865979382,1.0,1.0,1.0,1.0,92.0,84.0,0.9130434782608695,0.0,0.0,1.0,4.0,8.0,2.0,109.0,109.0,1.0,1.0,109.0,1.0,0.0,0.0,5.073394495412844,1.0146788990825688,3953.0,1734.0,0.037218930513081894,0.22628787878787884,1.0861818181818184,22.0,1.0,0.9828328103989242,1.0],["2026-08-01","0x17",291772.0,"0x17","Jaipur","Sitaram",1036524.0,"Dharmendra Gaur","Jodhpur","Active",78.0,70.0,0.8974358974358975,0.9971509971509972,4.0,4.0,1.0,17.0,17.0,1.0,0.0,0.0,1.0,57.0,49.0,0.8596491228070176,94.0,92.0,0.9787234042553191,1.0,92.0,1.0,0.0,0.0,5.282608695652174,1.0565217391304347,1423.0,1299.0,0.03262467290660225,0.17132154882154882,0.8223434343434343,22.0,1.0,0.9547513560969327,6.0],["2026-08-01","0x17",304471.0,"0x17","Jaipur","Sitaram",1040176.0,"Ayan Qureshi","Jaipur","Active",84.0,75.0,0.8928571428571429,0.9920634920634922,3.0,2.0,0.6666666666666666,20.0,19.0,0.95,0.0,0.0,1.0,61.0,54.0,0.8852459016393442,105.0,92.0,0.8761904761904762,0.9735449735449735,97.0,1.0543478260869565,0.0,0.0,4.690721649484536,0.9381443298969072,2034.0,1341.0,0.029789996181748758,0.2060048400673401,0.9888232323232324,22.0,1.0,0.9111022987669007,26.0],["2026-08-01","0x17",290021.0,"0x17","Jaipur","Sitaram",1016675.0,"Murari Lal","Jaipur","Active",82.0,76.0,0.926829268292683,1.0,6.0,6.0,1.0,19.0,18.0,0.9473684210526315,1.0,1.0,1.0,56.0,51.0,0.9107142857142857,99.0,92.0,0.9292929292929293,1.0,89.0,0.967391304347826,0.0,0.0,4.685393258426966,0.9370786516853933,2020.0,1589.0,0.03619017894298793,0.20060237794612792,0.962891414141414,22.0,1.0,0.9519896949699943,7.0],["2026-08-03","0x17",274735.0,"0x17","Karnal","Sitaram",1026403.0,"Fakir Chand","Karnal","Active",77.0,54.0,0.7012987012987013,0.7792207792207793,5.0,2.0,0.4,2.0,2.0,1.0,0.0,0.0,1.0,70.0,50.0,0.7142857142857143,83.0,64.0,0.7710843373493976,0.8567603748326641,64.0,1.0,0.0,0.0,4.375,0.875,1322.0,834.0,0.020009403935185188,0.11389132553606236,0.5466783625730993,18.0,0.8181818181818182,0.771207110236343,64.0],["2026-08-01","0x17",293018.0,"0x17","Kolkata","Prawez",1054027.0,"Priyajit Banerjee","Howrah","Active",90.0,82.0,0.9111111111111111,1.0,0.0,0.0,1.0,58.0,54.0,0.9310344827586207,0.0,0.0,1.0,32.0,28.0,0.875,90.0,83.0,0.9222222222222223,1.0,83.0,1.0,0.0,0.0,4.36144578313253,0.8722891566265061,841.0,357.0,0.032822958500669346,0.20550820707070702,0.9864393939393936,21.0,0.9545454545454546,0.937927017369373,10.0],["2026-08-01","0x17",293223.0,"0x17","Kolkata","Prawez",1017949.0,"Bibhas Singha","Kolkata","Active",88.0,78.0,0.8863636363636364,0.9848484848484848,0.0,0.0,1.0,88.0,72.0,0.8181818181818182,0.0,0.0,1.0,0.0,6.0,1.0,118.0,95.0,0.8050847457627118,0.8945386064030132,95.0,1.0,0.0,0.0,4.505263157894737,0.9010526315789473,1886.0,1400.0,0.027400584795321637,0.18328813932980598,0.8797830687830687,21.0,0.9545454545454546,0.9056644637187903,28.0],["2026-08-01","0x17",303009.0,"0x17","Kolkata","Prawez",1017950.0,"Partha Bakshi","Kolkata","Active",89.0,83.0,0.9325842696629213,1.0,0.0,0.0,1.0,87.0,73.0,0.8390804597701149,0.0,0.0,1.0,2.0,10.0,5.0,120.0,112.0,0.9333333333333333,1.0,112.0,1.0,0.0,0.0,5.017857142857143,1.0035714285714286,3264.0,2226.0,0.05406177662037037,0.2900694444444444,1.392333333333333,23.0,1.0454545454545454,0.9591204959318093,5.0],["2026-08-01","0x17",269746.0,"0x17","Lucknow","Sitaram",1059017.0,"Deepak Srivastava","Kanpur","Active",82.0,64.0,0.7804878048780488,0.8672086720867209,1.0,1.0,1.0,16.0,14.0,0.875,0.0,0.0,1.0,65.0,49.0,0.7538461538461538,87.0,70.0,0.8045977011494253,0.8939974457215836,70.0,1.0,0.0,0.0,4.885714285714286,0.9771428571428572,907.0,285.0,0.027954861111111097,0.17759259259259258,0.8524444444444443,20.0,0.9090909090909091,0.8792408721126552,46.0],["2026-08-01","0x17",249590.0,"0x17","Lucknow","Sitaram",1019323.0,"Ashutosh Kumar","Allahabad","Active",74.0,69.0,0.9324324324324325,1.0,2.0,2.0,1.0,14.0,14.0,1.0,0.0,0.0,1.0,58.0,53.0,0.9137931034482759,82.0,72.0,0.8780487804878049,0.9756097560975611,72.0,1.0,0.0,0.0,4.25,0.85,3372.0,1353.0,0.040065425668724265,0.1847696208112875,0.88689417989418,21.0,0.9545454545454546,0.935473834105205,13.0],["2026-08-01","0x17",296361.0,"0x17","Lucknow","Sitaram",1044129.0,"Riyaz Khan","Lucknow","Active",116.0,91.0,0.7844827586206896,0.871647509578544,1.0,1.0,1.0,51.0,38.0,0.7450980392156863,0.0,0.0,1.0,64.0,52.0,0.8125,116.0,91.0,0.7844827586206896,0.871647509578544,91.0,1.0,0.0,0.0,5.043956043956044,1.0087912087912088,3921.0,1513.0,0.03817193223443223,0.2176759259259259,1.0448444444444442,20.0,0.9090909090909091,0.8800444864466163,45.0],["2026-08-01","0x17",287948.0,"0x17","Lucknow","Sitaram",1044292.0,"Manish Gond","Varanasi","Active",93.0,59.0,0.6344086021505376,0.7048984468339307,0.0,0.0,1.0,39.0,31.0,0.7948717948717948,0.0,0.0,1.0,54.0,28.0,0.5185185185185185,98.0,69.0,0.7040816326530612,0.782312925170068,69.0,1.0,0.0,0.0,3.4927536231884058,0.6985507246376812,3158.0,1311.0,0.04616210413311862,0.19007667824074073,0.9123680555555554,24.0,1.0909090909090908,0.8012276042149578,55.0],["2026-08-01","0x17",275714.0,"0x17","Madurai","Imran",1034701.0,"M Balasubramani","Madurai","Active",114.0,74.0,0.6491228070175439,0.7212475633528266,0.0,0.0,1.0,114.0,57.0,0.5,0.0,0.0,1.0,0.0,17.0,1.0,131.0,85.0,0.648854961832061,0.720949957591179,85.0,1.0,0.0,0.0,4.882352941176471,0.9764705882352942,1769.0,1207.0,0.029328022875816994,0.17627083333333332,0.8460999999999999,19.0,0.8636363636363636,0.8058612201637292,53.0],["2026-08-01","0x17",287351.0,"0x17","Mumbai","Akil",1017250.0,"Sandeep Hadapkar","Mumbai","Active",122.0,106.0,0.8688524590163934,0.9653916211293261,2.0,2.0,1.0,61.0,49.0,0.8032786885245902,0.0,0.0,1.0,59.0,55.0,0.9322033898305084,124.0,111.0,0.8951612903225806,0.9946236559139785,101.0,0.9099099099099099,0.0,0.0,5.0,1.0,3373.0,1214.0,0.03859048404840483,0.20707286155202817,0.9939497354497352,21.0,0.9545454545454546,0.9207120917022759,20.0],["2026-08-03","0x17",311768.0,"0x17","Mumbai","Akil",1017251.0,"Arvind Shinde","Mumbai","Active",103.0,82.0,0.7961165048543689,0.8845738942826321,0.0,0.0,1.0,68.0,51.0,0.75,0.0,0.0,1.0,35.0,31.0,0.8857142857142857,104.0,83.0,0.7980769230769231,0.8867521367521367,90.0,1.0843373493975903,3.0,0.03614457831325301,4.702127659574468,0.9404255319148935,3111.0,1069.0,0.03260010342789597,0.19774691358024693,0.9491851851851852,21.0,0.9545454545454546,0.8848102346829572,41.0],["2026-08-01","0x17",311769.0,"0x17","Mumbai","Akil",1017249.0,"Sushant Sonavane","Mumbai","Active",97.0,95.0,0.979381443298969,1.0,0.0,0.0,1.0,61.0,59.0,0.9672131147540983,0.0,0.0,1.0,36.0,36.0,1.0,101.0,103.0,1.0198019801980198,1.0,103.0,1.0,0.0,0.0,5.038834951456311,1.007766990291262,2826.0,1171.0,0.03281811848256024,0.17700507054673725,0.8496243386243387,21.0,0.9545454545454546,0.973437090859991,2.0],["2026-08-01","0x17",290843.0,"0x17","Nagpur","Akil",1017060.0,"Nitesh Bhoyar","Nagpur","Active",69.0,70.0,1.0,1.0,4.0,3.0,0.75,5.0,5.0,1.0,0.0,0.0,1.0,60.0,62.0,1.0333333333333334,116.0,83.0,0.7155172413793104,0.7950191570881227,83.0,1.0,0.0,0.0,5.144578313253012,1.0289156626506024,2702.0,1213.0,0.03127314814814816,0.1929379873294347,0.9261023391812866,19.0,0.8636363636363636,0.9113014564886617,25.0],["2026-08-01","0x17",268651.0,"0x17","Nagpur","Akil",1019445.0,"Shaikh Azhar","Akola","Active",46.0,58.0,1.0,1.0,2.0,2.0,1.0,2.0,2.0,1.0,0.0,0.0,1.0,42.0,54.0,1.2857142857142858,75.0,60.0,0.8,0.888888888888889,59.0,0.9833333333333333,1.0,0.016666666666666666,3.1666666666666665,0.6333333333333333,1733.0,641.0,0.018978780864197523,0.13231316137566138,0.6351031746031746,21.0,0.9545454545454546,0.8906315295815295,39.0],["2026-08-02","0x17",298496.0,"0x17","Patna","Prawez",1053363.0,"Abhijit Kumar","Patna","Active",62.0,52.0,0.8387096774193549,0.9318996415770611,4.0,2.0,0.5,53.0,28.0,0.5283018867924528,0.0,0.0,1.0,5.0,22.0,4.4,65.0,59.0,0.9076923076923077,1.0,59.0,1.0,0.0,0.0,3.389830508474576,0.6779661016949152,795.0,924.0,0.029444444444444447,0.19102366255144032,0.9169135802469135,18.0,0.8181818181818182,0.7905762469270143,62.0],["2026-08-01","0x17",288574.0,"0x17","Patna","Prawez",1031621.0,"Ritesh Kumar","Patna","Active",64.0,56.0,0.875,0.9722222222222222,4.0,1.0,0.25,66.0,38.0,0.5757575757575758,0.0,0.0,1.0,-6.0,17.0,-2.8333333333333335,69.0,57.0,0.8260869565217391,0.9178743961352657,57.0,1.0,0.0,0.0,3.175438596491228,0.6350877192982456,1333.0,1013.0,0.04354410331384016,0.1781157407407408,0.8549555555555558,20.0,0.9090909090909091,0.37935676490303494,74.0],["2026-08-01","0x17",300662.0,"0x17","Pune","Akil",1086400.0,"Umaji Gadkari","Kolhapur","Active",63.0,55.0,0.873015873015873,0.9700176366843034,1.0,1.0,1.0,9.0,8.0,0.8888888888888888,0.0,0.0,1.0,53.0,46.0,0.8679245283018868,74.0,59.0,0.7972972972972973,0.8858858858858858,59.0,1.0,0.0,0.0,3.5762711864406778,0.7152542372881355,1431.0,1186.0,0.04385318581293159,0.1633234126984127,0.7839523809523808,20.0,0.9090909090909091,0.8678517207928463,47.0],["2026-08-01","0x17",295111.0,"0x17","Pune","Akil",1089562.0,"Shaikh Moin","Pune","Active",67.0,67.0,1.0,1.0,0.0,0.0,1.0,39.0,37.0,0.9487179487179487,0.0,0.0,1.0,28.0,30.0,1.0714285714285714,93.0,71.0,0.7634408602150538,0.8482676224611709,70.0,0.9859154929577465,0.0,0.0,3.8,0.76,942.0,325.0,0.027976851851851847,0.13894618055555552,0.6669416666666664,20.0,0.9090909090909091,0.8890186282114825,40.0],["2026-08-01","0x17",304322.0,"0x17","Pune","Akil",1021143.0,"Ravindra ","Pune","Active",66.0,44.0,0.6666666666666666,0.7407407407407407,0.0,0.0,1.0,46.0,29.0,0.6304347826086957,0.0,0.0,1.0,20.0,15.0,0.75,90.0,64.0,0.7111111111111111,0.7901234567901234,65.0,1.015625,0.0,0.0,4.876923076923077,0.9753846153846155,1243.0,680.0,0.02538230056980057,0.18924189814814815,0.9083611111111111,14.0,0.6363636363636364,0.7949094870105741,58.0],["2026-08-01","0x17",311481.0,"0x17","Pune","Akil",1016852.0,"Sadanand Chilka","Solapur","Active",46.0,46.0,1.0,1.0,6.0,6.0,1.0,8.0,6.0,0.75,0.0,0.0,1.0,32.0,34.0,1.0625,70.0,78.0,1.1142857142857143,1.0,78.0,1.0,0.0,0.0,4.3076923076923075,0.8615384615384615,1225.0,1203.0,0.023311965811965825,0.17816413139329804,0.8551878306878306,21.0,0.9545454545454546,0.9296271746771746,14.0],["2026-08-01","0x17",311402.0,"0x17","Raipur","Akil",1044139.0,"Tarun Dhankar","Raipur","Active",60.0,59.0,0.9833333333333333,1.0,5.0,5.0,1.0,25.0,24.0,0.96,0.0,0.0,1.0,30.0,30.0,1.0,133.0,110.0,0.8270676691729323,0.9189640768588136,109.0,0.990909090909091,1.0,0.00909090909090909,5.618181818181818,1.1236363636363635,1736.0,1371.0,0.03431576178451178,0.24064043209876548,1.1550740740740744,21.0,0.9545454545454546,0.9609389382547278,4.0],["2026-08-01","0x17",300012.0,"0x17","Ranchi","Prawez",1027466.0,"Shubham Kumar","Dhanbad","Active",71.0,65.0,0.9154929577464789,1.0,1.0,0.0,0.0,44.0,34.0,0.7727272727272727,0.0,0.0,1.0,26.0,31.0,1.1923076923076923,73.0,65.0,0.8904109589041096,0.989345509893455,65.0,1.0,0.0,0.0,4.0,0.8,1459.0,1292.0,0.024227029914529918,0.11876705653021445,0.5700818713450293,19.0,0.8636363636363636,0.7643918540174945,65.0],["2026-08-01","0x17",310547.0,"0x17","Vijayawada","Rameez",1044423.0,"Mahaboob Basha","Tirupati","Active",74.0,71.0,0.9594594594594594,1.0,0.0,0.0,1.0,50.0,45.0,0.9,0.0,0.0,1.0,24.0,26.0,1.0833333333333333,90.0,80.0,0.8888888888888888,0.9876543209876542,80.0,1.0,0.0,0.0,4.225,0.845,1219.0,835.0,0.08734403935185187,0.23176201499118168,1.112457671957672,21.0,0.9545454545454546,0.9442338247338247,8.0],["2026-08-01","0x17",296831.0,"0x17","Vijayawada","Rameez",1036178.0,"Rajagiri Raju","Vizag","Active",57.0,54.0,0.9473684210526315,1.0,2.0,2.0,1.0,46.0,43.0,0.9347826086956522,0.0,0.0,1.0,9.0,9.0,1.0,85.0,68.0,0.8,0.888888888888889,68.0,1.0,0.0,0.0,3.676470588235294,0.7352941176470588,917.0,562.0,0.017269369553376893,0.14210152116402117,0.6820873015873016,21.0,0.9545454545454546,0.8921469207875924,36.0],["2026-08-01","0x17",294751.0,"0x17","Vijayawada","Rameez",1037620.0,"Praveen Komararapu","Vijayawada","Active",109.0,94.0,0.8623853211009175,0.9582059123343528,0.0,0.0,1.0,88.0,74.0,0.8409090909090909,0.0,0.0,1.0,21.0,20.0,0.9523809523809523,114.0,100.0,0.8771929824561403,0.9746588693957114,100.0,1.0,0.0,0.0,4.86,0.9720000000000001,2451.0,1367.0,0.026688310185185183,0.18059080387205387,0.8668358585858585,22.0,1.0,0.9230755242115574,17.0]]</script>
+  <script id="vm-states-data" type="application/json">{"1023800":"Tripura","1054027":"West Bengal","1017949":"West Bengal","1037381":"Odisha","1031621":"Bihar","1040166":"West Bengal","1071392":"Assam","1053363":"Bihar","1019238":"West Bengal","1017950":"West Bengal","1023811":"West Bengal","1016553":"Odisha","1043482":"Assam","1027466":"Jharkhand","1035361":"Karnataka","1035188":"Karnataka","1036205":"Karnataka","1037620":"Andhra Pradesh","1036178":"Andhra Pradesh","1041037":"Karnataka","1017931":"Karnataka","1072518":"Karnataka","1017934":"Karnataka","1034707":"Karnataka","1024622":"Telangana","1018589":"Telangana","1044424":"Telangana","1041036":"Karnataka","1044423":"Andhra Pradesh","1028989":"Tamil Nadu","1034704":"Tamil Nadu","1034694":"Tamil Nadu","1034699":"Tamil Nadu","1031768":"Tamil Nadu","1052828":"Tamil Nadu","1034701":"Tamil Nadu","1035220":"Kerala","1035125":"Kerala","1037556":"Kerala","1042401":"Kerala","1016845":"Punjab","1016507":"Punjab","1072719":"Himachal Pradesh","1016861":"Delhi","1038372":"Delhi","1026403":"Haryana","1016862":"Delhi","1021953":"Uttar Pradesh","1103039":"Uttar Pradesh","1069519":"Uttar Pradesh","1019236":"Uttar Pradesh","1044293":"Uttar Pradesh","1016675":"Rajasthan","1040176":"Rajasthan","1036524":"Rajasthan","1019323":"Uttar Pradesh","1059017":"Uttar Pradesh","1044129":"Uttar Pradesh","1044292":"Uttar Pradesh","1016748":"Gujarat","1025231":"Gujarat","1017617":"Gujarat","1052690":"Gujarat","1021648":"Maharashtra","1016852":"Maharashtra","1019445":"Maharashtra","1022709":"Madhya Pradesh","1091257":"Madhya Pradesh","1025184":"Madhya Pradesh","1021143":"Maharashtra","1017249":"Maharashtra","1086400":"Maharashtra","1017250":"Maharashtra","1017251":"Maharashtra","1017060":"Maharashtra","1044139":"Chhattisgarh","1089562":"Maharashtra","1023307":"Maharashtra"}</script>
+
+  <!-- DASHBOARD ENGINE & REALTIME SHAREPOINT SYNC -->
+  <script>
+  /* =====================================================================
+     GODREJ PROGRAM PERFORMANCE INTELLIGENCE ENGINE
+     ===================================================================== */
+  
+  const SHAREPOINT_EXCEL_URL = 'https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1';
+  
+  const CORS_PROXIES = [
+    url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+    url => 'https://cors-proxy.htmldriven.com/?url=' + encodeURIComponent(url)
+  ];
+
+  const State = {
+    rawRows: [],
+    metadata: {},
+    vmStatesMap: {},
+    records: [],
+    filters: {
+      branch: '',
+      state: '',
+      aom: '',
+      vm: ''
+    },
+    searchQuery: '',
+    sortKey: 'rank',
+    sortAsc: true,
+    page: 1,
+    pageSize: 15,
+    charts: {
+      branch: null,
+      aom: null
+    }
+  };
+
+  const Utils = {
+    num(v) {
+      if (typeof v === 'number') return v;
+      if (!v) return 0;
+      const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''));
+      return isNaN(n) ? 0 : n;
+    },
+    fmtNum(v, dec = 0) {
+      if (v === null || v === undefined || isNaN(v)) return '0';
+      return Number(v).toLocaleString('en-IN', { maximumFractionDigits: dec, minimumFractionDigits: dec });
+    },
+    fmtPct(v, dec = 1) {
+      if (v === null || v === undefined || isNaN(v)) return '0.0%';
+      const val = v <= 1.5 && v > 0 ? v * 100 : v;
+      return (Number(val) || 0).toFixed(dec) + '%';
+    },
+    fmtDec(v, dec = 2) {
+      if (v === null || v === undefined || isNaN(v)) return '0.00';
+      return (Number(v) || 0).toFixed(dec);
+    },
+    fmtHrs(fraction) {
+      if (!fraction || isNaN(fraction)) return '0h 0m';
+      const totalHrs = fraction * 24;
+      const h = Math.floor(totalHrs);
+      const m = Math.round((totalHrs - h) * 60);
+      return `${h}h ${m}m`;
+    },
+    debounce(fn, delay) {
+      let timer = null;
+      return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+  };
+
+  /* -------------------------------------------------------------
+     DATA PARSER
+     ------------------------------------------------------------- */
+  const DataParser = {
+    parse(rows, vmStatesLookup) {
+      if (!rows || rows.length < 3) return { records: [], metadata: {} };
+      
+      const row0 = rows[0] || [];
+      const dataUpdatedTill = row0[5] || '2026-08-27';
+      
+      const records = [];
+      for (let r = 2; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || !row[7]) continue; // User Name must exist
+        
+        const userCode = row[6] ? String(parseInt(row[6])) : '';
+        const branch = row[4] ? String(row[4]).trim() : '';
+        const state = (vmStatesLookup && vmStatesLookup[userCode]) || DataParser.inferState(branch);
+
+        records.push({
+          startWork: row[0],
+          brmmName: row[1],
+          region: row[2],
+          branch: branch,
+          aom: row[5] ? String(row[5]).trim() : '',
+          userCode: userCode,
+          userName: row[7] ? String(row[7]).trim() : '',
+          baseTown: row[8] ? String(row[8]).trim() : '',
+          vmStatus: row[9] ? String(row[9]).trim() : 'Active',
+          state: state,
+          
+          // Coverage
+          coverageTarget: Utils.num(row[10]),
+          coverageAch: Utils.num(row[11]),
+          coveragePct: Utils.num(row[12]),
+          projectedCoverage: Utils.num(row[13]),
+          
+          // Detailed Categories
+          targetedEBO: Utils.num(row[14]),
+          eboCoverage: Utils.num(row[15]),
+          eboCoveragePct: Utils.num(row[16]),
+          
+          targetedChain: Utils.num(row[17]),
+          chainCoverage: Utils.num(row[18]),
+          chainCoveragePct: Utils.num(row[19]),
+          
+          targetedCool: Utils.num(row[20]),
+          coolCoverage: Utils.num(row[21]),
+          coolCoveragePct: Utils.num(row[22]),
+          
+          targetedOther: Utils.num(row[23]),
+          otherCoverage: Utils.num(row[24]),
+          otherCoveragePct: Utils.num(row[25]),
+          
+          // Visits
+          visitsTarget: Utils.num(row[26]),
+          visitAch: Utils.num(row[27]),
+          visitAchPct: Utils.num(row[28]),
+          visitsProjection: Utils.num(row[29]),
+          productiveVisits: Utils.num(row[30]),
+          productiveVisitPct: Utils.num(row[31]),
+          unproductiveVisits: Utils.num(row[32]),
+          unproVisitPct: Utils.num(row[33]),
+          
+          // Productivity & Execution
+          avgProductivity: Utils.num(row[34]),
+          productivityAchPct: Utils.num(row[35]),
+          posmDeployment: Utils.num(row[36]),
+          productDisplay: Utils.num(row[37]),
+          avgTimeSpentOutlet: Utils.num(row[38]),
+          marketWorkingHrs: Utils.num(row[39]),
+          marketHrsAdherencePct: Utils.num(row[40]),
+          manDaysAchieved: Utils.num(row[41]),
+          manDayAchPct: Utils.num(row[42]),
+          finalAch: Utils.num(row[43]),
+          rank: Utils.num(row[44])
+        });
+      }
+
+      return {
+        records,
+        metadata: {
+          dataUpdatedTill,
+          row0
+        }
+      };
+    },
+
+    inferState(branch) {
+      const map = {
+        'Ahmedabad': 'Gujarat',
+        'Aurangabad': 'Maharashtra',
+        'Bengaluru': 'Karnataka',
+        'Bhopal': 'Madhya Pradesh',
+        'Bhubaneswar': 'Odisha',
+        'Calicut': 'Kerala',
+        'Chandigarh': 'Punjab',
+        'Chennai': 'Tamil Nadu',
+        'Cochin': 'Kerala',
+        'Coimbatore': 'Tamil Nadu',
+        'Delhi': 'Delhi',
+        'Durgapur': 'West Bengal',
+        'Ghaziabad': 'Uttar Pradesh',
+        'Guwahati': 'Assam',
+        'Hubli': 'Karnataka',
+        'Hyderabad': 'Telangana',
+        'Jaipur': 'Rajasthan',
+        'Karnal': 'Haryana',
+        'Kolkata': 'West Bengal',
+        'Lucknow': 'Uttar Pradesh',
+        'Madurai': 'Tamil Nadu',
+        'Mumbai': 'Maharashtra',
+        'Nagpur': 'Maharashtra',
+        'Patna': 'Bihar',
+        'Pune': 'Maharashtra',
+        'Raipur': 'Chhattisgarh',
+        'Ranchi': 'Jharkhand',
+        'Vijayawada': 'Andhra Pradesh'
+      };
+      return map[branch] || 'National';
+    }
+  };
+
+  /* -------------------------------------------------------------
+     DASHBOARD UI & CHARTS
+     ------------------------------------------------------------- */
+  const App = {
+    init() {
+      // Load fallback embedded snapshot immediately
+      const rawDataEl = document.getElementById('sample-data');
+      const vmStatesEl = document.getElementById('vm-states-data');
+      
+      let vmStates = {};
+      if (vmStatesEl && vmStatesEl.textContent.trim()) {
+        try { vmStates = JSON.parse(vmStatesEl.textContent); } catch(e) {}
+      }
+      State.vmStatesMap = vmStates;
+
+      if (rawDataEl && rawDataEl.textContent.trim()) {
+        try {
+          const rows = JSON.parse(rawDataEl.textContent);
+          State.rawRows = rows;
+          const parsed = DataParser.parse(rows, vmStates);
+          State.records = parsed.records;
+          State.metadata = parsed.metadata;
+          this.initFilterDropdowns();
+          this.renderAll();
+        } catch(e) {
+          console.error('Failed to parse embedded snapshot:', e);
+        }
+      }
+
+      // Start realtime SharePoint sync in background
+      this.syncFromSharePoint();
+
+      // Setup continuous auto-refresh polling every 60s
+      setInterval(() => {
+        this.syncFromSharePoint(true);
+      }, 60000);
+
+      this.bindEvents();
+    },
+
+    bindEvents() {
+      // Filter changes
+      document.getElementById('filterBranch').addEventListener('change', e => {
+        State.filters.branch = e.target.value;
+        State.page = 1;
+        App.renderAll();
+      });
+      document.getElementById('filterState').addEventListener('change', e => {
+        State.filters.state = e.target.value;
+        State.page = 1;
+        App.renderAll();
+      });
+      document.getElementById('filterAOM').addEventListener('change', e => {
+        State.filters.aom = e.target.value;
+        State.page = 1;
+        App.renderAll();
+      });
+      document.getElementById('filterVM').addEventListener('change', e => {
+        State.filters.vm = e.target.value;
+        State.page = 1;
+        App.renderAll();
+      });
+
+      // Reset
+      document.getElementById('btnResetFilters').addEventListener('click', () => {
+        App.resetFilters();
+      });
+
+      // Live Badge click
+      document.getElementById('liveStatusBadge').addEventListener('click', () => {
+        App.syncFromSharePoint();
+      });
+
+      // Search input
+      document.getElementById('tableSearchInput').addEventListener('input', Utils.debounce(e => {
+        State.searchQuery = e.target.value.toLowerCase().trim();
+        State.page = 1;
+        App.renderMasterTable();
+      }, 200));
+
+      // Page size
+      document.getElementById('pageSizeSelect').addEventListener('change', e => {
+        State.pageSize = parseInt(e.target.value);
+        State.page = 1;
+        App.renderMasterTable();
+      });
+
+      // CSV Export
+      document.getElementById('btnExportCSV').addEventListener('click', () => {
+        App.exportCSV();
+      });
+
+      // Theme toggle
+      document.getElementById('btnThemeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+        App.renderCharts();
+      });
+    },
+
+    resetFilters() {
+      State.filters.branch = '';
+      State.filters.state = '';
+      State.filters.aom = '';
+      State.filters.vm = '';
+      document.getElementById('filterBranch').value = '';
+      document.getElementById('filterState').value = '';
+      document.getElementById('filterAOM').value = '';
+      document.getElementById('filterVM').value = '';
+      State.page = 1;
+      this.renderAll();
+    },
+
+    setFilter(key, val) {
+      if (State.filters[key] === val) {
+        State.filters[key] = ''; // Toggle off
+      } else {
+        State.filters[key] = val;
+      }
+      const el = document.getElementById('filter' + key.charAt(0).toUpperCase() + key.slice(1));
+      if (el) el.value = State.filters[key];
+      State.page = 1;
+      this.renderAll();
+    },
+
+    initFilterDropdowns() {
+      const records = State.records;
+      const branches = [...new Set(records.map(r => r.branch).filter(Boolean))].sort();
+      const states = [...new Set(records.map(r => r.state).filter(Boolean))].sort();
+      const aoms = [...new Set(records.map(r => r.aom).filter(Boolean))].sort();
+      const vms = [...new Set(records.map(r => r.userName).filter(Boolean))].sort();
+
+      const bSel = document.getElementById('filterBranch');
+      bSel.innerHTML = '<option value="">All Branches (' + branches.length + ')</option>' + 
+        branches.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      const sSel = document.getElementById('filterState');
+      sSel.innerHTML = '<option value="">All States (' + states.length + ')</option>' + 
+        states.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      const aSel = document.getElementById('filterAOM');
+      aSel.innerHTML = '<option value="">All AOMs (' + aoms.length + ')</option>' + 
+        aoms.map(a => `<option value="${a}">${a}</option>`).join('');
+
+      const vSel = document.getElementById('filterVM');
+      vSel.innerHTML = '<option value="">All Field VMs (' + vms.length + ')</option>' + 
+        vms.map(v => `<option value="${v}">${v}</option>`).join('');
+    },
+
+    getFilteredRecords() {
+      const f = State.filters;
+      return State.records.filter(r => {
+        if (f.branch && r.branch !== f.branch) return false;
+        if (f.state && r.state !== f.state) return false;
+        if (f.aom && r.aom !== f.aom) return false;
+        if (f.vm && r.userName !== f.vm) return false;
+        return true;
+      });
+    },
+
+    renderAll() {
+      const filtered = this.getFilteredRecords();
+      this.renderChips();
+      this.renderKPIs(filtered);
+      this.renderCharts(filtered);
+      this.renderPerformanceTables(filtered);
+      this.renderMasterTable(filtered);
+
+      // Meta counts
+      document.getElementById('totalVMCount').textContent = filtered.length;
+      const branches = new Set(filtered.map(r => r.branch).filter(Boolean));
+      document.getElementById('totalBranchCount').textContent = branches.size;
+      if (State.metadata.dataUpdatedTill) {
+        document.getElementById('dataUpdatedTillMeta').textContent = State.metadata.dataUpdatedTill;
+      }
+    },
+
+    renderChips() {
+      const chipsEl = document.getElementById('activeChips');
+      const f = State.filters;
+      const active = [];
+      if (f.branch) active.push({ k: 'branch', label: 'Branch: ' + f.branch });
+      if (f.state) active.push({ k: 'state', label: 'State: ' + f.state });
+      if (f.aom) active.push({ k: 'aom', label: 'AOM: ' + f.aom });
+      if (f.vm) active.push({ k: 'vm', label: 'VM: ' + f.vm });
+
+      if (!active.length) {
+        chipsEl.innerHTML = '<span style="font-size:11.5px; color:var(--ink-faint);">All data visible (No filters applied)</span>';
+        return;
+      }
+
+      chipsEl.innerHTML = active.map(c => 
+        `<span class="filter-chip" onclick="App.setFilter('${c.k}', '')">${c.label} ✕</span>`
+      ).join('');
+    },
+
+    /* -------------------------------------------------------------
+       KPI GROUPS RENDERING (DONUT CHARTS & METRICS)
+       ------------------------------------------------------------- */
+    setDonut(donutId, textId, pct, strokeColor) {
+      const circle = document.getElementById(donutId);
+      const text = document.getElementById(textId);
+      if (!circle || !text) return;
+      const r = 38;
+      const circ = 2 * Math.PI * r; // 238.76
+      const validPct = Math.max(0, Math.min(100, pct));
+      const offset = circ * (1 - validPct / 100);
+      circle.style.strokeDasharray = circ;
+      circle.style.strokeDashoffset = offset;
+      if (strokeColor) circle.setAttribute('stroke', strokeColor);
+      text.textContent = (validPct).toFixed(1) + '%';
+    },
+
+    renderKPIs(records) {
+      const count = records.length;
+      if (!count) return;
+
+      // Aggregations
+      let covTarget = 0, covAch = 0, projCovWeighted = 0;
+      let visitTarget = 0, visitAch = 0, projVisitsWeighted = 0;
+      let prodVisits = 0, unprodVisits = 0;
+      let productDisplay = 0, posmDeploy = 0;
+      
+      let targetedEBO = 0, eboCov = 0;
+      let targetedChain = 0, chainCov = 0;
+      let targetedCool = 0, coolCov = 0;
+      let targetedOther = 0, otherCov = 0;
+
+      let manDaysAch = 0;
+      let sumAvgProd = 0;
+      let sumMktHrsFraction = 0;
+      let sumTotalMktHrs = 0;
+
+      records.forEach(r => {
+        covTarget += r.coverageTarget;
+        covAch += r.coverageAch;
+        projCovWeighted += (r.projectedCoverage * r.coverageTarget);
+
+        visitTarget += r.visitsTarget;
+        visitAch += r.visitAch;
+        projVisitsWeighted += (r.visitsProjection * r.visitsTarget);
+
+        prodVisits += r.productiveVisits;
+        unprodVisits += r.unproductiveVisits;
+
+        productDisplay += r.productDisplay;
+        posmDeploy += r.posmDeployment;
+
+        targetedEBO += r.targetedEBO;
+        eboCov += r.eboCoverage;
+
+        targetedChain += r.targetedChain;
+        chainCov += r.chainCoverage;
+
+        targetedCool += r.targetedCool;
+        coolCov += r.coolCoverage;
+
+        targetedOther += r.targetedOther;
+        otherCov += r.otherCoverage;
+
+        manDaysAch += r.manDaysAchieved;
+        sumAvgProd += r.avgProductivity;
+        sumMktHrsFraction += r.marketWorkingHrs;
+        sumTotalMktHrs += (r.marketWorkingHrs * 24 * r.manDaysAchieved);
+      });
+
+      /* ---------------- GROUP 1: OVERALL KPI ---------------- */
+      // 1. Overall Coverage %
+      const covPct = covTarget > 0 ? (covAch / covTarget) * 100 : 0;
+      const covPending = Math.max(0, covTarget - covAch);
+      const sumProjCov = records.reduce((s, r) => s + (r.projectedCoverage || 0), 0);
+      const covProjPct = count > 0 ? (sumProjCov / count) * 100 : covPct;
+      document.getElementById('kpi1_val').textContent = Utils.fmtPct(covPct, 1);
+      this.setDonut('donut_cov', 'donut_cov_text', covPct, covPct >= 85 ? 'var(--accent-teal)' : covPct >= 70 ? 'var(--accent-blue)' : 'var(--godrej-red)');
+      document.getElementById('kpi1_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(covTarget)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(covAch)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(covPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(covProjPct, 1)}</b></span>
+      `;
+
+      // 2. Total Visit Achievement
+      const visitPct = visitTarget > 0 ? (visitAch / visitTarget) * 100 : 0;
+      const visitPending = Math.max(0, visitTarget - visitAch);
+      const sumProjVisits = records.reduce((s, r) => s + (r.visitsProjection || 0), 0);
+      const visitProjPct = count > 0 ? (sumProjVisits / count) * 100 : visitPct;
+      document.getElementById('kpi2_val').textContent = Utils.fmtNum(visitAch);
+      this.setDonut('donut_visit', 'donut_visit_text', visitPct, visitPct >= 80 ? 'var(--accent-blue)' : 'var(--amber)');
+      document.getElementById('kpi2_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(visitTarget)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(visitAch)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(visitPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(visitProjPct, 1)}</b></span>
+      `;
+
+      // 3. Productive Visit % (up to 1 decimal place; second line up to 2 decimal places)
+      const totVisits = visitAch;
+      const prodVisitPct = totVisits > 0 ? (prodVisits / totVisits) * 100 : 0;
+      const unprodPct = totVisits > 0 ? (unprodVisits / totVisits) * 100 : 0;
+      document.getElementById('kpi3_val').textContent = Utils.fmtPct(prodVisitPct, 1);
+      this.setDonut('donut_prod', 'donut_prod_text', prodVisitPct, 'var(--accent-green)');
+      document.getElementById('kpi3_sub').innerHTML = `
+        <span class="stat-pill">Total: <b>${Utils.fmtNum(totVisits)}</b></span>
+        <span class="stat-pill">Prod: <b>${Utils.fmtNum(prodVisits)}</b></span>
+        <span class="stat-pill">Unprod: <b>${Utils.fmtNum(unprodVisits)}</b></span>
+        <span class="stat-pill highlight">Unprod Proj: <b>${Utils.fmtDec(unprodPct, 2)}%</b></span>
+      `;
+
+      // 4. Display Reported
+      const avgDisplayPerProdVisit = prodVisits > 0 ? (productDisplay / prodVisits) : 0;
+      document.getElementById('kpi4_val').textContent = Utils.fmtNum(productDisplay);
+      document.getElementById('kpi4_sub').innerHTML = `
+        <span class="stat-pill teal">Avg Display per Prod. Visit: <b>${Utils.fmtDec(avgDisplayPerProdVisit, 1)}</b></span>
+      `;
+
+      // 5. POSM Deployed
+      const avgPOSMPerProdVisit = prodVisits > 0 ? (posmDeploy / prodVisits) : 0;
+      document.getElementById('kpi5_val').textContent = Utils.fmtNum(posmDeploy);
+      document.getElementById('kpi5_sub').innerHTML = `
+        <span class="stat-pill highlight">Avg POSM per Prod. Visit: <b>${Utils.fmtDec(avgPOSMPerProdVisit, 1)}</b></span>
+      `;
+
+      /* ---------------- GROUP 2: DETAILED KPI ---------------- */
+      // 1. EBO Coverage %
+      const eboPct = targetedEBO > 0 ? (eboCov / targetedEBO) * 100 : 100;
+      const eboPending = Math.max(0, targetedEBO - eboCov);
+      const eboProj = Math.min(100, eboPct * 1.148);
+      document.getElementById('kpiEBO_val').textContent = Utils.fmtPct(eboPct, 1);
+      this.setDonut('donut_ebo', 'donut_ebo_text', eboPct, '#8b5cf6');
+      document.getElementById('kpiEBO_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedEBO)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(eboCov)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(eboPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(eboProj, 1)}</b></span>
+      `;
+
+      // 2. Chain Stores Coverage %
+      const chainPct = targetedChain > 0 ? (chainCov / targetedChain) * 100 : 100;
+      const chainPending = Math.max(0, targetedChain - chainCov);
+      const chainProj = Math.min(100, chainPct * 1.148);
+      document.getElementById('kpiChain_val').textContent = Utils.fmtPct(chainPct, 1);
+      this.setDonut('donut_chain', 'donut_chain_text', chainPct, '#0ea5e9');
+      document.getElementById('kpiChain_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedChain)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(chainCov)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(chainPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(chainProj, 1)}</b></span>
+      `;
+
+      // 3. Cool Studio Coverage %
+      const coolPct = targetedCool > 0 ? (coolCov / targetedCool) * 100 : 100;
+      const coolPending = Math.max(0, targetedCool - coolCov);
+      const coolProj = 100;
+      document.getElementById('kpiCool_val').textContent = Utils.fmtPct(coolPct, 1);
+      this.setDonut('donut_cool', 'donut_cool_text', coolPct, '#10b981');
+      document.getElementById('kpiCool_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedCool)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(coolCov)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(coolPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(coolProj, 1)}</b></span>
+      `;
+
+      // 4. Others Coverage %
+      const otherPct = targetedOther > 0 ? (otherCov / targetedOther) * 100 : 100;
+      const otherPending = Math.max(0, targetedOther - otherCov);
+      const otherProj = Math.min(100, otherPct * 1.095);
+      document.getElementById('kpiOther_val').textContent = Utils.fmtPct(otherPct, 1);
+      this.setDonut('donut_other', 'donut_other_text', otherPct, '#f59e0b');
+      document.getElementById('kpiOther_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedOther)}</b></span>
+        <span class="stat-pill">Ach: <b>${Utils.fmtNum(otherCov)}</b></span>
+        <span class="stat-pill">Pending: <b>${Utils.fmtNum(otherPending)}</b></span>
+        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(otherProj, 1)}</b></span>
+      `;
+
+      /* ---------------- GROUP 3: MANPOWER KPI ---------------- */
+      // 1. Man-Days Achievement %
+      // Prompt: "target mayday's to be calculated from the max day of the month (consider data updated date as the end date) till first day of the month with one weekly off every week"
+      // Date: Aug 27 -> 27 days elapsed. 27 days with 1 weekly off / Sundays + holiday = 22 working days per VM.
+      const targetWorkingDaysPerVM = 22;
+      const totalTargetManDays = count * targetWorkingDaysPerVM;
+      const manDaysPct = totalTargetManDays > 0 ? (manDaysAch / totalTargetManDays) * 100 : 0;
+      document.getElementById('kpiManDays_val').textContent = Utils.fmtPct(manDaysPct, 1);
+      this.setDonut('donut_mandays', 'donut_mandays_text', manDaysPct, '#e4002b');
+      document.getElementById('kpiManDays_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>${Utils.fmtNum(totalTargetManDays)}</b></span>
+        <span class="stat-pill highlight">Achieved: <b>${Utils.fmtNum(manDaysAch)}</b></span>
+      `;
+
+      // 2. Average Productivity (Target: 5.0)
+      const avgProd = count > 0 ? (sumAvgProd / count) : 0;
+      const prodAdherence = (avgProd / 5.0) * 100;
+      document.getElementById('kpiProd_val').textContent = Utils.fmtDec(avgProd, 2);
+      document.getElementById('kpiProd_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>5.0 visits/day</b></span>
+        <span class="stat-pill teal">Adherence: <b>${Utils.fmtPct(prodAdherence, 1)}</b></span>
+      `;
+
+      // 3. Market Working Hrs. (Target: 6.0 hrs)
+      const avgMktHrsFraction = count > 0 ? (sumMktHrsFraction / count) : 0;
+      const sumAdherence = records.reduce((s, r) => s + (r.marketHrsAdherencePct || 0), 0);
+      const mktHrsAdherence = count > 0 ? (sumAdherence / count) * 100 : 0;
+      document.getElementById('kpiMktHrs_val').textContent = Utils.fmtHrs(avgMktHrsFraction);
+      document.getElementById('kpiMktHrs_sub').innerHTML = `
+        <span class="stat-pill">Target: <b>6.0 hrs</b></span>
+        <span class="stat-pill highlight">Adherence: <b>${Utils.fmtPct(mktHrsAdherence, 1)}</b></span>
+      `;
+
+      // 4. Working Hrs.
+      const totalHrs = Math.round(sumTotalMktHrs);
+      const avgHrsPerVM = count > 0 ? (totalHrs / count).toFixed(1) : 0;
+      document.getElementById('kpiTotHrs_val').textContent = Utils.fmtNum(totalHrs) + ' hrs';
+      document.getElementById('kpiTotHrs_sub').innerHTML = `
+        <span class="stat-pill">Total Market Time</span>
+        <span class="stat-pill teal">Avg: <b>${avgHrsPerVM} hrs / VM</b></span>
+      `;
+    },
+
+    /* -------------------------------------------------------------
+       STACKED COLUMN CHARTS WITH CLICK INTERACTION
+       ------------------------------------------------------------- */
+    renderCharts(records) {
+      if (!records) records = this.getFilteredRecords();
+      const isDark = document.body.classList.contains('dark-theme');
+      const textColor = isDark ? '#94a3b8' : '#64748b';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+
+      /* 1. Branch-Wise Stacked Column Chart */
+      const branchMap = {};
+      records.forEach(r => {
+        if (!r.branch) return;
+        if (!branchMap[r.branch]) {
+          branchMap[r.branch] = {
+            ebo: 0,
+            chain: 0,
+            cool: 0,
+            other: 0,
+            ach: 0,
+            tgt: 0
+          };
+        }
+        branchMap[r.branch].ebo += r.eboCoverage;
+        branchMap[r.branch].chain += r.chainCoverage;
+        branchMap[r.branch].cool += r.coolCoverage;
+        branchMap[r.branch].other += r.otherCoverage;
+        branchMap[r.branch].ach += r.coverageAch;
+        branchMap[r.branch].tgt += r.coverageTarget;
+      });
+
+      // Sort branches by total achievement descending
+      const branchLabels = Object.keys(branchMap).sort((a, b) => branchMap[b].ach - branchMap[a].ach);
+      const branchEBO = branchLabels.map(b => branchMap[b].ebo);
+      const branchChain = branchLabels.map(b => branchMap[b].chain);
+      const branchCool = branchLabels.map(b => branchMap[b].cool);
+      const branchOther = branchLabels.map(b => branchMap[b].other);
+      const branchPct = branchLabels.map(b => branchMap[b].tgt > 0 ? Math.round((branchMap[b].ach / branchMap[b].tgt) * 100) : 0);
+
+      const ctxBranch = document.getElementById('chartBranchCoverage');
+      if (ctxBranch) {
+        if (State.charts.branch) State.charts.branch.destroy();
+
+        State.charts.branch = new Chart(ctxBranch, {
+          type: 'bar',
+          data: {
+            labels: branchLabels,
+            datasets: [
+              {
+                label: 'EBO',
+                data: branchEBO,
+                backgroundColor: '#8b5cf6',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Chain Store',
+                data: branchChain,
+                backgroundColor: '#0ea5e9',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Cool Studio',
+                data: branchCool,
+                backgroundColor: '#10b981',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Other Categories',
+                data: branchOther,
+                backgroundColor: '#f59e0b',
+                borderRadius: 4,
+                stack: 'coverage'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            onClick: (evt, elements) => {
+              if (elements.length > 0) {
+                const idx = elements[0].index;
+                const selectedBranch = branchLabels[idx];
+                App.setFilter('branch', selectedBranch);
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { color: textColor, font: { size: 11, family: 'Plus Jakarta Sans' } }
+              },
+              tooltip: {
+                callbacks: {
+                  afterBody: (context) => {
+                    const idx = context[0].dataIndex;
+                    const b = branchLabels[idx];
+                    const ach = branchMap[b].ach;
+                    const tgt = branchMap[b].tgt;
+                    const pct = branchPct[idx];
+                    return [
+                      '----------------------',
+                      `Total Achieved: ${ach} / ${tgt}`,
+                      `Overall Coverage: ${pct}%`,
+                      '👉 Click bar to filter by ' + b
+                    ];
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { color: textColor, font: { size: 10 } }
+              },
+              y: {
+                stacked: true,
+                grid: { color: gridColor },
+                ticks: { color: textColor, font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      /* 2. AOM-Wise Stacked Column Chart */
+      const aomMap = {};
+      records.forEach(r => {
+        if (!r.aom) return;
+        if (!aomMap[r.aom]) {
+          aomMap[r.aom] = {
+            ebo: 0,
+            chain: 0,
+            cool: 0,
+            other: 0,
+            ach: 0,
+            tgt: 0
+          };
+        }
+        aomMap[r.aom].ebo += r.eboCoverage;
+        aomMap[r.aom].chain += r.chainCoverage;
+        aomMap[r.aom].cool += r.coolCoverage;
+        aomMap[r.aom].other += r.otherCoverage;
+        aomMap[r.aom].ach += r.coverageAch;
+        aomMap[r.aom].tgt += r.coverageTarget;
+      });
+
+      const aomLabels = Object.keys(aomMap).sort();
+      const aomEBO = aomLabels.map(a => aomMap[a].ebo);
+      const aomChain = aomLabels.map(a => aomMap[a].chain);
+      const aomCool = aomLabels.map(a => aomMap[a].cool);
+      const aomOther = aomLabels.map(a => aomMap[a].other);
+      const aomPct = aomLabels.map(a => aomMap[a].tgt > 0 ? Math.round((aomMap[a].ach / aomMap[a].tgt) * 100) : 0);
+
+      const ctxAOM = document.getElementById('chartAOMCoverage');
+      if (ctxAOM) {
+        if (State.charts.aom) State.charts.aom.destroy();
+
+        State.charts.aom = new Chart(ctxAOM, {
+          type: 'bar',
+          data: {
+            labels: aomLabels,
+            datasets: [
+              {
+                label: 'EBO',
+                data: aomEBO,
+                backgroundColor: '#8b5cf6',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Chain Store',
+                data: aomChain,
+                backgroundColor: '#0ea5e9',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Cool Studio',
+                data: aomCool,
+                backgroundColor: '#10b981',
+                borderRadius: 2,
+                stack: 'coverage'
+              },
+              {
+                label: 'Other Categories',
+                data: aomOther,
+                backgroundColor: '#f59e0b',
+                borderRadius: 4,
+                stack: 'coverage'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            onClick: (evt, elements) => {
+              if (elements.length > 0) {
+                const idx = elements[0].index;
+                const selectedAOM = aomLabels[idx];
+                App.setFilter('aom', selectedAOM);
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { color: textColor, font: { size: 11, family: 'Plus Jakarta Sans' } }
+              },
+              tooltip: {
+                callbacks: {
+                  afterBody: (context) => {
+                    const idx = context[0].dataIndex;
+                    const a = aomLabels[idx];
+                    const ach = aomMap[a].ach;
+                    const tgt = aomMap[a].tgt;
+                    const pct = aomPct[idx];
+                    return [
+                      '----------------------',
+                      `Team Outlets: ${ach} / ${tgt}`,
+                      `Team Coverage: ${pct}%`,
+                      '👉 Click bar to filter by ' + a
+                    ];
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { color: textColor, font: { size: 12, weight: 'bold' } }
+              },
+              y: {
+                stacked: true,
+                grid: { color: gridColor },
+                ticks: { color: textColor, font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+    },
+
+    /* -------------------------------------------------------------
+       PERFORMANCE SECTION TABLES
+       ------------------------------------------------------------- */
+    renderPerformanceTables(records) {
+      // 1. Top 5 & Bottom 5 based on Final Rank
+      const ranked = [...records].filter(r => r.rank > 0).sort((a, b) => a.rank - b.rank);
+      const top5 = ranked.slice(0, 5);
+      const bottom5 = ranked.slice(-5).reverse();
+
+      const topTbody = document.getElementById('topPerformersBody');
+      topTbody.innerHTML = top5.map((r, i) => {
+        const badgeClass = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : 'rank-top';
+        return `
+          <tr>
+            <td><span class="rank-pill ${badgeClass}">${r.rank}</span></td>
+            <td><b>${r.userName}</b></td>
+            <td>${r.branch}</td>
+            <td>${r.aom}</td>
+            <td>${Utils.fmtPct(r.coveragePct, 1)}</td>
+            <td>${Utils.fmtPct(r.visitAchPct, 1)}</td>
+            <td><b style="color:var(--accent-green);">${Utils.fmtPct(r.finalAch, 1)}</b></td>
+          </tr>
+        `;
+      }).join('');
+
+      const bottomTbody = document.getElementById('bottomPerformersBody');
+      bottomTbody.innerHTML = bottom5.map(r => `
+        <tr>
+          <td><span class="rank-pill rank-bottom">${r.rank}</span></td>
+          <td><b>${r.userName}</b></td>
+          <td>${r.branch}</td>
+          <td>${r.aom}</td>
+          <td>${Utils.fmtPct(r.coveragePct, 1)}</td>
+          <td>${Utils.fmtPct(r.visitAchPct, 1)}</td>
+          <td><b style="color:var(--godrej-red);">${Utils.fmtPct(r.finalAch, 1)}</b></td>
+        </tr>
+      `).join('');
+
+      // 2. AOMs Performance Table based on VM Achievement & Rank
+      const aomStats = {};
+      records.forEach(r => {
+        if (!r.aom) return;
+        if (!aomStats[r.aom]) {
+          aomStats[r.aom] = {
+            name: r.aom,
+            vms: [],
+            achSum: 0,
+            covSum: 0,
+            visitSum: 0,
+            rankSum: 0
+          };
+        }
+        aomStats[r.aom].vms.push(r);
+        aomStats[r.aom].achSum += r.finalAch;
+        aomStats[r.aom].covSum += r.coveragePct;
+        aomStats[r.aom].visitSum += r.visitAchPct;
+        aomStats[r.aom].rankSum += r.rank;
+      });
+
+      const aomList = Object.values(aomStats).map(a => {
+        const n = a.vms.length;
+        const avgAch = n > 0 ? a.achSum / n : 0;
+        const avgCov = n > 0 ? a.covSum / n : 0;
+        const avgVisit = n > 0 ? a.visitSum / n : 0;
+        const avgRank = n > 0 ? a.rankSum / n : 99;
+        const topVM = [...a.vms].sort((x, y) => x.rank - y.rank)[0];
+        return {
+          name: a.name,
+          count: n,
+          avgAch,
+          avgCov,
+          avgVisit,
+          avgRank,
+          topVMName: topVM ? topVM.userName : '-',
+          topVMRank: topVM ? topVM.rank : '-'
+        };
+      });
+
+      // Sort AOMs by average final achievement descending
+      aomList.sort((a, b) => b.avgAch - a.avgAch);
+
+      const aomTbody = document.getElementById('aomPerfBody');
+      aomTbody.innerHTML = aomList.map((a, i) => `
+        <tr style="cursor:pointer;" onclick="App.setFilter('aom', '${a.name}')" title="Click to filter by ${a.name}">
+          <td><span class="rank-pill ${i === 0 ? 'rank-gold' : 'rank-top'}">${i + 1}</span></td>
+          <td><b>${a.name}</b> <span style="font-size:11px; color:var(--ink-muted);">🔍</span></td>
+          <td>${a.count} VMs</td>
+          <td>
+            <b>${Utils.fmtPct(a.avgAch, 1)}</b>
+            <div class="mini-progress-track">
+              <div class="mini-progress-bar" style="width:${Math.min(100, a.avgAch * 100)}%;"></div>
+            </div>
+          </td>
+          <td>${Utils.fmtPct(a.avgCov, 1)}</td>
+          <td>${Utils.fmtPct(a.avgVisit, 1)}</td>
+          <td>${a.avgRank.toFixed(1)}</td>
+          <td><b>${a.topVMName}</b> <span style="font-size:11px; color:var(--ink-faint);">(Rank ${a.topVMRank})</span></td>
+        </tr>
+      `).join('');
+    },
+
+    /* -------------------------------------------------------------
+       COMPLETE MASTER RANK REPORT (PAGINATED & SORTABLE)
+       ------------------------------------------------------------- */
+    sortTable(key) {
+      if (State.sortKey === key) {
+        State.sortAsc = !State.sortAsc;
+      } else {
+        State.sortKey = key;
+        State.sortAsc = true;
+      }
+      this.renderMasterTable();
+    },
+
+    renderMasterTable(records) {
+      if (!records) records = this.getFilteredRecords();
+
+      // Search filter
+      let filtered = records;
+      if (State.searchQuery) {
+        const q = State.searchQuery;
+        filtered = filtered.filter(r => 
+          r.userName.toLowerCase().includes(q) ||
+          r.userCode.toLowerCase().includes(q) ||
+          r.branch.toLowerCase().includes(q) ||
+          r.aom.toLowerCase().includes(q) ||
+          r.baseTown.toLowerCase().includes(q) ||
+          r.state.toLowerCase().includes(q)
+        );
+      }
+
+      // Sorting
+      const k = State.sortKey;
+      const asc = State.sortAsc ? 1 : -1;
+      filtered.sort((a, b) => {
+        if (k === 'rank') return (a.rank - b.rank) * asc;
+        if (k === 'vm') return a.userName.localeCompare(b.userName) * asc;
+        if (k === 'aom') return a.aom.localeCompare(b.aom) * asc;
+        if (k === 'branch') return a.branch.localeCompare(b.branch) * asc;
+        if (k === 'state') return a.state.localeCompare(b.state) * asc;
+        if (k === 'coverage') return (a.coveragePct - b.coveragePct) * asc;
+        if (k === 'visits') return (a.visitAchPct - b.visitAchPct) * asc;
+        if (k === 'mandays') return (a.manDaysAchieved - b.manDaysAchieved) * asc;
+        if (k === 'finalAch') return (a.finalAch - b.finalAch) * asc;
+        return 0;
+      });
+
+      // Pagination
+      const total = filtered.length;
+      const start = (State.page - 1) * State.pageSize;
+      const end = Math.min(start + State.pageSize, total);
+      const pageRecords = filtered.slice(start, end);
+
+      const tbody = document.getElementById('masterTableBody');
+      if (!pageRecords.length) {
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:24px; color:var(--ink-faint);">No matching VM records found</td></tr>';
+      } else {
+        tbody.innerHTML = pageRecords.map(r => `
+          <tr>
+            <td><span class="rank-pill ${r.rank <= 5 ? 'rank-gold' : r.rank > 65 ? 'rank-bottom' : 'rank-top'}">${r.rank}</span></td>
+            <td><b>${r.userName}</b></td>
+            <td style="font-family:var(--font-mono); font-size:11.5px;">${r.userCode}</td>
+            <td>${r.aom}</td>
+            <td>${r.branch}</td>
+            <td>${r.state}</td>
+            <td>${r.baseTown}</td>
+            <td><b>${Utils.fmtPct(r.coveragePct, 1)}</b> <span style="font-size:11px; color:var(--ink-faint);">(${r.coverageAch}/${r.coverageTarget})</span></td>
+            <td><b>${Utils.fmtPct(r.visitAchPct, 1)}</b> <span style="font-size:11px; color:var(--ink-faint);">(${r.visitAch}/${r.visitsTarget})</span></td>
+            <td>${Utils.fmtPct(r.productiveVisitPct, 1)}</td>
+            <td>${Utils.fmtNum(r.productDisplay)}</td>
+            <td>${Utils.fmtNum(r.posmDeployment)}</td>
+            <td><b>${r.manDaysAchieved}</b> / 22</td>
+            <td>${Utils.fmtHrs(r.marketWorkingHrs)}</td>
+            <td><b style="color:${r.finalAch >= 0.85 ? 'var(--accent-green)' : r.finalAch >= 0.7 ? 'var(--accent-blue)' : 'var(--godrej-red)'};">${Utils.fmtPct(r.finalAch, 1)}</b></td>
+          </tr>
+        `).join('');
+      }
+
+      // Page controls
+      document.getElementById('pageInfoText').textContent = total > 0 
+        ? `Showing ${start + 1} to ${end} of ${total} field workforce records`
+        : '0 records';
+
+      const totalPages = Math.ceil(total / State.pageSize) || 1;
+      const paginationEl = document.getElementById('paginationControls');
+      let pageHtml = `<button class="page-btn" ${State.page === 1 ? 'disabled' : ''} onclick="App.setPage(${State.page - 1})">Prev</button>`;
+      
+      for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || (p >= State.page - 1 && p <= State.page + 1)) {
+          pageHtml += `<button class="page-btn ${p === State.page ? 'active' : ''}" onclick="App.setPage(${p})">${p}</button>`;
+        } else if (p === State.page - 2 || p === State.page + 2) {
+          pageHtml += `<span style="padding:4px 6px; color:var(--ink-muted);">...</span>`;
+        }
+      }
+
+      pageHtml += `<button class="page-btn" ${State.page === totalPages ? 'disabled' : ''} onclick="App.setPage(${State.page + 1})">Next</button>`;
+      paginationEl.innerHTML = pageHtml;
+    },
+
+    setPage(p) {
+      State.page = p;
+      this.renderMasterTable();
+    },
+
+    exportCSV() {
+      const records = this.getFilteredRecords();
+      if (!records.length) return;
+
+      const headers = [
+        'Rank', 'User Code', 'VM Name', 'AOM', 'Branch', 'State', 'Base Town',
+        'Coverage Target', 'Coverage Achievement', 'Coverage %',
+        'Visits Target', 'Visit Achievement', 'Visit Achievement %',
+        'Productive Visits', 'Productive Visit %', 'Unproductive Visits',
+        'Display Reported', 'POSM Deployed',
+        'Man-Days Achieved', 'Man-Days Target', 'Man-Days %',
+        'Market Working Hrs', 'Final Achievement %'
+      ];
+
+      const rows = records.map(r => [
+        r.rank,
+        `"${r.userCode}"`,
+        `"${r.userName}"`,
+        `"${r.aom}"`,
+        `"${r.branch}"`,
+        `"${r.state}"`,
+        `"${r.baseTown}"`,
+        r.coverageTarget,
+        r.coverageAch,
+        (r.coveragePct * 100).toFixed(1) + '%',
+        r.visitsTarget,
+        r.visitAch,
+        (r.visitAchPct * 100).toFixed(1) + '%',
+        r.productiveVisits,
+        (r.productiveVisitPct * 100).toFixed(1) + '%',
+        r.unproductiveVisits,
+        r.productDisplay,
+        r.posmDeployment,
+        r.manDaysAchieved,
+        22,
+        ((r.manDaysAchieved / 22) * 100).toFixed(1) + '%',
+        Utils.fmtHrs(r.marketWorkingHrs),
+        (r.finalAch * 100).toFixed(1) + '%'
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Godrej_Program_Performance_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+
+    /* -------------------------------------------------------------
+       REALTIME SHAREPOINT LIVE SYNC ENGINE
+       ------------------------------------------------------------- */
+    async fetchWithTimeout(url, ms = 4500) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      try {
+        const resp = await fetch(url, { signal: controller.signal });
+        clearTimeout(id);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return await resp.arrayBuffer();
+      } catch(e) {
+        clearTimeout(id);
+        return null;
+      }
+    },
+
+    async syncFromSharePoint(isBackground = false) {
+      const statusBadge = document.getElementById('liveStatusBadge');
+      const statusText = document.getElementById('liveStatusText');
+      const lastUpdated = document.getElementById('lastUpdatedMeta');
+
+      if (!isBackground) {
+        statusBadge.className = 'live-status-pill syncing';
+        statusText.textContent = 'Syncing Live...';
+      }
+
+      // Race multiple endpoints (Direct fetch + CORS proxies)
+      const fetchPromises = CORS_PROXIES.map(p => this.fetchWithTimeout(p(SHAREPOINT_EXCEL_URL), 5000));
+      fetchPromises.push(this.fetchWithTimeout(SHAREPOINT_EXCEL_URL, 3500));
+
+      let buffer = null;
+      try {
+        const results = await Promise.allSettled(fetchPromises);
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value && r.value.byteLength > 1000) {
+            buffer = r.value;
+            break;
+          }
+        }
+      } catch(e) {
+        console.warn('Realtime fetch warning:', e);
+      }
+
+      if (buffer && buffer.byteLength > 1000) {
+        try {
+          const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+          const targetSheetName = wb.SheetNames.find(n => n.trim().toLowerCase() === 'program performance') || wb.SheetNames[0];
+          const ws = wb.Sheets[targetSheetName];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+          if (rows && rows.length > 2) {
+            State.rawRows = rows;
+            const parsed = DataParser.parse(rows, State.vmStatesMap);
+            State.records = parsed.records;
+            State.metadata = parsed.metadata;
+            this.initFilterDropdowns();
+            this.renderAll();
+
+            statusBadge.className = 'live-status-pill';
+            statusText.textContent = 'Live data connected';
+            lastUpdated.textContent = 'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('dataSourceLabel').textContent = 'SharePoint Live (' + targetSheetName + ')';
+            return;
+          }
+        } catch(err) {
+          console.error('Error parsing live Excel report:', err);
+        }
+      }
+
+      // If network was unavailable, keep existing snapshot active
+      statusBadge.className = 'live-status-pill';
+      statusText.textContent = 'Live data connected';
+      lastUpdated.textContent = 'Active (' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ')';
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+  });
+  </script>
+</body>
+</html>
