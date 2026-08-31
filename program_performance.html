@@ -152,14 +152,14 @@
     .donut-track {
       fill: none;
       stroke: var(--surface-border);
-      stroke-width: 13;
+      stroke-width: 12;
     }
     body.dark-theme .donut-track {
       stroke: rgba(255, 255, 255, 0.08);
     }
     .donut-fill {
       fill: none;
-      stroke-width: 13;
+      stroke-width: 12;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -168,12 +168,15 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 14.5px;
-      font-weight: 800;
+      font-size: 12px;
+      font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--ink);
       font-family: var(--font-body);
       pointer-events: none;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1;
     }
 
     /* Second Line styling for non-% cards */
@@ -615,19 +618,22 @@
             </div>
           </div>
 
-          <!-- Tile 2: Total Visit Achievement (Count Tile - No Donut) -->
+          <!-- Tile 2: Total Visit Achievement % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Total Visit Achievement</div>
-                <div class="kpi-meta-num" id="kpi2_val">--</div>
-              </div>
-              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(2, 132, 199, 0.12); color:var(--accent-blue);">
-                🎯
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Total Visit Achievement %</div>
             </div>
-            <div class="kpi-second-line" id="kpi2_sub">
-              <!-- Target, Achievement, Pending, Projection -->
+            <div class="kpi-donut-body">
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
+                  <circle class="donut-track" cx="50" cy="50" r="38"/>
+                  <circle class="donut-fill" id="donut_visit" cx="50" cy="50" r="38" stroke="var(--accent-blue)" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                </svg>
+                <div class="donut-text-center" id="donut_visit_text">0%</div>
+              </div>
+              <div class="kpi-metric-rows" id="kpi2_sub">
+                <!-- Target, Achievement, Pending, Projection -->
+              </div>
             </div>
           </div>
 
@@ -1600,17 +1606,18 @@
         <div class="stat-pill highlight"><span>Projection:</span> <b>${Utils.fmtPct(covProjPct, 1)}</b></div>
       `;
 
-      // 2. Total Visit Achievement (Count tile - No Donut)
+      // 2. Total Visit Achievement % (Donut)
       const visitPct = visitTarget > 0 ? (visitAch / visitTarget) * 100 : 0;
       const visitPending = Math.max(0, visitTarget - visitAch);
       const sumProjVisits = records.reduce((s, r) => s + (r.visitsProjection || 0), 0);
       const visitProjPct = count > 0 ? (sumProjVisits / count) * 100 : visitPct;
-      document.getElementById('kpi2_val').textContent = Utils.fmtNum(visitAch);
+      if (document.getElementById('kpi2_val')) document.getElementById('kpi2_val').textContent = Utils.fmtPct(visitPct, 1);
+      this.setDonut('donut_visit', 'donut_visit_text', visitPct, visitPct >= 85 ? 'var(--accent-teal)' : visitPct >= 70 ? 'var(--accent-blue)' : 'var(--godrej-red)');
       document.getElementById('kpi2_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(visitTarget)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(visitAch)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(visitPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(visitProjPct, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(visitTarget)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(visitAch)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(visitPending)}</b></div>
+        <div class="stat-pill highlight"><span>Projection:</span> <b>${Utils.fmtPct(visitProjPct, 1)}</b></div>
       `;
 
       // 3. Productive Visit %
