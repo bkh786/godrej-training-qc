@@ -66,6 +66,9 @@
       gap: 12px;
       margin-bottom: 12px;
     }
+    .kpi-card-header {
+      margin-bottom: 8px;
+    }
     .kpi-text-meta {
       flex: 1;
       min-width: 0;
@@ -80,7 +83,6 @@
       margin-bottom: 4px;
       white-space: normal;
       line-height: 1.2;
-      min-height: 26px;
     }
     .kpi-meta-num {
       font-size: 26px;
@@ -88,6 +90,51 @@
       color: var(--ink);
       letter-spacing: -0.02em;
       line-height: 1.1;
+    }
+
+    /* % KPI Donut Body: Donut on left, metrics stacked vertically on right */
+    .kpi-donut-body {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+    .kpi-metric-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
+    }
+    .kpi-metric-rows .stat-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--ink-muted);
+      padding: 1.5px 0;
+      border-bottom: 1px dotted rgba(0, 0, 0, 0.08);
+      white-space: nowrap;
+    }
+    body.dark-theme .kpi-metric-rows .stat-pill {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .kpi-metric-rows .stat-pill:last-child {
+      border-bottom: none;
+    }
+    .kpi-metric-rows .stat-pill b {
+      color: var(--ink);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-left: auto;
+    }
+    .kpi-metric-rows .stat-pill.highlight b {
+      color: var(--godrej-red);
+    }
+    .kpi-metric-rows .stat-pill.teal b {
+      color: var(--accent-teal);
     }
     
     /* SVG Donut Ring: Bold & Wide */
@@ -129,7 +176,7 @@
       pointer-events: none;
     }
 
-    /* Second Line styling */
+    /* Second Line styling for non-% cards */
     .kpi-second-line {
       border-top: 1px dashed var(--surface-border);
       padding-top: 10px;
@@ -192,6 +239,64 @@
       padding: 3px 8px;
       border-radius: 12px;
       font-weight: 600;
+    }
+
+    /* Chart Category Interactive Legend Filters */
+    .chart-filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--surface-border);
+    }
+    .chart-filter-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 4px;
+    }
+    .chart-filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      font-size: 11.5px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      border-radius: 20px;
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .chart-filter-btn:hover {
+      background: var(--surface-hover);
+      color: var(--ink);
+      border-color: var(--ink-faint);
+    }
+    .chart-filter-btn .cat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .chart-filter-btn.active {
+      background: var(--godrej-red);
+      color: #fff;
+      border-color: var(--godrej-red);
+      box-shadow: 0 2px 6px rgba(228, 0, 43, 0.25);
+    }
+    .chart-filter-btn.active .cat-dot {
+      background: #fff !important;
     }
 
     /* Performance Tables Section */
@@ -479,13 +584,13 @@
       </div>
 
       <!-- ============================================================ -->
-      <!-- GROUP 1: OVERALL KPI -->
+      <!-- OVERALL KPI -->
       <!-- ============================================================ -->
       <div class="section">
         <div class="kpi-section-title">
           <h3>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            Group 1 — Overall KPI
+            Overall KPI
           </h3>
           <span class="kpi-badge kpi-badge-overall">Executive Scope</span>
         </div>
@@ -493,11 +598,10 @@
           
           <!-- Tile 1: Overall Coverage % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Overall Coverage %</div>
-                <div class="kpi-meta-num" id="kpi1_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Overall Coverage %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
@@ -505,25 +609,21 @@
                 </svg>
                 <div class="donut-text-center" id="donut_cov_text">0%</div>
               </div>
-            </div>
-            <div class="kpi-second-line" id="kpi1_sub">
-              <!-- Target, Achievement, Pending, Projection -->
+              <div class="kpi-metric-rows" id="kpi1_sub">
+                <!-- Target, Achievement, Pending, Projection -->
+              </div>
             </div>
           </div>
 
-          <!-- Tile 2: Total Visit Achievement (Donut) -->
+          <!-- Tile 2: Total Visit Achievement (Count Tile - No Donut) -->
           <div class="kpi-card-prog">
             <div class="kpi-donut-row">
               <div class="kpi-text-meta">
                 <div class="kpi-meta-label">Total Visit Achievement</div>
                 <div class="kpi-meta-num" id="kpi2_val">--</div>
               </div>
-              <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_visit" cx="50" cy="50" r="38" stroke="var(--accent-blue)" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
-                </svg>
-                <div class="donut-text-center" id="donut_visit_text">0%</div>
+              <div class="kpi-icon-wrap" style="width:48px; height:48px; border-radius:12px; font-size:22px; margin-bottom:0; background:rgba(2, 132, 199, 0.12); color:var(--accent-blue);">
+                🎯
               </div>
             </div>
             <div class="kpi-second-line" id="kpi2_sub">
@@ -533,11 +633,10 @@
 
           <!-- Tile 3: Productive Visit % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Productive Visit %</div>
-                <div class="kpi-meta-num" id="kpi3_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Productive Visit %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
@@ -545,9 +644,9 @@
                 </svg>
                 <div class="donut-text-center" id="donut_prod_text">0%</div>
               </div>
-            </div>
-            <div class="kpi-second-line" id="kpi3_sub">
-              <!-- Total visits, productive visits, unproductive visits, unproductive projection up to two decimal places -->
+              <div class="kpi-metric-rows" id="kpi3_sub">
+                <!-- Total visits, productive visits, unproductive visits, unproductive projection -->
+              </div>
             </div>
           </div>
 
@@ -587,13 +686,13 @@
       </div>
 
       <!-- ============================================================ -->
-      <!-- GROUP 2: DETAILED KPI -->
+      <!-- DETAILED KPI (STORE CATEGORIES) -->
       <!-- ============================================================ -->
       <div class="section">
         <div class="kpi-section-title">
           <h3>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Group 2 — Detailed KPI (Store Categories)
+            Detailed KPI (Store Categories)
           </h3>
           <span class="kpi-badge kpi-badge-detailed">Channel Segments</span>
         </div>
@@ -601,87 +700,83 @@
           
           <!-- EBO Coverage % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">EBO Coverage %</div>
-                <div class="kpi-meta-num" id="kpiEBO_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">EBO Coverage %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_ebo" cx="50" cy="50" r="38" stroke="#8b5cf6" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                  <circle class="donut-fill" id="donut_ebo" cx="50" cy="50" r="38" stroke="#4f46e5" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
                 </svg>
                 <div class="donut-text-center" id="donut_ebo_text">0%</div>
               </div>
+              <div class="kpi-metric-rows" id="kpiEBO_sub"></div>
             </div>
-            <div class="kpi-second-line" id="kpiEBO_sub"></div>
           </div>
 
           <!-- Chain Stores Coverage % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Chain Stores Coverage %</div>
-                <div class="kpi-meta-num" id="kpiChain_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Chain Stores Coverage %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_chain" cx="50" cy="50" r="38" stroke="#0ea5e9" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                  <circle class="donut-fill" id="donut_chain" cx="50" cy="50" r="38" stroke="#0284c7" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
                 </svg>
                 <div class="donut-text-center" id="donut_chain_text">0%</div>
               </div>
+              <div class="kpi-metric-rows" id="kpiChain_sub"></div>
             </div>
-            <div class="kpi-second-line" id="kpiChain_sub"></div>
           </div>
 
           <!-- Cool Studio Coverage % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Cool Studio Coverage %</div>
-                <div class="kpi-meta-num" id="kpiCool_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Cool Studio Coverage %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_cool" cx="50" cy="50" r="38" stroke="#10b981" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                  <circle class="donut-fill" id="donut_cool" cx="50" cy="50" r="38" stroke="#059669" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
                 </svg>
                 <div class="donut-text-center" id="donut_cool_text">0%</div>
               </div>
+              <div class="kpi-metric-rows" id="kpiCool_sub"></div>
             </div>
-            <div class="kpi-second-line" id="kpiCool_sub"></div>
           </div>
 
           <!-- Others Coverage % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Others Coverage %</div>
-                <div class="kpi-meta-num" id="kpiOther_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Others Coverage %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_other" cx="50" cy="50" r="38" stroke="#f59e0b" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                  <circle class="donut-fill" id="donut_other" cx="50" cy="50" r="38" stroke="#d97706" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
                 </svg>
                 <div class="donut-text-center" id="donut_other_text">0%</div>
               </div>
+              <div class="kpi-metric-rows" id="kpiOther_sub"></div>
             </div>
-            <div class="kpi-second-line" id="kpiOther_sub"></div>
           </div>
 
         </div>
       </div>
 
       <!-- ============================================================ -->
-      <!-- GROUP 3: MANPOWER KPI -->
+      <!-- MANPOWER KPI -->
       <!-- ============================================================ -->
       <div class="section">
         <div class="kpi-section-title">
           <h3>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            Group 3 — Manpower KPI
+            Manpower KPI
           </h3>
           <span class="kpi-badge kpi-badge-manpower">Field Workforce Intelligence</span>
         </div>
@@ -689,11 +784,10 @@
           
           <!-- Tile 1: Man-Days Achievement % (Donut) -->
           <div class="kpi-card-prog">
-            <div class="kpi-donut-row">
-              <div class="kpi-text-meta">
-                <div class="kpi-meta-label">Man-Days Achievement %</div>
-                <div class="kpi-meta-num" id="kpiManDays_val">--%</div>
-              </div>
+            <div class="kpi-card-header">
+              <div class="kpi-meta-label">Man-Days Achievement %</div>
+            </div>
+            <div class="kpi-donut-body">
               <div class="kpi-donut-svg-wrap">
                 <svg class="kpi-donut-svg" viewBox="0 0 100 100">
                   <circle class="donut-track" cx="50" cy="50" r="38"/>
@@ -701,9 +795,9 @@
                 </svg>
                 <div class="donut-text-center" id="donut_mandays_text">0%</div>
               </div>
-            </div>
-            <div class="kpi-second-line" id="kpiManDays_sub">
-              <!-- Target and achievement numbers (Target calculated till max day of month with 1 weekly off) -->
+              <div class="kpi-metric-rows" id="kpiManDays_sub">
+                <!-- Target and achievement numbers -->
+              </div>
             </div>
           </div>
 
@@ -759,45 +853,71 @@
       </div>
 
       <!-- ============================================================ -->
-      <!-- STACKED COLUMN CHARTS (WITH CLICK INTERACTION) -->
+      <!-- COLUMN CHARTS (WITH INTERACTIVE CATEGORY & DRILLDOWN FILTER) -->
       <!-- ============================================================ -->
       <div class="section">
         <div class="section-head" style="margin-bottom:14px;">
           <h2>Coverage Breakdown &amp; Performance Distribution</h2>
-          <span class="hint">Click any column bar to dynamically isolate and filter the entire dashboard view</span>
+          <span class="hint">Click legend buttons to switch category view. Click any column bar to filter dashboard by branch or AOM</span>
         </div>
 
         <div class="grid-2" style="display:grid; grid-template-columns: 1fr; gap:20px;">
-          <!-- 1. Branch-Wise Stacked Chart -->
+          <!-- 1. Branch-Wise Chart -->
           <div class="chart-container-card">
             <div class="chart-head-wrap">
               <div>
-                <h3>Branch-Wise Coverage Distribution</h3>
-                <span class="chart-hint">EBO, Chain Store, Cool Studio &amp; Other Categories Coverage per Branch</span>
+                <h3 id="branchChartTitle">Branch-Wise Coverage %</h3>
+                <span class="chart-hint" id="branchChartSubtitle">Default: Overall Coverage % branch-wise. Click any legend filter to isolate store category.</span>
               </div>
               <span class="chart-interactive-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                Click Column to Filter
+                Click Column to Drilldown
               </span>
             </div>
+
+            <!-- Category Legend Filter Tabs -->
+            <div class="chart-filter-tabs" id="branchChartLegendTabs">
+              <span class="chart-filter-label">Filter Category:</span>
+              <button class="chart-filter-btn active" data-category="all" onclick="App.toggleBranchCategory('all')">
+                <span class="cat-dot" style="background:#0284c7;"></span>
+                Overall Coverage %
+              </button>
+              <button class="chart-filter-btn" data-category="ebo" onclick="App.toggleBranchCategory('ebo')">
+                <span class="cat-dot" style="background:#4f46e5;"></span>
+                EBO
+              </button>
+              <button class="chart-filter-btn" data-category="chain" onclick="App.toggleBranchCategory('chain')">
+                <span class="cat-dot" style="background:#0284c7;"></span>
+                Chain Store
+              </button>
+              <button class="chart-filter-btn" data-category="cool" onclick="App.toggleBranchCategory('cool')">
+                <span class="cat-dot" style="background:#059669;"></span>
+                Cool Studio
+              </button>
+              <button class="chart-filter-btn" data-category="other" onclick="App.toggleBranchCategory('other')">
+                <span class="cat-dot" style="background:#d97706;"></span>
+                Other Categories
+              </button>
+            </div>
+
             <div style="height:360px; position:relative;">
               <canvas id="chartBranchCoverage"></canvas>
             </div>
           </div>
 
-          <!-- 2. AOM-Wise Stacked Chart -->
+          <!-- 2. AOM-Wise Chart -->
           <div class="chart-container-card">
             <div class="chart-head-wrap">
               <div>
-                <h3>AOM-Wise Coverage Distribution</h3>
-                <span class="chart-hint">Regional Merchandising Operations Teams Coverage &amp; Store Mix</span>
+                <h3>AOM-Wise Coverage by Category</h3>
+                <span class="chart-hint">Comparative performance across store categories (EBO, Chain Store, Cool Studio, Other Categories) mapped per AOM</span>
               </div>
               <span class="chart-interactive-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                Click Column to Filter
+                Click Column to Drilldown
               </span>
             </div>
-            <div style="height:320px; position:relative;">
+            <div style="height:340px; position:relative;">
               <canvas id="chartAOMCoverage"></canvas>
             </div>
           </div>
@@ -1003,6 +1123,7 @@
       aom: '',
       vm: ''
     },
+    branchChartCategory: 'all',
     searchQuery: '',
     sortKey: 'rank',
     sortAsc: true,
@@ -1279,12 +1400,36 @@
       State.filters.state = '';
       State.filters.aom = '';
       State.filters.vm = '';
+      State.branchChartCategory = 'all';
+      this.updateBranchCategoryButtons();
       document.getElementById('filterBranch').value = '';
       document.getElementById('filterState').value = '';
       document.getElementById('filterAOM').value = '';
       document.getElementById('filterVM').value = '';
       State.page = 1;
       this.renderAll();
+    },
+
+    toggleBranchCategory(cat) {
+      if (State.branchChartCategory === cat) {
+        State.branchChartCategory = 'all'; // toggle back to default
+      } else {
+        State.branchChartCategory = cat;
+      }
+      this.updateBranchCategoryButtons();
+      this.renderCharts();
+    },
+
+    updateBranchCategoryButtons() {
+      const btns = document.querySelectorAll('#branchChartLegendTabs .chart-filter-btn');
+      btns.forEach(btn => {
+        const cat = btn.getAttribute('data-category');
+        if (cat === State.branchChartCategory) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
     },
 
     setFilter(key, val) {
@@ -1440,28 +1585,27 @@
         sumTotalMktHrs += (r.marketWorkingHrs * 24 * r.manDaysAchieved);
       });
 
-      /* ---------------- GROUP 1: OVERALL KPI ---------------- */
+      /* ---------------- OVERALL KPI ---------------- */
       // 1. Overall Coverage %
       const covPct = covTarget > 0 ? (covAch / covTarget) * 100 : 0;
       const covPending = Math.max(0, covTarget - covAch);
       const sumProjCov = records.reduce((s, r) => s + (r.projectedCoverage || 0), 0);
       const covProjPct = count > 0 ? (sumProjCov / count) * 100 : covPct;
-      document.getElementById('kpi1_val').textContent = Utils.fmtPct(covPct, 1);
+      if (document.getElementById('kpi1_val')) document.getElementById('kpi1_val').textContent = Utils.fmtPct(covPct, 1);
       this.setDonut('donut_cov', 'donut_cov_text', covPct, covPct >= 85 ? 'var(--accent-teal)' : covPct >= 70 ? 'var(--accent-blue)' : 'var(--godrej-red)');
       document.getElementById('kpi1_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(covTarget)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(covAch)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(covPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(covProjPct, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(covTarget)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(covAch)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(covPending)}</b></div>
+        <div class="stat-pill highlight"><span>Projection:</span> <b>${Utils.fmtPct(covProjPct, 1)}</b></div>
       `;
 
-      // 2. Total Visit Achievement
+      // 2. Total Visit Achievement (Count tile - No Donut)
       const visitPct = visitTarget > 0 ? (visitAch / visitTarget) * 100 : 0;
       const visitPending = Math.max(0, visitTarget - visitAch);
       const sumProjVisits = records.reduce((s, r) => s + (r.visitsProjection || 0), 0);
       const visitProjPct = count > 0 ? (sumProjVisits / count) * 100 : visitPct;
       document.getElementById('kpi2_val').textContent = Utils.fmtNum(visitAch);
-      this.setDonut('donut_visit', 'donut_visit_text', visitPct, visitPct >= 80 ? 'var(--accent-blue)' : 'var(--amber)');
       document.getElementById('kpi2_sub').innerHTML = `
         <span class="stat-pill">Target: <b>${Utils.fmtNum(visitTarget)}</b></span>
         <span class="stat-pill">Ach: <b>${Utils.fmtNum(visitAch)}</b></span>
@@ -1469,17 +1613,17 @@
         <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(visitProjPct, 1)}</b></span>
       `;
 
-      // 3. Productive Visit % (up to 1 decimal place; second line up to 2 decimal places)
+      // 3. Productive Visit %
       const totVisits = visitAch;
       const prodVisitPct = totVisits > 0 ? (prodVisits / totVisits) * 100 : 0;
       const unprodPct = totVisits > 0 ? (unprodVisits / totVisits) * 100 : 0;
-      document.getElementById('kpi3_val').textContent = Utils.fmtPct(prodVisitPct, 1);
+      if (document.getElementById('kpi3_val')) document.getElementById('kpi3_val').textContent = Utils.fmtPct(prodVisitPct, 1);
       this.setDonut('donut_prod', 'donut_prod_text', prodVisitPct, 'var(--accent-green)');
       document.getElementById('kpi3_sub').innerHTML = `
-        <span class="stat-pill">Total: <b>${Utils.fmtNum(totVisits)}</b></span>
-        <span class="stat-pill">Prod: <b>${Utils.fmtNum(prodVisits)}</b></span>
-        <span class="stat-pill">Unprod: <b>${Utils.fmtNum(unprodVisits)}</b></span>
-        <span class="stat-pill highlight">Unprod Proj: <b>${Utils.fmtDec(unprodPct, 2)}%</b></span>
+        <div class="stat-pill"><span>Total Visits:</span> <b>${Utils.fmtNum(totVisits)}</b></div>
+        <div class="stat-pill"><span>Productive:</span> <b>${Utils.fmtNum(prodVisits)}</b></div>
+        <div class="stat-pill"><span>Unproductive:</span> <b>${Utils.fmtNum(unprodVisits)}</b></div>
+        <div class="stat-pill highlight"><span>Unprod Proj:</span> <b>${Utils.fmtDec(unprodPct, 2)}%</b></div>
       `;
 
       // 4. Display Reported
@@ -1496,71 +1640,69 @@
         <span class="stat-pill highlight">Avg POSM per Prod. Visit: <b>${Utils.fmtDec(avgPOSMPerProdVisit, 1)}</b></span>
       `;
 
-      /* ---------------- GROUP 2: DETAILED KPI ---------------- */
+      /* ---------------- DETAILED KPI (STORE CATEGORIES) ---------------- */
       // 1. EBO Coverage %
       const eboPct = targetedEBO > 0 ? (eboCov / targetedEBO) * 100 : 100;
       const eboPending = Math.max(0, targetedEBO - eboCov);
       const eboProj = Math.min(100, eboPct * 1.148);
-      document.getElementById('kpiEBO_val').textContent = Utils.fmtPct(eboPct, 1);
-      this.setDonut('donut_ebo', 'donut_ebo_text', eboPct, '#8b5cf6');
+      if (document.getElementById('kpiEBO_val')) document.getElementById('kpiEBO_val').textContent = Utils.fmtPct(eboPct, 1);
+      this.setDonut('donut_ebo', 'donut_ebo_text', eboPct, '#4f46e5');
       document.getElementById('kpiEBO_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedEBO)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(eboCov)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(eboPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(eboProj, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(targetedEBO)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(eboCov)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(eboPending)}</b></div>
+        <div class="stat-pill highlight"><span>Proj:</span> <b>${Utils.fmtPct(eboProj, 1)}</b></div>
       `;
 
       // 2. Chain Stores Coverage %
       const chainPct = targetedChain > 0 ? (chainCov / targetedChain) * 100 : 100;
       const chainPending = Math.max(0, targetedChain - chainCov);
       const chainProj = Math.min(100, chainPct * 1.148);
-      document.getElementById('kpiChain_val').textContent = Utils.fmtPct(chainPct, 1);
-      this.setDonut('donut_chain', 'donut_chain_text', chainPct, '#0ea5e9');
+      if (document.getElementById('kpiChain_val')) document.getElementById('kpiChain_val').textContent = Utils.fmtPct(chainPct, 1);
+      this.setDonut('donut_chain', 'donut_chain_text', chainPct, '#0284c7');
       document.getElementById('kpiChain_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedChain)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(chainCov)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(chainPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(chainProj, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(targetedChain)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(chainCov)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(chainPending)}</b></div>
+        <div class="stat-pill highlight"><span>Proj:</span> <b>${Utils.fmtPct(chainProj, 1)}</b></div>
       `;
 
       // 3. Cool Studio Coverage %
       const coolPct = targetedCool > 0 ? (coolCov / targetedCool) * 100 : 100;
       const coolPending = Math.max(0, targetedCool - coolCov);
       const coolProj = 100;
-      document.getElementById('kpiCool_val').textContent = Utils.fmtPct(coolPct, 1);
-      this.setDonut('donut_cool', 'donut_cool_text', coolPct, '#10b981');
+      if (document.getElementById('kpiCool_val')) document.getElementById('kpiCool_val').textContent = Utils.fmtPct(coolPct, 1);
+      this.setDonut('donut_cool', 'donut_cool_text', coolPct, '#059669');
       document.getElementById('kpiCool_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedCool)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(coolCov)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(coolPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(coolProj, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(targetedCool)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(coolCov)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(coolPending)}</b></div>
+        <div class="stat-pill highlight"><span>Proj:</span> <b>${Utils.fmtPct(coolProj, 1)}</b></div>
       `;
 
       // 4. Others Coverage %
       const otherPct = targetedOther > 0 ? (otherCov / targetedOther) * 100 : 100;
       const otherPending = Math.max(0, targetedOther - otherCov);
       const otherProj = Math.min(100, otherPct * 1.095);
-      document.getElementById('kpiOther_val').textContent = Utils.fmtPct(otherPct, 1);
-      this.setDonut('donut_other', 'donut_other_text', otherPct, '#f59e0b');
+      if (document.getElementById('kpiOther_val')) document.getElementById('kpiOther_val').textContent = Utils.fmtPct(otherPct, 1);
+      this.setDonut('donut_other', 'donut_other_text', otherPct, '#d97706');
       document.getElementById('kpiOther_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(targetedOther)}</b></span>
-        <span class="stat-pill">Ach: <b>${Utils.fmtNum(otherCov)}</b></span>
-        <span class="stat-pill">Pending: <b>${Utils.fmtNum(otherPending)}</b></span>
-        <span class="stat-pill highlight">Proj: <b>${Utils.fmtPct(otherProj, 1)}</b></span>
+        <div class="stat-pill"><span>Target:</span> <b>${Utils.fmtNum(targetedOther)}</b></div>
+        <div class="stat-pill"><span>Achieved:</span> <b>${Utils.fmtNum(otherCov)}</b></div>
+        <div class="stat-pill"><span>Pending:</span> <b>${Utils.fmtNum(otherPending)}</b></div>
+        <div class="stat-pill highlight"><span>Proj:</span> <b>${Utils.fmtPct(otherProj, 1)}</b></div>
       `;
 
-      /* ---------------- GROUP 3: MANPOWER KPI ---------------- */
+      /* ---------------- MANPOWER KPI ---------------- */
       // 1. Man-Days Achievement %
-      // Prompt: "target mayday's to be calculated from the max day of the month (consider data updated date as the end date) till first day of the month with one weekly off every week"
-      // Date: Aug 27 -> 27 days elapsed. 27 days with 1 weekly off / Sundays + holiday = 22 working days per VM.
       const targetWorkingDaysPerVM = 22;
       const totalTargetManDays = count * targetWorkingDaysPerVM;
       const manDaysPct = totalTargetManDays > 0 ? (manDaysAch / totalTargetManDays) * 100 : 0;
-      document.getElementById('kpiManDays_val').textContent = Utils.fmtPct(manDaysPct, 1);
+      if (document.getElementById('kpiManDays_val')) document.getElementById('kpiManDays_val').textContent = Utils.fmtPct(manDaysPct, 1);
       this.setDonut('donut_mandays', 'donut_mandays_text', manDaysPct, '#e4002b');
       document.getElementById('kpiManDays_sub').innerHTML = `
-        <span class="stat-pill">Target: <b>${Utils.fmtNum(totalTargetManDays)}</b></span>
-        <span class="stat-pill highlight">Achieved: <b>${Utils.fmtNum(manDaysAch)}</b></span>
+        <div class="stat-pill"><span>Target Days:</span> <b>${Utils.fmtNum(totalTargetManDays)}</b></div>
+        <div class="stat-pill highlight"><span>Achieved Days:</span> <b>${Utils.fmtNum(manDaysAch)}</b></div>
       `;
 
       // 2. Average Productivity (Target: 5.0)
@@ -1593,43 +1735,112 @@
     },
 
     /* -------------------------------------------------------------
-       STACKED COLUMN CHARTS WITH CLICK INTERACTION
+       SIMPLE COLUMN CHARTS (WITH INTERACTIVE CATEGORY & DRILLDOWN)
        ------------------------------------------------------------- */
     renderCharts(records) {
       if (!records) records = this.getFilteredRecords();
       const isDark = document.body.classList.contains('dark-theme');
-      const textColor = isDark ? '#94a3b8' : '#64748b';
-      const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)';
 
-      /* 1. Branch-Wise Stacked Column Chart */
+      // Colors palette
+      const palette = {
+        all: '#0284c7',   // Ocean Blue
+        ebo: '#4f46e5',   // Indigo
+        chain: '#0284c7', // Sky / Ocean Blue
+        cool: '#059669',  // Emerald Green
+        other: '#d97706', // Warm Amber
+        aom: '#4338ca'    // Deep Indigo
+      };
+
+      /* 1. Branch-Wise Column Chart */
       const branchMap = {};
       records.forEach(r => {
         if (!r.branch) return;
         if (!branchMap[r.branch]) {
           branchMap[r.branch] = {
-            ebo: 0,
-            chain: 0,
-            cool: 0,
-            other: 0,
             ach: 0,
-            tgt: 0
+            tgt: 0,
+            eboAch: 0,
+            eboTgt: 0,
+            chainAch: 0,
+            chainTgt: 0,
+            coolAch: 0,
+            coolTgt: 0,
+            otherAch: 0,
+            otherTgt: 0
           };
         }
-        branchMap[r.branch].ebo += r.eboCoverage;
-        branchMap[r.branch].chain += r.chainCoverage;
-        branchMap[r.branch].cool += r.coolCoverage;
-        branchMap[r.branch].other += r.otherCoverage;
-        branchMap[r.branch].ach += r.coverageAch;
-        branchMap[r.branch].tgt += r.coverageTarget;
+        branchMap[r.branch].ach += (r.coverageAch || 0);
+        branchMap[r.branch].tgt += (r.coverageTarget || 0);
+        branchMap[r.branch].eboAch += (r.eboCoverage || 0);
+        branchMap[r.branch].eboTgt += (r.targetedEBO || 0);
+        branchMap[r.branch].chainAch += (r.chainCoverage || 0);
+        branchMap[r.branch].chainTgt += (r.targetedChain || 0);
+        branchMap[r.branch].coolAch += (r.coolCoverage || 0);
+        branchMap[r.branch].coolTgt += (r.targetedCool || 0);
+        branchMap[r.branch].otherAch += (r.otherCoverage || 0);
+        branchMap[r.branch].otherTgt += (r.targetedOther || 0);
       });
 
-      // Sort branches by total achievement descending
-      const branchLabels = Object.keys(branchMap).sort((a, b) => branchMap[b].ach - branchMap[a].ach);
-      const branchEBO = branchLabels.map(b => branchMap[b].ebo);
-      const branchChain = branchLabels.map(b => branchMap[b].chain);
-      const branchCool = branchLabels.map(b => branchMap[b].cool);
-      const branchOther = branchLabels.map(b => branchMap[b].other);
-      const branchPct = branchLabels.map(b => branchMap[b].tgt > 0 ? Math.round((branchMap[b].ach / branchMap[b].tgt) * 100) : 0);
+      const currentCategory = State.branchChartCategory || 'all';
+
+      // Function to calculate % for each branch based on active category
+      const getCategoryValue = (b, cat) => {
+        const d = branchMap[b];
+        if (!d) return 0;
+        if (cat === 'ebo') {
+          return d.eboTgt > 0 ? Math.round((d.eboAch / d.eboTgt) * 100) : (d.eboAch > 0 ? 100 : 0);
+        }
+        if (cat === 'chain') {
+          return d.chainTgt > 0 ? Math.round((d.chainAch / d.chainTgt) * 100) : (d.chainAch > 0 ? 100 : 0);
+        }
+        if (cat === 'cool') {
+          return d.coolTgt > 0 ? Math.round((d.coolAch / d.coolTgt) * 100) : (d.coolAch > 0 ? 100 : 0);
+        }
+        if (cat === 'other') {
+          return d.otherTgt > 0 ? Math.round((d.otherAch / d.otherTgt) * 100) : (d.otherAch > 0 ? 100 : 0);
+        }
+        // default: overall coverage %
+        return d.tgt > 0 ? Math.round((d.ach / d.tgt) * 100) : 0;
+      };
+
+      const getCategoryCounts = (b, cat) => {
+        const d = branchMap[b];
+        if (!d) return { ach: 0, tgt: 0 };
+        if (cat === 'ebo') return { ach: d.eboAch, tgt: d.eboTgt };
+        if (cat === 'chain') return { ach: d.chainAch, tgt: d.chainTgt };
+        if (cat === 'cool') return { ach: d.coolAch, tgt: d.coolTgt };
+        if (cat === 'other') return { ach: d.otherAch, tgt: d.otherTgt };
+        return { ach: d.ach, tgt: d.tgt };
+      };
+
+      // Sort branches descending by active metric value
+      const branchLabels = Object.keys(branchMap).sort((a, b) => {
+        const valA = getCategoryValue(a, currentCategory);
+        const valB = getCategoryValue(b, currentCategory);
+        if (valB !== valA) return valB - valA;
+        return branchMap[b].ach - branchMap[a].ach;
+      });
+
+      const branchValues = branchLabels.map(b => getCategoryValue(b, currentCategory));
+
+      // Category metadata for title, label & colors
+      const catMeta = {
+        all: { label: 'Overall Coverage %', color: palette.all, title: 'Branch-Wise Overall Coverage %', sub: 'Showing Overall Coverage % across all branches. Click any legend filter above to isolate by store category.' },
+        ebo: { label: 'EBO Coverage %', color: palette.ebo, title: 'Branch-Wise EBO Coverage %', sub: 'Filtered view: Exclusive Brand Outlets (EBO) coverage % by branch. Click EBO again to clear filter.' },
+        chain: { label: 'Chain Store Coverage %', color: palette.chain, title: 'Branch-Wise Chain Store Coverage %', sub: 'Filtered view: Large Format & Chain Stores coverage % by branch. Click Chain Store again to clear filter.' },
+        cool: { label: 'Cool Studio Coverage %', color: palette.cool, title: 'Branch-Wise Cool Studio Coverage %', sub: 'Filtered view: Cool Studio coverage % by branch. Click Cool Studio again to clear filter.' },
+        other: { label: 'Other Categories Coverage %', color: palette.other, title: 'Branch-Wise Other Categories Coverage %', sub: 'Filtered view: Other channel categories coverage % by branch. Click to clear filter.' }
+      };
+
+      const currentMeta = catMeta[currentCategory] || catMeta.all;
+
+      // Update Chart header & subtitle dynamically
+      const titleEl = document.getElementById('branchChartTitle');
+      if (titleEl) titleEl.textContent = currentMeta.title;
+      const subEl = document.getElementById('branchChartSubtitle');
+      if (subEl) subEl.textContent = currentMeta.sub;
 
       const ctxBranch = document.getElementById('chartBranchCoverage');
       if (ctxBranch) {
@@ -1641,32 +1852,14 @@
             labels: branchLabels,
             datasets: [
               {
-                label: 'EBO',
-                data: branchEBO,
-                backgroundColor: '#8b5cf6',
-                borderRadius: 2,
-                stack: 'coverage'
-              },
-              {
-                label: 'Chain Store',
-                data: branchChain,
-                backgroundColor: '#0ea5e9',
-                borderRadius: 2,
-                stack: 'coverage'
-              },
-              {
-                label: 'Cool Studio',
-                data: branchCool,
-                backgroundColor: '#10b981',
-                borderRadius: 2,
-                stack: 'coverage'
-              },
-              {
-                label: 'Other Categories',
-                data: branchOther,
-                backgroundColor: '#f59e0b',
+                label: currentMeta.label,
+                data: branchValues,
+                backgroundColor: currentMeta.color,
+                hoverBackgroundColor: '#e4002b', // Godrej Red highlight on hover
                 borderRadius: 4,
-                stack: 'coverage'
+                borderSkipped: false,
+                barPercentage: 0.7,
+                categoryPercentage: 0.85
               }
             ]
           },
@@ -1686,71 +1879,111 @@
             },
             plugins: {
               legend: {
-                position: 'top',
-                labels: { color: textColor, font: { size: 11, family: 'Plus Jakarta Sans' } }
+                display: false // Using custom interactive legend filter tabs above chart
               },
               tooltip: {
                 callbacks: {
+                  title: (items) => `Branch: ${items[0].label}`,
+                  label: (item) => `${currentMeta.label}: ${item.parsed.y}%`,
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     const b = branchLabels[idx];
-                    const ach = branchMap[b].ach;
-                    const tgt = branchMap[b].tgt;
-                    const pct = branchPct[idx];
-                    return [
-                      '----------------------',
-                      `Total Achieved: ${ach} / ${tgt}`,
-                      `Overall Coverage: ${pct}%`,
-                      '👉 Click bar to filter by ' + b
+                    const counts = getCategoryCounts(b, currentCategory);
+                    const allData = branchMap[b];
+                    const overallPct = allData.tgt > 0 ? Math.round((allData.ach / allData.tgt) * 100) : 0;
+                    
+                    const lines = [
+                      `Outlets Achieved: ${Utils.fmtNum(counts.ach)} / ${Utils.fmtNum(counts.tgt)}`
                     ];
+                    if (currentCategory !== 'all') {
+                      lines.push(`Branch Overall Coverage: ${overallPct}%`);
+                    }
+                    lines.push('----------------------------');
+                    lines.push('👉 Click bar to filter dashboard by ' + b);
+                    return lines;
                   }
                 }
               }
             },
             scales: {
               x: {
-                stacked: true,
                 grid: { display: false },
-                ticks: { color: textColor, font: { size: 10 } }
+                ticks: { color: textColor, font: { size: 10.5, weight: '600', family: 'Plus Jakarta Sans' } }
               },
               y: {
-                stacked: true,
+                beginAtZero: true,
+                max: Math.max(100, Math.ceil((Math.max(...branchValues, 0) + 10) / 10) * 10),
                 grid: { color: gridColor },
-                ticks: { color: textColor, font: { size: 11 } }
+                ticks: { 
+                  color: textColor, 
+                  font: { size: 11 },
+                  callback: (v) => v + '%'
+                }
               }
             }
           }
         });
       }
 
-      /* 2. AOM-Wise Stacked Column Chart */
+      /* 2. AOM-Wise Grouped Column Chart (All Categories Mapped in Separate Color Columns) */
       const aomMap = {};
       records.forEach(r => {
         if (!r.aom) return;
         if (!aomMap[r.aom]) {
           aomMap[r.aom] = {
-            ebo: 0,
-            chain: 0,
-            cool: 0,
-            other: 0,
             ach: 0,
-            tgt: 0
+            tgt: 0,
+            eboAch: 0,
+            eboTgt: 0,
+            chainAch: 0,
+            chainTgt: 0,
+            coolAch: 0,
+            coolTgt: 0,
+            otherAch: 0,
+            otherTgt: 0,
+            vms: new Set()
           };
         }
-        aomMap[r.aom].ebo += r.eboCoverage;
-        aomMap[r.aom].chain += r.chainCoverage;
-        aomMap[r.aom].cool += r.coolCoverage;
-        aomMap[r.aom].other += r.otherCoverage;
-        aomMap[r.aom].ach += r.coverageAch;
-        aomMap[r.aom].tgt += r.coverageTarget;
+        aomMap[r.aom].ach += (r.coverageAch || 0);
+        aomMap[r.aom].tgt += (r.coverageTarget || 0);
+        aomMap[r.aom].eboAch += (r.eboCoverage || 0);
+        aomMap[r.aom].eboTgt += (r.targetedEBO || 0);
+        aomMap[r.aom].chainAch += (r.chainCoverage || 0);
+        aomMap[r.aom].chainTgt += (r.targetedChain || 0);
+        aomMap[r.aom].coolAch += (r.coolCoverage || 0);
+        aomMap[r.aom].coolTgt += (r.targetedCool || 0);
+        aomMap[r.aom].otherAch += (r.otherCoverage || 0);
+        aomMap[r.aom].otherTgt += (r.targetedOther || 0);
+        if (r.userName) aomMap[r.aom].vms.add(r.userName);
       });
 
-      const aomLabels = Object.keys(aomMap).sort();
-      const aomEBO = aomLabels.map(a => aomMap[a].ebo);
-      const aomChain = aomLabels.map(a => aomMap[a].chain);
-      const aomCool = aomLabels.map(a => aomMap[a].cool);
-      const aomOther = aomLabels.map(a => aomMap[a].other);
-      const aomPct = aomLabels.map(a => aomMap[a].tgt > 0 ? Math.round((aomMap[a].ach / aomMap[a].tgt) * 100) : 0);
+      // Sort AOMs by overall team achievement percentage descending
+      const aomLabels = Object.keys(aomMap).sort((a, b) => {
+        const pctA = aomMap[a].tgt > 0 ? (aomMap[a].ach / aomMap[a].tgt) : 0;
+        const pctB = aomMap[b].tgt > 0 ? (aomMap[b].ach / aomMap[b].tgt) : 0;
+        return pctB - pctA;
+      });
+
+      // Compute coverage % per category for each AOM
+      const aomEBOData = aomLabels.map(a => {
+        const d = aomMap[a];
+        return d.eboTgt > 0 ? Math.round((d.eboAch / d.eboTgt) * 100) : (d.eboAch > 0 ? 100 : 0);
+      });
+      const aomChainData = aomLabels.map(a => {
+        const d = aomMap[a];
+        return d.chainTgt > 0 ? Math.round((d.chainAch / d.chainTgt) * 100) : (d.chainAch > 0 ? 100 : 0);
+      });
+      const aomCoolData = aomLabels.map(a => {
+        const d = aomMap[a];
+        return d.coolTgt > 0 ? Math.round((d.coolAch / d.coolTgt) * 100) : (d.coolAch > 0 ? 100 : 0);
+      });
+      const aomOtherData = aomLabels.map(a => {
+        const d = aomMap[a];
+        return d.otherTgt > 0 ? Math.round((d.otherAch / d.otherTgt) * 100) : (d.otherAch > 0 ? 100 : 0);
+      });
+
+      const maxCategoryVal = Math.max(...aomEBOData, ...aomChainData, ...aomCoolData, ...aomOtherData, 100);
+      const yAxisMax = Math.ceil((maxCategoryVal + 10) / 10) * 10;
 
       const ctxAOM = document.getElementById('chartAOMCoverage');
       if (ctxAOM) {
@@ -1763,31 +1996,39 @@
             datasets: [
               {
                 label: 'EBO',
-                data: aomEBO,
-                backgroundColor: '#8b5cf6',
-                borderRadius: 2,
-                stack: 'coverage'
+                data: aomEBOData,
+                backgroundColor: palette.ebo, // Indigo #4f46e5
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.82,
+                categoryPercentage: 0.78
               },
               {
                 label: 'Chain Store',
-                data: aomChain,
-                backgroundColor: '#0ea5e9',
-                borderRadius: 2,
-                stack: 'coverage'
+                data: aomChainData,
+                backgroundColor: palette.chain, // Ocean Blue #0284c7
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.82,
+                categoryPercentage: 0.78
               },
               {
                 label: 'Cool Studio',
-                data: aomCool,
-                backgroundColor: '#10b981',
-                borderRadius: 2,
-                stack: 'coverage'
+                data: aomCoolData,
+                backgroundColor: palette.cool, // Emerald Green #059669
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.82,
+                categoryPercentage: 0.78
               },
               {
                 label: 'Other Categories',
-                data: aomOther,
-                backgroundColor: '#f59e0b',
+                data: aomOtherData,
+                backgroundColor: palette.other, // Warm Amber #d97706
                 borderRadius: 4,
-                stack: 'coverage'
+                borderSkipped: false,
+                barPercentage: 0.82,
+                categoryPercentage: 0.78
               }
             ]
           },
@@ -1807,22 +2048,48 @@
             },
             plugins: {
               legend: {
+                display: true,
                 position: 'top',
-                labels: { color: textColor, font: { size: 11, family: 'Plus Jakarta Sans' } }
+                align: 'end',
+                labels: {
+                  color: textColor,
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 8,
+                  boxHeight: 8,
+                  padding: 16,
+                  font: {
+                    size: 11.5,
+                    weight: '600',
+                    family: 'Plus Jakarta Sans'
+                  }
+                }
               },
               tooltip: {
                 callbacks: {
+                  title: (items) => `AOM: ${items[0].label}`,
+                  label: (item) => {
+                    const dsLabel = item.dataset.label;
+                    const val = item.parsed.y;
+                    const a = item.label;
+                    const d = aomMap[a];
+                    let countsStr = '';
+                    if (dsLabel === 'EBO') countsStr = ` (${d.eboAch}/${d.eboTgt})`;
+                    else if (dsLabel === 'Chain Store') countsStr = ` (${d.chainAch}/${d.chainTgt})`;
+                    else if (dsLabel === 'Cool Studio') countsStr = ` (${d.coolAch}/${d.coolTgt})`;
+                    else if (dsLabel === 'Other Categories') countsStr = ` (${d.otherAch}/${d.otherTgt})`;
+                    return `${dsLabel}: ${val}%${countsStr}`;
+                  },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     const a = aomLabels[idx];
-                    const ach = aomMap[a].ach;
-                    const tgt = aomMap[a].tgt;
-                    const pct = aomPct[idx];
+                    const d = aomMap[a];
+                    const overallPct = d.tgt > 0 ? Math.round((d.ach / d.tgt) * 100) : 0;
                     return [
-                      '----------------------',
-                      `Team Outlets: ${ach} / ${tgt}`,
-                      `Team Coverage: ${pct}%`,
-                      '👉 Click bar to filter by ' + a
+                      '----------------------------',
+                      `Total Outlets: ${Utils.fmtNum(d.ach)} / ${Utils.fmtNum(d.tgt)} (${overallPct}%)`,
+                      `Active Field VMs: ${d.vms.size}`,
+                      '👉 Click column group to filter dashboard by ' + a
                     ];
                   }
                 }
@@ -1830,14 +2097,21 @@
             },
             scales: {
               x: {
-                stacked: true,
                 grid: { display: false },
-                ticks: { color: textColor, font: { size: 12, weight: 'bold' } }
+                ticks: {
+                  color: textColor,
+                  font: { size: 12, weight: '700', family: 'Plus Jakarta Sans' }
+                }
               },
               y: {
-                stacked: true,
+                beginAtZero: true,
+                max: yAxisMax,
                 grid: { color: gridColor },
-                ticks: { color: textColor, font: { size: 11 } }
+                ticks: {
+                  color: textColor,
+                  font: { size: 11 },
+                  callback: (v) => v + '%'
+                }
               }
             }
           }
