@@ -118,8 +118,13 @@ def sync_program_performance(opener):
             for i, row in enumerate(s.rows()):
                 r_vals = [c.v for c in row]
                 # convert Excel serial dates
-                if i == 0 and len(r_vals) > 5 and isinstance(r_vals[5], (int, float)) and r_vals[5] > 20000:
-                    r_vals[5] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[5]))).strftime("%Y-%m-%d")
+                if i == 0:
+                    for idx, val in enumerate(r_vals):
+                        if isinstance(val, str) and "data updated" in val.lower():
+                            for k in range(idx + 1, min(idx + 4, len(r_vals))):
+                                if isinstance(r_vals[k], (int, float)) and r_vals[k] > 20000:
+                                    r_vals[k] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[k]))).strftime("%Y-%m-%d")
+                                    break
                 if i >= 2 and len(r_vals) > 0 and isinstance(r_vals[0], (int, float)) and r_vals[0] > 20000:
                     r_vals[0] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[0]))).strftime("%Y-%m-%d")
                 rows.append(r_vals)
