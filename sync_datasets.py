@@ -139,15 +139,30 @@ def auto_push_to_github():
         if res.returncode != 0:
             msg = f"chore(data): auto-sync latest live SharePoint datasets ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"
             subprocess.run(["git", "commit", "-m", msg], check=True)
+            # Rebase onto latest remote in case remote was updated by GitHub Actions
+            subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=True)
             subprocess.run(["git", "push", "origin", "main"], check=True)
             print("🚀 Successfully pushed updated datasets to GitHub main branch!")
         else:
-            print("No data changes detected. Remote repository is already up-to-date.")
+            # Still attempt to push any previously committed local syncs if ahead
+            ahead_check = subprocess.run(["git", "log", "origin/main..main", "--oneline"], capture_output=True, text=True)
+            if ahead_check.stdout.strip():
+                subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=True)
+                subprocess.run(["git", "push", "origin", "main"], check=True)
+                print("🚀 Successfully pushed pending local commits to GitHub main branch!")
+            else:
+                print("No data changes detected. Remote repository is already up-to-date.")
     except Exception as e:
         print("Note: Could not push to git automatically:", e)
 
 def main():
     print("Starting SharePoint Data Sync...")
+    # Ensure local repo is up-to-date with remote before starting sync
+    try:
+        subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=True)
+    except Exception as e:
+        print("Notice: Could not pull latest changes from remote, continuing with local base:", e)
+
     opener = get_opener()
     sync_index(opener)
     sync_training(opener)
