@@ -16,6 +16,7 @@ import datetime
 import os
 import subprocess
 import sys
+import time
 
 SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
@@ -30,6 +31,27 @@ def get_opener():
         urllib.request.HTTPCookieProcessor(cookie_jar),
         urllib.request.HTTPRedirectHandler
     )
+
+def fetch_url_data(opener, url, timeout=90, retries=3):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = opener.open(req, timeout=timeout)
+            chunks = []
+            while True:
+                chunk = resp.read(1024 * 1024)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                print(f"Warning: Download attempt {attempt} failed ({e}), retrying in 3 seconds...")
+                time.sleep(3)
+            else:
+                raise last_err
 
 def embed_sample_data(html_file, rows):
     if not os.path.exists(html_file):
@@ -53,8 +75,7 @@ def embed_sample_data(html_file, rows):
 
 def sync_index(opener):
     print("\n--- Syncing index.html (QC Tracker) ---")
-    req = urllib.request.Request(SHAREPOINT_URLS["index"], headers={"User-Agent": "Mozilla/5.0"})
-    data = opener.open(req, timeout=30).read()
+    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], timeout=45)
     wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
     sheet_name = next((s for s in wb.sheetnames if "qc" in s.lower()), wb.sheetnames[0])
     ws = wb[sheet_name]
@@ -72,8 +93,7 @@ def sync_index(opener):
 
 def sync_training(opener):
     print("\n--- Syncing training.html (Training Details) ---")
-    req = urllib.request.Request(SHAREPOINT_URLS["training"], headers={"User-Agent": "Mozilla/5.0"})
-    data = opener.open(req, timeout=30).read()
+    data = fetch_url_data(opener, SHAREPOINT_URLS["training"], timeout=45)
     wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
     sheet_name = next((s for s in wb.sheetnames if "training" in s.lower()), wb.sheetnames[0])
     ws = wb[sheet_name]
@@ -91,8 +111,7 @@ def sync_training(opener):
 
 def sync_m_score(opener):
     print("\n--- Syncing m_score.html (Product-VM-Score) ---")
-    req = urllib.request.Request(SHAREPOINT_URLS["m_score"], headers={"User-Agent": "Mozilla/5.0"})
-    data = opener.open(req, timeout=45).read()
+    data = fetch_url_data(opener, SHAREPOINT_URLS["m_score"], timeout=120)
     with open_workbook(io.BytesIO(data)) as wb:
         sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheets else wb.sheets[0]
         with wb.get_sheet(sheet_name) as s:
@@ -109,8 +128,7 @@ def sync_m_score(opener):
 
 def sync_program_performance(opener):
     print("\n--- Syncing program_performance.html (Program Performance) ---")
-    req = urllib.request.Request(SHAREPOINT_URLS["program_performance"], headers={"User-Agent": "Mozilla/5.0"})
-    data = opener.open(req, timeout=45).read()
+    data = fetch_url_data(opener, SHAREPOINT_URLS["program_performance"], timeout=60)
     with open_workbook(io.BytesIO(data)) as wb:
         sheet_name = "Program Performance" if "Program Performance" in wb.sheets else wb.sheets[0]
         with wb.get_sheet(sheet_name) as s:
@@ -164,12 +182,26 @@ def main():
         print("Notice: Could not pull latest changes from remote, continuing with local base:", e)
 
     opener = get_opener()
-    sync_index(opener)
-    sync_training(opener)
-    sync_m_score(opener)
-    sync_program_performance(opener)
-    print("\nAll datasets synchronized successfully!")
-    auto_push_to_github()
+    sync_tasks = [
+        ("index.html (QC Tracker)", sync_index),
+        ("training.html (Training Details)", sync_training),
+        ("m_score.html (Product-VM-Score)", sync_m_score),
+        ("program_performance.html (Program Performance)", sync_program_performance),
+    ]
+
+    success_count = 0
+    for name, func in sync_tasks:
+        try:
+            func(opener)
+            success_count += 1
+        except Exception as err:
+            print(f"❌ Error syncing {name}: {err}")
+
+    if success_count > 0:
+        print(f"\nAll datasets processed ({success_count}/{len(sync_tasks)} succeeded)!")
+        auto_push_to_github()
+    else:
+        print("\nNo datasets were synchronized.")
 
 if __name__ == "__main__":
     main()
