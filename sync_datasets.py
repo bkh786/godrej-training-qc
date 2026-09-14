@@ -13,10 +13,13 @@ import openpyxl
 import io
 import json
 import datetime
+import functools
 import os
 import subprocess
 import sys
 import time
+
+print = functools.partial(print, flush=True)
 
 SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
