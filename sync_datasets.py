@@ -55,12 +55,13 @@ def get_opener():
     )
 
 def fetch_url_data(opener, url, fallback_paths=None, timeout=90, retries=3, label="dataset"):
-    # If explicitly preferred local or local flag passed
-    prefer_local = "--local" in sys.argv or "--prefer-local" in sys.argv
-    if prefer_local and fallback_paths:
+    # When running on local machine where OneDrive files exist and user hasn't requested --remote:
+    # Read the active local file directly. This guarantees instant updates with zero SharePoint cache delay!
+    prefer_remote = "--remote" in sys.argv or "--prefer-remote" in sys.argv
+    if not prefer_remote and fallback_paths:
         for path in fallback_paths:
-            if os.path.exists(path):
-                print(f"✓ Using local file (--prefer-local) for {label}: {path}")
+            if os.path.exists(path) and os.path.getsize(path) > 3000:
+                print(f"✓ Using active local OneDrive file for {label}: {path}")
                 with open(path, "rb") as f:
                     return f.read()
 
@@ -223,8 +224,8 @@ def auto_push_to_github():
     except Exception as e:
         print("Note: Could not push to git automatically:", e)
 
-def main():
-    print("Starting SharePoint Data Sync...")
+def run_sync_once():
+    print(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting SharePoint / Local Data Sync...")
     # Ensure local repo is up-to-date with remote before starting sync
     try:
         subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=True)
@@ -252,6 +253,56 @@ def main():
         auto_push_to_github()
     else:
         print("\nNo datasets were synchronized.")
+
+def watch_mode(interval=5):
+    print(f"👀 Watching local OneDrive folder for instant changes:")
+    print(f"   {ONEDRIVE_BASE}")
+    print("Whenever you save any report file in Excel, it will automatically sync and push to GitHub.")
+    print("Press Ctrl+C to stop watching.\n")
+    
+    tracked_files = []
+    for paths in LOCAL_FALLBACKS.values():
+        for p in paths:
+            if p.startswith(ONEDRIVE_BASE) and p not in tracked_files:
+                tracked_files.append(p)
+
+    last_mtimes = {}
+    for p in tracked_files:
+        if os.path.exists(p):
+            last_mtimes[p] = os.path.getmtime(p)
+
+    while True:
+        try:
+            time.sleep(interval)
+            changed_file = None
+            for p in tracked_files:
+                if os.path.exists(p):
+                    m = os.path.getmtime(p)
+                    if p not in last_mtimes:
+                        last_mtimes[p] = m
+                        changed_file = p
+                        break
+                    elif m > last_mtimes[p]:
+                        changed_file = p
+                        last_mtimes[p] = m
+                        break
+            if changed_file:
+                print(f"\n🔔 File change detected: {os.path.basename(changed_file)}")
+                print("Debouncing 3 seconds to allow Excel to finish writing...")
+                time.sleep(3)
+                run_sync_once()
+        except KeyboardInterrupt:
+            print("\nExiting watcher.")
+            break
+        except Exception as e:
+            print(f"Watcher exception: {e}")
+            time.sleep(interval)
+
+def main():
+    if "--watch" in sys.argv:
+        watch_mode()
+    else:
+        run_sync_once()
 
 if __name__ == "__main__":
     main()
