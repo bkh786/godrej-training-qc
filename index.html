@@ -76,21 +76,21 @@
       </div>
     </header>
 
-  </div> <!-- /sticky-header-wrapper -->
+    <!-- SYNC STATUS INFO BAR -->
+    <div class="sync-bar" id="syncInfoBar">
+      <div class="sync-meta">
+        <span>📁 Sheet: <b>QC Tracker</b></span>
+        <span>🌐 Connection: <b id="dataSourceLabel">SharePoint Live Sync</b></span>
+        <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
+        <span>📊 Total Audits: <b id="totalRecordCount">0</b></span>
+        <span>⚠️ Total Rejections: <b id="totalRejectionCount" style="color:var(--godrej-red);">0</b></span>
+      </div>
+      <div class="sync-actions">
+        <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
+      </div>
+    </div>
 
-  <!-- SYNC STATUS INFO BAR -->
-  <div class="sync-bar" id="syncInfoBar">
-    <div class="sync-meta">
-      <span>📁 Sheet: <b>QC Tracker</b></span>
-      <span>🌐 Connection: <b id="dataSourceLabel">SharePoint Live Sync</b></span>
-      <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
-      <span>📊 Total Audits: <b id="totalRecordCount">0</b></span>
-      <span>⚠️ Total Rejections: <b id="totalRejectionCount" style="color:var(--godrej-red);">0</b></span>
-    </div>
-    <div class="sync-actions">
-      <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
-    </div>
-  </div>
+  </div> <!-- /sticky-header-wrapper -->
 
   <div class="err-banner" id="errBanner"></div>
 
@@ -1287,38 +1287,117 @@ const ChartModule = {
 const UI = {
   renderKPIs(filtered){
     const k = Calc.kpis(filtered);
-
     const grid = document.getElementById('kpiGrid');
+    if (!grid) return;
+
+    const qcScoreHex = Utils.statusHex(k.avgQC || 0);
+    const qcBadgeClass = (k.avgQC >= 0.8) ? 'badge-green' : ((k.avgQC >= 0.65) ? 'badge-amber' : 'badge-red');
+    const qcAccentClass = (k.avgQC >= 0.8) ? 'accent-green' : ((k.avgQC >= 0.65) ? 'accent-amber' : 'accent-red');
+
     grid.innerHTML = `
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap">📋</div>
-        <div class="kpi-label">Total Audits</div>
-        <div class="kpi-value" id="kpiTotal">${k.total}</div>
-        <div class="kpi-sub">Average ${k.avgAuditsPerDay} audits per day</div>
+      <!-- KPI 1: Total Audits -->
+      <div class="kpi-card accent-blue">
+        <div class="kpi-top">
+          <span class="kpi-label">Total Audits</span>
+          <span class="kpi-badge badge-blue">AUDITS</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" id="kpiTotal">${k.total}</span>
+            <span class="kpi-sublabel">(Total Reported)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#0284c7;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Avg: <b>${k.avgAuditsPerDay} / day</b></span>
+          <span>Compliance: <b>100%</b></span>
+        </div>
       </div>
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:var(--godrej-red-soft); color:var(--godrej-red);">🎯</div>
-        <div class="kpi-label">Overall QC Score</div>
-        <div class="kpi-value" id="kpiAvgQC" style="color:${Utils.statusHex(k.avgQC||0)}">${Utils.pct(k.avgQC)}</div>
-        <div class="kpi-sub">Target benchmark: &ge; 80%</div>
+
+      <!-- KPI 2: Overall QC Score -->
+      <div class="kpi-card ${qcAccentClass}">
+        <div class="kpi-top">
+          <span class="kpi-label">Overall QC Score</span>
+          <span class="kpi-badge ${qcBadgeClass}">BENCHMARK</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" id="kpiAvgQC" style="color:${qcScoreHex}">${Utils.pct(k.avgQC)}</span>
+            <span class="kpi-sublabel">(Target &ge; 80%)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round((k.avgQC||0)*100))}%; background:${qcScoreHex};"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Target: <b>&ge; 80%</b></span>
+          <span>Status: <b style="color:${qcScoreHex};">${k.avgQC >= 0.8 ? 'Achieved' : 'Needs Focus'}</b></span>
+        </div>
       </div>
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(2,132,199,0.12); color:#0284c7;">🖥️</div>
-        <div class="kpi-label">Display Audit Score</div>
-        <div class="kpi-value" id="kpiDispScore">${Utils.pct(k.dispScore)}</div>
-        <div class="kpi-sub">Display parameter compliance</div>
+
+      <!-- KPI 3: Display Audit Score -->
+      <div class="kpi-card accent-cyan">
+        <div class="kpi-top">
+          <span class="kpi-label">Display Audit Score</span>
+          <span class="kpi-badge badge-cyan">DISPLAY</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" id="kpiDispScore" style="color:#06b6d4;">${Utils.pct(k.dispScore)}</span>
+            <span class="kpi-sublabel">(Display Parameters)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round((k.dispScore||0)*100))}%; background:#06b6d4;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Ref · WM · AC · MWO</span>
+          <span>Compliance: <b>${Utils.pct(k.dispScore)}</b></span>
+        </div>
       </div>
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(99,102,241,0.12); color:#6366f1;">🏷️</div>
-        <div class="kpi-label">Campaign / POSM Score</div>
-        <div class="kpi-value" id="kpiCampScore">${Utils.pct(k.campScore)}</div>
-        <div class="kpi-sub">POSM &amp; Branding deployment</div>
+
+      <!-- KPI 4: Campaign / POSM Score -->
+      <div class="kpi-card accent-purple">
+        <div class="kpi-top">
+          <span class="kpi-label">Campaign / POSM Score</span>
+          <span class="kpi-badge badge-purple">CAMPAIGN</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" id="kpiCampScore" style="color:#8b5cf6;">${Utils.pct(k.campScore)}</span>
+            <span class="kpi-sublabel">(POSM &amp; Branding)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round((k.campScore||0)*100))}%; background:#8b5cf6;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Branding &amp; Deployment</span>
+          <span>Compliance: <b>${Utils.pct(k.campScore)}</b></span>
+        </div>
       </div>
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.12); color:#10b981;">👥</div>
-        <div class="kpi-label">Unique Users Audited</div>
-        <div class="kpi-value" id="kpiUniqueVMs" style="color:#10b981;">${k.uniqueVMCount}</div>
-        <div class="kpi-sub">Active VMs in selected range</div>
+
+      <!-- KPI 5: Unique Users Audited -->
+      <div class="kpi-card accent-green">
+        <div class="kpi-top">
+          <span class="kpi-label">Unique Users Audited</span>
+          <span class="kpi-badge badge-green">WORKFORCE</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" id="kpiUniqueVMs" style="color:#10b981;">${k.uniqueVMCount}</span>
+            <span class="kpi-sublabel">(Active Field VMs)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#10b981;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Field Workforce Covered</span>
+          <span>Audited: <b>${k.total} audits</b></span>
+        </div>
       </div>
     `;
   },

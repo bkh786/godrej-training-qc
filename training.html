@@ -76,21 +76,21 @@
       </div>
     </header>
 
-  </div> <!-- /sticky-header-wrapper -->
+    <!-- SYNC STATUS INFO BAR -->
+    <div class="sync-bar" id="syncInfoBar">
+      <div class="sync-meta">
+        <span>📁 Sheet: <b>Training Details</b></span>
+        <span>🌐 Connection: <b id="dataSourceLabel">Training Details (Instant Sync)</b></span>
+        <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
+        <span>📚 Total Records: <b id="totalRecordCount">0</b></span>
+        <span>🎓 Unique Sessions: <b id="totalSessionsCount">0</b></span>
+      </div>
+      <div class="sync-actions">
+        <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
+      </div>
+    </div>
 
-  <!-- SYNC STATUS INFO BAR -->
-  <div class="sync-bar" id="syncInfoBar">
-    <div class="sync-meta">
-      <span>📁 Sheet: <b>Training Details</b></span>
-      <span>🌐 Connection: <b id="dataSourceLabel">Training Details (Instant Sync)</b></span>
-      <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
-      <span>📚 Total Records: <b id="totalRecordCount">0</b></span>
-      <span>🎓 Unique Sessions: <b id="totalSessionsCount">0</b></span>
-    </div>
-    <div class="sync-actions">
-      <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
-    </div>
-  </div>
+  </div> <!-- /sticky-header-wrapper -->
 
   <div class="err-banner" id="errBanner"></div>
 
@@ -1045,49 +1045,136 @@ const UI = {
     const grid = document.getElementById('kpiGrid');
     if(!grid) return;
 
+    const scorePct = k.overallScore != null ? Math.min(100, Math.round(k.overallScore * 100)) : 0;
+    const scoreColor = (k.overallScore != null && k.overallScore >= 0.8) ? '#10b981' : ((k.overallScore >= 0.65) ? '#f59e0b' : '#e4002b');
+    const scoreBadge = (k.overallScore != null && k.overallScore >= 0.8) ? 'badge-green' : ((k.overallScore >= 0.65) ? 'badge-amber' : 'badge-red');
+    const scoreAccent = (k.overallScore != null && k.overallScore >= 0.8) ? 'accent-green' : ((k.overallScore >= 0.65) ? 'accent-amber' : 'accent-red');
+
     grid.innerHTML = `
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#e0f2fe; color:#0284c7;">📚</div>
-        <div class="kpi-label">Trainings Conducted</div>
-        <div class="kpi-value">${k.trainingsConducted}</div>
-        <div class="kpi-sub">Unique date &amp; module sessions</div>
-      </div>
-
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#dcfce7; color:#16a34a;">👥</div>
-        <div class="kpi-label">Unique Employees Trained</div>
-        <div class="kpi-value" style="color:#16a34a;">${k.uniqueEmployees}</div>
-        <div class="kpi-sub">Active VMs in selected range</div>
-      </div>
-
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#fef3c7; color:#d97706;">📝</div>
-        <div class="kpi-label">Assessments Conducted</div>
-        <div class="kpi-value">${k.assessmentCount}</div>
-        <div class="kpi-sub">Assessed unique training batches</div>
-      </div>
-
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#fee2e2; color:#e4002b;">🎯</div>
-        <div class="kpi-label">Overall Assessment Score</div>
-        <div class="kpi-value" style="color:${k.overallScore != null && k.overallScore >= 0.8 ? '#16a34a' : (k.overallScore >= 0.65 ? '#d97706' : '#e4002b')};">
-          ${k.overallScore != null ? Utils.pct(k.overallScore) : '—'}
+      <!-- KPI 1: Trainings Conducted -->
+      <div class="kpi-card accent-blue">
+        <div class="kpi-top">
+          <span class="kpi-label">Trainings Conducted</span>
+          <span class="kpi-badge badge-blue">SESSIONS</span>
         </div>
-        <div class="kpi-sub">Target benchmark: ≥ 80%</div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large">${k.trainingsConducted}</span>
+            <span class="kpi-sublabel">(Conducted Sessions)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#0284c7;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Unique Date &amp; Module</span>
+          <span>Coverage: <b>100%</b></span>
+        </div>
       </div>
 
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#d1fae5; color:#059669;">🏆</div>
-        <div class="kpi-label">Highest Score</div>
-        <div class="kpi-value" style="color:#059669;">${k.highestScore != null ? Utils.pct(k.highestScore) : '—'}</div>
-        <div class="kpi-sub">Top performer score</div>
+      <!-- KPI 2: Unique Employees Trained -->
+      <div class="kpi-card accent-green">
+        <div class="kpi-top">
+          <span class="kpi-label">Unique Employees Trained</span>
+          <span class="kpi-badge badge-green">WORKFORCE</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#10b981;">${k.uniqueEmployees}</span>
+            <span class="kpi-sublabel">(Field VMs)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#10b981;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Active in Range</span>
+          <span>Trained: <b>${k.uniqueEmployees} VMs</b></span>
+        </div>
       </div>
 
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:#ffe4e6; color:#e11d48;">⚠️</div>
-        <div class="kpi-label">Lowest Score</div>
-        <div class="kpi-value" style="color:#e11d48;">${k.lowestScore != null ? Utils.pct(k.lowestScore) : '—'}</div>
-        <div class="kpi-sub">Coaching focus threshold</div>
+      <!-- KPI 3: Assessments Conducted -->
+      <div class="kpi-card accent-amber">
+        <div class="kpi-top">
+          <span class="kpi-label">Assessments Conducted</span>
+          <span class="kpi-badge badge-amber">ASSESSMENTS</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#f59e0b;">${k.assessmentCount}</span>
+            <span class="kpi-sublabel">(Batches Evaluated)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#f59e0b;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Evaluated Training Batches</span>
+          <span>Count: <b>${k.assessmentCount}</b></span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Overall Assessment Score -->
+      <div class="kpi-card ${scoreAccent}">
+        <div class="kpi-top">
+          <span class="kpi-label">Overall Assessment Score</span>
+          <span class="kpi-badge ${scoreBadge}">BENCHMARK</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:${scoreColor};">${k.overallScore != null ? Utils.pct(k.overallScore) : '—'}</span>
+            <span class="kpi-sublabel">(Target &ge; 80%)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${scorePct}%; background:${scoreColor};"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Target: <b>&ge; 80%</b></span>
+          <span>Status: <b style="color:${scoreColor};">${k.overallScore != null && k.overallScore >= 0.8 ? 'Achieved' : 'Needs Focus'}</b></span>
+        </div>
+      </div>
+
+      <!-- KPI 5: Highest Score -->
+      <div class="kpi-card accent-cyan">
+        <div class="kpi-top">
+          <span class="kpi-label">Highest Score</span>
+          <span class="kpi-badge badge-cyan">TOP PERFORMER</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#06b6d4;">${k.highestScore != null ? Utils.pct(k.highestScore) : '—'}</span>
+            <span class="kpi-sublabel">(Peak Score)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${k.highestScore != null ? Math.min(100, Math.round(k.highestScore * 100)) : 0}%; background:#06b6d4;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Top Batch Performer</span>
+          <span>Score: <b>${k.highestScore != null ? Utils.pct(k.highestScore) : '—'}</b></span>
+        </div>
+      </div>
+
+      <!-- KPI 6: Lowest Score -->
+      <div class="kpi-card accent-red">
+        <div class="kpi-top">
+          <span class="kpi-label">Lowest Score</span>
+          <span class="kpi-badge badge-red">COACHING</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#e4002b;">${k.lowestScore != null ? Utils.pct(k.lowestScore) : '—'}</span>
+            <span class="kpi-sublabel">(Focus Threshold)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${k.lowestScore != null ? Math.min(100, Math.round(k.lowestScore * 100)) : 0}%; background:#e4002b;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Coaching Focus Need</span>
+          <span>Threshold: <b>${k.lowestScore != null ? Utils.pct(k.lowestScore) : '—'}</b></span>
+        </div>
       </div>
     `;
   },

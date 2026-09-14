@@ -182,22 +182,22 @@
       </div>
     </header>
 
-  </div> <!-- /sticky-header-wrapper -->
+    <!-- SYNC STATUS INFO BAR -->
+    <div class="sync-bar" id="syncInfoBar">
+      <div class="sync-meta">
+        <span>📁 Sheet: <b>Product-VM-Score</b></span>
+        <span>🌐 Connection: <b id="dataSourceLabel">SharePoint Live Sync</b></span>
+        <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
+        <span>🏬 Total Visits: <b id="totalRecordCount">0</b></span>
+        <span>🎯 Target POSM: <b id="totalTargetMeta">0</b></span>
+        <span>⚠️ Under 100% Score: <b id="under100CountMeta" style="color:var(--godrej-red);">0</b></span>
+      </div>
+      <div class="sync-actions">
+        <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
+      </div>
+    </div>
 
-  <!-- SYNC STATUS INFO BAR -->
-  <div class="sync-bar" id="syncInfoBar">
-    <div class="sync-meta">
-      <span>📁 Sheet: <b>Product-VM-Score</b></span>
-      <span>🌐 Connection: <b id="dataSourceLabel">SharePoint Live Sync</b></span>
-      <span>🕒 Last Synced: <b id="lastUpdatedMeta">Connecting...</b></span>
-      <span>🏬 Total Visits: <b id="totalRecordCount">0</b></span>
-      <span>🎯 Target POSM: <b id="totalTargetMeta">0</b></span>
-      <span>⚠️ Under 100% Score: <b id="under100CountMeta" style="color:var(--godrej-red);">0</b></span>
-    </div>
-    <div class="sync-actions">
-      <span style="font-size:12px; color:var(--ink-faint);">Click <b>Live data connected</b> to refresh</span>
-    </div>
-  </div>
+  </div> <!-- /sticky-header-wrapper -->
 
   <div class="err-banner" id="errBanner"></div>
 
@@ -1005,51 +1005,130 @@ const UI = {
     const notExecPct = sumTargetDeployment > 0 ? ((sumFinalNotDeployed / sumTargetDeployment) * 100).toFixed(1) : '0';
 
     kpiGrid.innerHTML = `
-      <!-- KPI 1: Overall Merchandising Score (No second line text) -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(228,0,43,0.12); color:#e4002b;">🎯</div>
-        <div class="kpi-label">Overall Merchandising Score</div>
-        <div class="kpi-value" style="color:var(--godrej-red);">${Utils.formatPercent(avgScore, 1)}</div>
+      <!-- KPI 1: Overall Merchandising Score -->
+      <div class="kpi-card accent-red">
+        <div class="kpi-top">
+          <span class="kpi-label">Overall Merchandising Score</span>
+          <span class="kpi-badge badge-red">BENCHMARK</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:var(--godrej-red);">${Utils.formatPercent(avgScore, 1)}</span>
+            <span class="kpi-sublabel">(Target &ge; 85%)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round(avgScore))}%; background:var(--godrej-red);"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Target: <b>&ge; 85%</b></span>
+          <span>Status: <b style="color:${avgScore >= 85 ? '#10b981' : 'var(--godrej-red)'};">${avgScore >= 85 ? 'Achieved' : 'Needs Focus'}</b></span>
+        </div>
       </div>
 
-      <!-- KPI 2: Products Captured (Second line: Average product display) -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(2,132,199,0.12); color:#0284c7;">📦</div>
-        <div class="kpi-label">Products Captured</div>
-        <div class="kpi-value">${Utils.formatNum(sumDisplayCount)}</div>
-        <div class="kpi-sub">Avg ${avgProdPerVisit} / visit</div>
+      <!-- KPI 2: Products Captured -->
+      <div class="kpi-card accent-blue">
+        <div class="kpi-top">
+          <span class="kpi-label">Products Captured</span>
+          <span class="kpi-badge badge-blue">DISPLAY</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#0284c7;">${Utils.formatNum(sumDisplayCount)}</span>
+            <span class="kpi-sublabel">(Total Reported)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#0284c7;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Average: <b>${avgProdPerVisit} / visit</b></span>
+          <span>Visits: <b>${Utils.formatNum(totalUniqueVisits)}</b></span>
+        </div>
       </div>
 
-      <!-- KPI 3: Target Deployment (Second line: Average target POSM) -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(99,102,241,0.12); color:#6366f1;">📋</div>
-        <div class="kpi-label">Target Deployment</div>
-        <div class="kpi-value">${Utils.formatNum(sumTargetDeployment)}</div>
-        <div class="kpi-sub">Avg ${avgTargetPerProd} / product</div>
+      <!-- KPI 3: Target Deployment -->
+      <div class="kpi-card accent-purple">
+        <div class="kpi-top">
+          <span class="kpi-label">Target Deployment</span>
+          <span class="kpi-badge badge-purple">TARGET</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#6366f1;">${Utils.formatNum(sumTargetDeployment)}</span>
+            <span class="kpi-sublabel">(Required POSM)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#6366f1;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Average: <b>${avgTargetPerProd} / prod</b></span>
+          <span>Target POSM units</span>
+        </div>
       </div>
 
-      <!-- KPI 4: POSM Executed (Second line: % of Target Deployment) -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(16,185,129,0.12); color:#10b981;">✅</div>
-        <div class="kpi-label">POSM Executed</div>
-        <div class="kpi-value" style="color:#10b981;">${Utils.formatNum(sumFinalDeployed)}</div>
-        <div class="kpi-sub">${execPct}% of Target</div>
+      <!-- KPI 4: POSM Executed -->
+      <div class="kpi-card accent-green">
+        <div class="kpi-top">
+          <span class="kpi-label">POSM Executed</span>
+          <span class="kpi-badge badge-green">EXECUTED</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#10b981;">${Utils.formatNum(sumFinalDeployed)}</span>
+            <span class="kpi-sublabel">(${execPct}% of Target)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round(parseFloat(execPct)||0))}%; background:#10b981;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Achievement: <b>${execPct}%</b></span>
+          <span>Deployed Units</span>
+        </div>
       </div>
 
-      <!-- KPI 5: POSM Not Executed (Second line: % of Target) -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.12); color:#d97706;">⚠️</div>
-        <div class="kpi-label">POSM Not Executed</div>
-        <div class="kpi-value" style="color:#d97706;">${Utils.formatNum(sumFinalNotDeployed)}</div>
-        <div class="kpi-sub">${notExecPct}% of Target</div>
+      <!-- KPI 5: POSM Not Executed -->
+      <div class="kpi-card accent-amber">
+        <div class="kpi-top">
+          <span class="kpi-label">POSM Not Executed</span>
+          <span class="kpi-badge badge-amber">PENDING</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#d97706;">${Utils.formatNum(sumFinalNotDeployed)}</span>
+            <span class="kpi-sublabel">(${notExecPct}% of Target)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:${Math.min(100, Math.round(parseFloat(notExecPct)||0))}%; background:#d97706;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Pending Gap: <b>${notExecPct}%</b></span>
+          <span>Unfulfilled Units</span>
+        </div>
       </div>
 
       <!-- KPI 6: Total Visits -->
-      <div class="card kpi-card">
-        <div class="kpi-icon-wrap" style="background:rgba(13,148,136,0.12); color:#0d9488;">🏬</div>
-        <div class="kpi-label">Total Visits</div>
-        <div class="kpi-value">${Utils.formatNum(totalUniqueVisits)}</div>
-        <div class="kpi-sub">Unique Store + Date Visits</div>
+      <div class="kpi-card accent-cyan">
+        <div class="kpi-top">
+          <span class="kpi-label">Total Visits</span>
+          <span class="kpi-badge badge-cyan">VISITS</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-value-row">
+            <span class="kpi-value-large" style="color:#06b6d4;">${Utils.formatNum(totalUniqueVisits)}</span>
+            <span class="kpi-sublabel">(Store Visits)</span>
+          </div>
+          <div class="kpi-progress-track">
+            <div class="kpi-progress-bar" style="width:100%; background:#06b6d4;"></div>
+          </div>
+        </div>
+        <div class="kpi-subline">
+          <span>Store &amp; Date Visits</span>
+          <span>Coverage Active</span>
+        </div>
       </div>
     `;
 
