@@ -22,6 +22,13 @@
       font-weight: 700;
       letter-spacing: -0.01em;
       color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
       margin: 0;
     }
     .kpi-section-subtitle {
@@ -30,25 +37,25 @@
       font-weight: 500;
     }
 
-    /* KPI Card Base */
+    /* KPI Card Base: Exact Bosch card styling with 0 top padding */
     .kpi-card-prog {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
+      background: var(--surface-solid, #ffffff);
+      border: 1px solid var(--surface-border, #e2e8f0);
       border-radius: 12px;
-      padding: 14px 16px 12px 16px;
-      box-shadow: var(--shadow-sm);
+      padding: 0 0 12px 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 165px;
+      position: relative;
       overflow: hidden;
+      min-height: 165px;
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .kpi-card-prog:hover {
       transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+      border-color: rgba(0, 75, 135, 0.35);
     }
     .kpi-card-prog::before {
       content: '';
@@ -56,124 +63,172 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 3px;
-      background: var(--card-accent, #0ea5e9);
+      height: 3.5px;
+      background: var(--card-accent, linear-gradient(90deg, #ef4444, #008ecf));
+      opacity: 0.95;
+      z-index: 2;
     }
 
-    /* Card Top Border Accents */
-    .accent-sky { --card-accent: #0ea5e9; }
-    .accent-blue { --card-accent: #0284c7; }
-    .accent-green { --card-accent: #10b981; }
-    .accent-purple { --card-accent: #8b5cf6; }
-    .accent-red { --card-accent: #ef4444; }
-    .accent-amber { --card-accent: #f59e0b; }
-    .accent-cyan { --card-accent: #06b6d4; }
+    /* Card Top Accent Stripes */
+    .accent-sky { --card-accent: linear-gradient(90deg, #ef4444 0%, #8b5cf6 50%, #008ecf 100%); }
+    .accent-blue { --card-accent: linear-gradient(90deg, #008ecf 0%, #06b6d4 100%); }
+    .accent-green { --card-accent: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+    .accent-purple { --card-accent: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%); }
+    .accent-red { --card-accent: linear-gradient(90deg, #ef4444 0%, #f97316 100%); }
+    .accent-amber { --card-accent: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+    .accent-cyan { --card-accent: linear-gradient(90deg, #06b6d4 0%, #008ecf 100%); }
 
-    /* Card Header with Title & Tag Badge */
+    /* Dark Ribbon Header: Covering Primary & Secondary Headers in bold contrast */
     .kpi-card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
       gap: 8px;
+      background: linear-gradient(135deg, #0b1e36 0%, #15294a 100%);
+      padding: 10px 14px 9px 14px;
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14);
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
     }
+    body.dark-theme .kpi-card-header {
+      background: linear-gradient(135deg, #08111e 0%, #101c2e 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Primary Header text in crisp white for clear visibility */
     .kpi-card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ink);
-      letter-spacing: -0.01em;
+      font-size: 12px;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    /* Secondary Header tag badges in luminous contrast colors */
     .kpi-tag-badge {
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
+      padding: 2.5px 8px;
+      border-radius: 5px;
       font-family: var(--font-mono, monospace);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 2.5px 7px;
-      border-radius: 4px;
       white-space: nowrap;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
       flex-shrink: 0;
     }
-    .tag-primary { background: rgba(14, 165, 233, 0.16); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
-    .tag-visits { background: rgba(59, 130, 246, 0.16); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .tag-quality { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .tag-display { background: rgba(14, 165, 233, 0.16); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
-    .tag-posm { background: rgba(139, 92, 246, 0.16); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
-    .tag-ebo { background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .tag-chain { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .tag-cool { background: rgba(139, 92, 246, 0.16); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
-    .tag-others { background: rgba(6, 182, 212, 0.16); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
-    .tag-prod { background: rgba(14, 165, 233, 0.16); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
-    .tag-mandays { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .tag-mkthrs { background: rgba(14, 165, 233, 0.16); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
-    .tag-tothrs { background: rgba(139, 92, 246, 0.16); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .tag-primary, .tag-visits, .tag-display, .tag-prod, .tag-mkthrs {
+      background: rgba(56, 189, 248, 0.22);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .tag-quality, .tag-mandays {
+      background: rgba(16, 185, 129, 0.22);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .tag-chain {
+      background: rgba(245, 158, 11, 0.22);
+      color: #fde047;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .tag-ebo {
+      background: rgba(239, 68, 68, 0.22);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .tag-posm, .tag-cool, .tag-tothrs {
+      background: rgba(139, 92, 246, 0.22);
+      color: #c4b5fd;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+    }
+    .tag-others {
+      background: rgba(6, 182, 212, 0.22);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
 
-    /* Donut Centered Layout */
+    /* KPI Donut Charts - Exact Bosch sizing & styling */
     .kpi-donut-centered {
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 6px 14px 6px;
       flex: 1;
-      padding: 4px 0 2px 0;
     }
     .kpi-donut-svg-wrap {
-      width: 74px;
-      height: 74px;
-      flex-shrink: 0;
       position: relative;
+      width: 86px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
     .kpi-donut-svg {
       width: 100%;
       height: 100%;
       transform: rotate(-90deg);
+      overflow: visible;
     }
     .donut-track {
       fill: none;
-      stroke: var(--surface-border);
-      stroke-width: 11;
+      stroke: rgba(15, 23, 42, 0.08);
+      stroke-width: 6.5;
     }
     body.dark-theme .donut-track {
-      stroke: rgba(255, 255, 255, 0.08);
+      stroke: rgba(255, 255, 255, 0.10);
     }
     .donut-fill {
       fill: none;
-      stroke-width: 11;
+      stroke-width: 6.5;
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      stroke-dasharray: 128.8;
+      stroke-dashoffset: 128.8;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .kpi-card-prog:hover .donut-fill {
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
     }
     .donut-text-center {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 13.5px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--ink);
-      font-family: var(--font-body, system-ui);
-      pointer-events: none;
-      white-space: nowrap;
-      text-align: center;
-      line-height: 1;
-    }
-
-    /* Footer Stats for Donut Cards */
-    .kpi-footer-stats {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px 10px;
-      flex-wrap: wrap;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: var(--font-mono, monospace);
+      color: var(--ink);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      pointer-events: none;
+      text-align: center;
+      padding: 0 4px;
+    }
+
+    /* Subline / Footer Stats */
+    .kpi-footer-stats {
       font-size: 11px;
       color: var(--ink-faint);
-      padding-top: 8px;
-      border-top: 1px solid var(--surface-border-subtle, rgba(255, 255, 255, 0.05));
+      line-height: 1.4;
+      padding: 6px 14px 0;
+      border-top: 1px solid var(--surface-border-subtle);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      justify-content: center;
       margin-top: auto;
-      line-height: 1.3;
-      text-align: center;
     }
     .kpi-footer-stats .kpi-stat-item {
       display: inline-flex;
@@ -183,56 +238,65 @@
     }
     .kpi-footer-stats .kpi-stat-label {
       color: var(--ink-faint);
-      font-size: 10.5px;
+      font-size: 11px;
     }
-    .kpi-footer-stats b {
+    .kpi-footer-stats .kpi-stat-item b {
       color: var(--ink);
-      font-weight: 700;
+      font-family: var(--font-mono, monospace);
+      font-weight: 600;
     }
 
-    /* Dual Metric Cards (Display, POSM, Productivity, Time, Working Hrs) */
+    /* Dual KPI Split Cards (Product Display, POSM, etc.) */
     .kpi-metric-dual-body {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       flex: 1;
-      padding: 4px 0 2px 0;
+      justify-content: space-evenly;
+      padding: 10px 14px 12px 14px;
+      gap: 8px;
     }
-    .kpi-metric-primary-row {
+    .kpi-metric-primary-row, .kpi-metric-secondary-row {
       display: flex;
       align-items: baseline;
-      gap: 6px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .kpi-big-value {
       font-size: 24px;
       font-weight: 800;
       color: var(--ink);
-      line-height: 1.1;
+      font-family: var(--font-mono, monospace);
       letter-spacing: -0.02em;
-    }
-    .kpi-metric-sublabel {
-      font-size: 11px;
-      color: var(--ink-faint);
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .kpi-accent-bar {
-      height: 2.5px;
-      width: 100%;
-      border-radius: 2px;
-      margin: 8px 0 10px 0;
-    }
-    .kpi-metric-secondary-row {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
+      line-height: 1.1;
     }
     .kpi-mid-value {
-      font-size: 19px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--ink);
+      font-family: var(--font-mono, monospace);
+      letter-spacing: -0.02em;
       line-height: 1.1;
-      letter-spacing: -0.01em;
+    }
+    .kpi-metric-sublabel {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      letter-spacing: 0.01em;
+    }
+    body.dark-theme .kpi-metric-sublabel {
+      color: #94a3b8;
+    }
+    .kpi-accent-bar {
+      height: 4px;
+      background: var(--surface-hover);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      margin: 4px 0;
+    }
+    body.dark-theme .kpi-accent-bar {
+      background: rgba(255, 255, 255, 0.08);
     }
 
     /* Stacked Chart Card */
@@ -637,9 +701,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_cov" cx="50" cy="50" r="38" stroke="#0ea5e9" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_cov" cx="26" cy="26" r="20.5" stroke="#0ea5e9" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_cov_text">0%</div>
               </div>
@@ -657,9 +721,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_visit" cx="50" cy="50" r="38" stroke="#0284c7" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_visit" cx="26" cy="26" r="20.5" stroke="#008ecf" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_visit_text">0%</div>
               </div>
@@ -677,9 +741,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_prod" cx="50" cy="50" r="38" stroke="#10b981" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_prod" cx="26" cy="26" r="20.5" stroke="#10b981" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_prod_text">0%</div>
               </div>
@@ -700,7 +764,7 @@
                 <span class="kpi-big-value" id="kpi4_val">--</span>
                 <span class="kpi-metric-sublabel">(Total Reported)</span>
               </div>
-              <div class="kpi-accent-bar" style="background:#0284c7;"></div>
+              <div class="kpi-accent-bar" style="background:#008ecf;"></div>
               <div class="kpi-metric-secondary-row">
                 <span class="kpi-mid-value" id="kpi4_sub_val">--</span>
                 <span class="kpi-metric-sublabel">(Avg. per Visit)</span>
@@ -748,9 +812,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_ebo" cx="50" cy="50" r="38" stroke="#ef4444" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_ebo" cx="26" cy="26" r="20.5" stroke="#ef4444" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_ebo_text">0%</div>
               </div>
@@ -766,9 +830,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_chain" cx="50" cy="50" r="38" stroke="#f59e0b" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_chain" cx="26" cy="26" r="20.5" stroke="#f59e0b" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_chain_text">0%</div>
               </div>
@@ -784,9 +848,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_cool" cx="50" cy="50" r="38" stroke="#8b5cf6" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_cool" cx="26" cy="26" r="20.5" stroke="#8b5cf6" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_cool_text">0%</div>
               </div>
@@ -802,9 +866,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_other" cx="50" cy="50" r="38" stroke="#06b6d4" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_other" cx="26" cy="26" r="20.5" stroke="#06b6d4" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_other_text">0%</div>
               </div>
@@ -836,7 +900,7 @@
                 <span class="kpi-big-value" id="kpiProd_val">--</span>
                 <span class="kpi-metric-sublabel">(Visits / Day)</span>
               </div>
-              <div class="kpi-accent-bar" style="background:#0284c7;"></div>
+              <div class="kpi-accent-bar" style="background:#008ecf;"></div>
               <div class="kpi-metric-secondary-row">
                 <span class="kpi-mid-value">5.00</span>
                 <span class="kpi-metric-sublabel">(Target &middot; Adh: <b id="kpiProd_adh" style="color:var(--ink);">--</b>)</span>
@@ -852,9 +916,9 @@
             </div>
             <div class="kpi-donut-centered">
               <div class="kpi-donut-svg-wrap">
-                <svg class="kpi-donut-svg" viewBox="0 0 100 100">
-                  <circle class="donut-track" cx="50" cy="50" r="38"/>
-                  <circle class="donut-fill" id="donut_mandays" cx="50" cy="50" r="38" stroke="#10b981" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_mandays" cx="26" cy="26" r="20.5" stroke="#10b981" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
                 </svg>
                 <div class="donut-text-center" id="donut_mandays_text">0%</div>
               </div>
@@ -1810,12 +1874,12 @@
       const circle = document.getElementById(donutId);
       const text = document.getElementById(textId);
       if (!circle || !text) return;
-      const r = 38;
-      const circ = 2 * Math.PI * r; // 238.76
+      const r = 20.5;
+      const circ = 128.8; // 2 * Math.PI * 20.5
       const validPct = Math.max(0, Math.min(100, pct));
       const offset = circ * (1 - validPct / 100);
       circle.style.strokeDasharray = circ;
-      circle.style.strokeDashoffset = offset;
+      circle.style.strokeDashoffset = offset.toFixed(2);
       if (strokeColor) circle.setAttribute('stroke', strokeColor);
       text.textContent = (validPct).toFixed(1) + '%';
     },
