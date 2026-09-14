@@ -5,6 +5,8 @@ on:
     # Runs automatically every 15 minutes
     - cron: '*/15 * * * *'
   workflow_dispatch: # Allows manual 1-click execution from GitHub Actions UI
+  repository_dispatch: # Allows instant triggering via Power Automate or external webhook
+    types: [sharepoint_updated, sync, webhook]
 
 permissions:
   contents: write

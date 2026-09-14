@@ -25,6 +25,28 @@ SHAREPOINT_URLS = {
     "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
 }
 
+ONEDRIVE_BASE = "/Users/bikash/Library/CloudStorage/OneDrive-ChannelplayLimited/My Laptop/0 Active Projects/Godrej VM 100838/0 Project 2.0/Reports for dashboard"
+
+LOCAL_FALLBACKS = {
+    "index": [
+        os.path.join(ONEDRIVE_BASE, "QC Audit Report.xlsx"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "QC Audit Report.xlsx"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "qc_download.xlsx"),
+    ],
+    "training": [
+        os.path.join(ONEDRIVE_BASE, "Training Tracker.xlsx"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Training Tracker.xlsx"),
+    ],
+    "m_score": [
+        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej MS.xlsb"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS.xlsb"),
+    ],
+    "program_performance": [
+        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej VM Productivity Report.xlsb"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej VM Productivity Report.xlsb"),
+    ]
+}
+
 def get_opener():
     cookie_jar = http.cookiejar.CookieJar()
     return urllib.request.build_opener(
@@ -32,8 +54,21 @@ def get_opener():
         urllib.request.HTTPRedirectHandler
     )
 
-def fetch_url_data(opener, url, timeout=90, retries=3):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+def fetch_url_data(opener, url, fallback_paths=None, timeout=90, retries=3, label="dataset"):
+    # If explicitly preferred local or local flag passed
+    prefer_local = "--local" in sys.argv or "--prefer-local" in sys.argv
+    if prefer_local and fallback_paths:
+        for path in fallback_paths:
+            if os.path.exists(path):
+                print(f"✓ Using local file (--prefer-local) for {label}: {path}")
+                with open(path, "rb") as f:
+                    return f.read()
+
+    print(f"Fetching latest {label} from SharePoint...")
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+    )
     last_err = None
     for attempt in range(1, retries + 1):
         try:
@@ -44,14 +79,29 @@ def fetch_url_data(opener, url, timeout=90, retries=3):
                 if not chunk:
                     break
                 chunks.append(chunk)
-            return b"".join(chunks)
+            data = b"".join(chunks)
+            if len(data) > 3000:
+                print(f"✓ Downloaded {len(data):,} bytes for {label}")
+                return data
+            else:
+                print(f"Warning: Downloaded data for {label} was too small ({len(data)} bytes).")
         except Exception as e:
             last_err = e
             if attempt < retries:
                 print(f"Warning: Download attempt {attempt} failed ({e}), retrying in 3 seconds...")
                 time.sleep(3)
-            else:
-                raise last_err
+
+    if fallback_paths:
+        print(f"SharePoint fetch failed for {label}: {last_err}. Checking local fallbacks...")
+        for path in fallback_paths:
+            if os.path.exists(path):
+                print(f"✓ Using local fallback for {label}: {path}")
+                with open(path, "rb") as f:
+                    return f.read()
+
+    if last_err:
+        raise last_err
+    raise ValueError(f"Could not download {label} or locate local fallback file.")
 
 def embed_sample_data(html_file, rows):
     if not os.path.exists(html_file):
@@ -75,7 +125,7 @@ def embed_sample_data(html_file, rows):
 
 def sync_index(opener):
     print("\n--- Syncing index.html (QC Tracker) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], timeout=45)
+    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], LOCAL_FALLBACKS.get("index"), timeout=45, label="QC Audit Report (index)")
     wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
     sheet_name = next((s for s in wb.sheetnames if "qc" in s.lower()), wb.sheetnames[0])
     ws = wb[sheet_name]
@@ -93,7 +143,7 @@ def sync_index(opener):
 
 def sync_training(opener):
     print("\n--- Syncing training.html (Training Details) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["training"], timeout=45)
+    data = fetch_url_data(opener, SHAREPOINT_URLS["training"], LOCAL_FALLBACKS.get("training"), timeout=45, label="Training Tracker (training)")
     wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
     sheet_name = next((s for s in wb.sheetnames if "training" in s.lower()), wb.sheetnames[0])
     ws = wb[sheet_name]
@@ -111,7 +161,7 @@ def sync_training(opener):
 
 def sync_m_score(opener):
     print("\n--- Syncing m_score.html (Product-VM-Score) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["m_score"], timeout=120)
+    data = fetch_url_data(opener, SHAREPOINT_URLS["m_score"], LOCAL_FALLBACKS.get("m_score"), timeout=120, label="Godrej MS (m_score)")
     with open_workbook(io.BytesIO(data)) as wb:
         sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheets else wb.sheets[0]
         with wb.get_sheet(sheet_name) as s:
@@ -128,7 +178,7 @@ def sync_m_score(opener):
 
 def sync_program_performance(opener):
     print("\n--- Syncing program_performance.html (Program Performance) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["program_performance"], timeout=60)
+    data = fetch_url_data(opener, SHAREPOINT_URLS["program_performance"], LOCAL_FALLBACKS.get("program_performance"), timeout=60, label="VM Productivity (program_performance)")
     with open_workbook(io.BytesIO(data)) as wb:
         sheet_name = "Program Performance" if "Program Performance" in wb.sheets else wb.sheets[0]
         with wb.get_sheet(sheet_name) as s:
