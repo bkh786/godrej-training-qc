@@ -14,6 +14,7 @@ import io
 import json
 import datetime
 import functools
+import re
 import os
 import subprocess
 import sys
