@@ -2212,14 +2212,14 @@
               ctx.fillText(Utils.fmtNum(achVal), x, elAch.y + achHeight / 2);
             }
 
-            // 3. Target count inside Pending bar (top segment)
+            // 3. Pending count inside Pending bar (top segment)
             if (elPending && pendingVal > 0) {
               const pendingHeight = Math.abs(elPending.base - elPending.y);
               if (pendingHeight >= 16) {
                 ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
                 ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(Utils.fmtNum(tgtVal), x, elPending.y + pendingHeight / 2);
+                ctx.fillText(Utils.fmtNum(pendingVal), x, elPending.y + pendingHeight / 2);
               }
             }
           }

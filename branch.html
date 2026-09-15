@@ -464,6 +464,91 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+
+    /* Exact Replica Branch Coverage & Visits Audit Table */
+    .audit-replica-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      line-height: 1.25;
+      border: 1.5px solid #64748b;
+      margin-top: 8px;
+    }
+    .audit-replica-table th,
+    .audit-replica-table td {
+      border: 1px solid #94a3b8;
+      padding: 6px 6px;
+    }
+    .audit-replica-table th {
+      background-color: #cbd5e1;
+      color: #0f172a;
+      font-weight: 700;
+      text-transform: none;
+      cursor: pointer;
+      user-select: none;
+      text-align: center;
+      white-space: normal;
+      vertical-align: middle;
+      font-size: 11px;
+    }
+    body.dark-theme .audit-replica-table th {
+      background-color: #334155;
+      color: #f8fafc;
+      border-color: #64748b;
+    }
+    .audit-replica-table th:nth-child(1),
+    .audit-replica-table th:nth-child(2),
+    .audit-replica-table th:nth-child(3) {
+      text-align: center;
+    }
+    .audit-replica-table td:nth-child(1),
+    .audit-replica-table td:nth-child(2) {
+      text-align: left;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .audit-replica-table td:nth-child(3) {
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .audit-replica-table td:nth-child(n+4) {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .audit-replica-table tbody tr:nth-child(even) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    body.dark-theme .audit-replica-table tbody tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .audit-replica-table tbody tr:hover {
+      background-color: rgba(14, 165, 233, 0.07);
+    }
+    .audit-replica-table tfoot td {
+      background-color: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+      border-top: 2px solid #64748b;
+    }
+    body.dark-theme .audit-replica-table tfoot td {
+      background-color: #1e293b;
+      color: #f8fafc;
+      border-top: 2px solid #475569;
+    }
+    .chart-legend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--surface-hover);
+      border: 1px solid var(--surface-border);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
   </style>
 </head>
 <body>
@@ -839,7 +924,13 @@
                 Other Categories
               </button>
             </div>
-            <div style="height:350px; position:relative;">
+            <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-tmm-cov"></span> Outlets Covered</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+            </div>
+            <div style="height:380px; position:relative;">
               <canvas id="chartTMMCoverage"></canvas>
             </div>
           </div>
@@ -879,7 +970,13 @@
                 Other Categories
               </button>
             </div>
-            <div style="height:360px; position:relative;">
+            <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-br-cov"></span> Outlets Covered</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+            </div>
+            <div style="height:380px; position:relative;">
               <canvas id="chartBranchCoverage"></canvas>
             </div>
           </div>
@@ -919,7 +1016,13 @@
                 Other Categories
               </button>
             </div>
-            <div style="height:340px; position:relative;">
+            <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-zn-cov"></span> Outlets Covered</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+            </div>
+            <div style="height:380px; position:relative;">
               <canvas id="chartZoneCoverage"></canvas>
             </div>
           </div>
@@ -1093,6 +1196,62 @@
           </div>
         </div>
 
+        <!-- Subsection 4: Zone & State Branch-wise Coverage & Visits Summary (Exact Replica View) -->
+        <div class="perf-table-card" style="margin-bottom:28px;">
+          <div class="perf-table-title" style="flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:18px;">📊</span>
+              <div>
+                <span style="font-weight:700; font-size:15px;">Zone & State Branch-wise Coverage & Visits Summary</span>
+                <span style="display:block; font-size:12px; font-weight:400; color:var(--ink-muted); margin-top:2px;">Exact audit breakdown of Unique Target/Achievement and Visit Targets, Achievements & Productivity</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="kpi-badge" id="auditTableBadge" style="background:rgba(2,132,199,0.12); color:var(--accent-blue); font-weight:600;">28 Branches</span>
+              <button class="export-btn" onclick="App.exportAuditCSV()" style="padding:6px 14px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; font-weight:600; background:var(--surface-sunken); border:1px solid var(--surface-border); border-radius:6px; cursor:pointer; color:var(--ink);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export as CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick search toolbar -->
+          <div class="table-toolbar">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" id="auditTableSearchInput" placeholder="Filter by Zone, State, or Branch...">
+            </div>
+            <div style="font-size:12px; color:var(--ink-faint);" id="auditRowCountText">
+              Showing 28 of 28 branches
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="audit-replica-table" id="auditReplicaTable">
+              <thead>
+                <tr>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('zone')">Zone</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('state')">State</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('branch')">Branch Name</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('coverageTarget')">Unique<br>Target</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('coverageAch')">Unique<br>Achievement</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('coveragePct')">Unique<br>Achievement %</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('visitsTarget')">Visit<br>Target</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('visitAch')">Visits<br>Achievement</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('visitAchPct')">Visits<br>Achievement %</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('productiveVisits')">Productive<br>Visits</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('productiveVisitPct')">Productive<br>Visits %</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('unproductiveVisits')">Unproductive<br>Visits</th>
+                  <th style="cursor:pointer;" onclick="App.sortAuditTable('unproVisitPct')">Unproductive<br>Visits %</th>
+                </tr>
+              </thead>
+              <tbody id="auditReplicaTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
     </div> <!-- /dashboard -->
@@ -1133,11 +1292,45 @@
     sortAsc: true,
     page: 1,
     pageSize: 15,
+    auditSearchQuery: '',
+    auditSortKey: 'default',
+    auditSortAsc: true,
     charts: {
       tmm: null,
       branch: null,
       zone: null
     }
+  };
+
+  const BRANCH_METADATA = {
+    'Guwahati':    { zone: 'East - WNE', state: 'Assam', order: 1 },
+    'Durgapur':    { zone: 'East - WNE', state: 'West Bengal', order: 2 },
+    'Kolkata':     { zone: 'East - WNE', state: 'West Bengal', order: 3 },
+    'Patna':       { zone: 'East - OBJ', state: 'Bihar', order: 4 },
+    'Ranchi':      { zone: 'East - OBJ', state: 'Jharkhand', order: 5 },
+    'Bhubaneswar': { zone: 'East - OBJ', state: 'Odisha', order: 6 },
+    'Delhi':       { zone: 'North - DR', state: 'Delhi', order: 7 },
+    'Jaipur':      { zone: 'North - DR', state: 'Rajasthan', order: 8 },
+    'Chandigarh':  { zone: 'North - PHY', state: 'Punjab', order: 9 },
+    'Gurugram':    { zone: 'North - PHY', state: 'Haryana', order: 10 },
+    'Ghaziabad':   { zone: 'North - UP', state: 'Uttar Pradesh', order: 11 },
+    'Lucknow':     { zone: 'North - UP', state: 'Uttar Pradesh', order: 12 },
+    'Vijayawada':  { zone: 'South - APT', state: 'Andhra Pradesh', order: 13 },
+    'Hyderabad':   { zone: 'South - APT', state: 'Telangana', order: 14 },
+    'Goa':         { zone: 'South - KA', state: 'Goa', order: 15 },
+    'Mangalore':   { zone: 'South - KA', state: 'Karnataka', order: 16 },
+    'Bengaluru':   { zone: 'South - KA', state: 'Karnataka', order: 17 },
+    'Calicut':     { zone: 'South - KL', state: 'Kerala', order: 18 },
+    'Cochin':      { zone: 'South - KL', state: 'Kerala', order: 19 },
+    'Madurai':     { zone: 'South - TN', state: 'Tamil Nadu', order: 20 },
+    'Chennai':     { zone: 'South - TN', state: 'Tamil Nadu', order: 21 },
+    'Coimbatore':  { zone: 'South - TN', state: 'Tamil Nadu', order: 22 },
+    'Pune':        { zone: 'West - MH', state: 'Maharashtra', order: 23 },
+    'Nagpur':      { zone: 'West - MH', state: 'Maharashtra', order: 24 },
+    'Aurangabad':  { zone: 'West - MH', state: 'Maharashtra', order: 25 },
+    'Mumbai':      { zone: 'West - MH', state: 'Maharashtra', order: 26 },
+    'Ahmedabad':   { zone: 'West - MH', state: 'Gujarat', order: 27 },
+    'Bhopal':      { zone: 'North - UP', state: 'Madhya Pradesh', order: 28 }
   };
 
   const Utils = {
@@ -1228,6 +1421,8 @@
       const colVisitAchPct = findCol(/visit\s*achievement\s*%/i, 27);
       const colProdVisits = findCol(/productive\s*visits?(?!.*%)/i, 29);
       const colProdVisitPct = findCol(/productive\s*visit\s*%/i, 30);
+      const colUnprodVisits = findCol(/unproductive\s*visits?(?!.*%)/i, 31);
+      const colUnproVisitPct = findCol(/unpro\s*visit\s*%/i, 32);
       const colPOSMDeploy = findCol(/posm\s*deployment/i, 33);
       const colProdDisplay = findCol(/product\s*display/i, 34);
       const colFinalAch = findCol(/final\s*achievement/i, 35);
@@ -1259,7 +1454,9 @@
         let month = row[colMonth] ? String(row[colMonth]).trim() : '';
         if (!month) month = defaultDerivedMonth;
 
-        const zone = row[colZone] ? String(row[colZone]).trim() : 'National';
+        const metaBranch = BRANCH_METADATA[branch];
+        const zone = metaBranch ? metaBranch.zone : (row[colZone] ? String(row[colZone]).trim() : 'National');
+        const state = metaBranch ? metaBranch.state : '';
         const tmm = row[colTMM] ? String(row[colTMM]).trim() : 'Unassigned';
         const aom = row[colAOM] ? String(row[colAOM]).trim() : 'Unassigned';
 
@@ -1297,6 +1494,10 @@
         let prodVisitPct = Utils.num(row[colProdVisitPct]);
         if (prodVisitPct === 0 && visitAch > 0) prodVisitPct = prodVisits / visitAch;
 
+        const unprodVisits = Utils.num(row[colUnprodVisits]);
+        let unproVisitPct = Utils.num(row[colUnproVisitPct]);
+        if (unproVisitPct === 0 && visitAch > 0) unproVisitPct = unprodVisits / visitAch;
+
         const posmDeploy = Utils.num(row[colPOSMDeploy]);
         const prodDisplay = Utils.num(row[colProdDisplay]);
         const finalAch = Utils.num(row[colFinalAch]);
@@ -1305,6 +1506,7 @@
         records.push({
           month,
           zone,
+          state,
           branch,
           tmm,
           aom,
@@ -1328,6 +1530,8 @@
           visitAchPct,
           productiveVisits: prodVisits,
           productiveVisitPct: prodVisitPct,
+          unproductiveVisits: unprodVisits,
+          unproVisitPct: unproVisitPct,
           posmDeployment: posmDeploy,
           productDisplay: prodDisplay,
           finalAch,
@@ -1438,6 +1642,11 @@
         State.searchQuery = e.target.value.toLowerCase().trim();
         State.page = 1;
         App.renderMasterTable();
+      }, 200));
+
+      // Audit Search input
+      document.getElementById('auditTableSearchInput')?.addEventListener('input', Utils.debounce(e => {
+        App.handleAuditSearch(e.target.value);
       }, 200));
 
       // Page size
@@ -1613,6 +1822,7 @@
       try { this.renderCharts(filtered); } catch(e) { console.error('Error in renderCharts:', e); }
       try { this.renderPerformanceTables(filtered); } catch(e) { console.error('Error in renderPerformanceTables:', e); }
       try { this.renderMasterTable(filtered); } catch(e) { console.error('Error in renderMasterTable:', e); }
+      try { this.renderAuditTable(filtered); } catch(e) { console.error('Error in renderAuditTable:', e); }
     },
 
     renderChips() {
@@ -1821,6 +2031,7 @@
               chainAch: 0, chainTgt: 0,
               coolAch: 0, coolTgt: 0,
               otherAch: 0, otherTgt: 0,
+              visAch: 0, visTgt: 0,
               branches: new Set()
             };
           }
@@ -1834,14 +2045,16 @@
           map[dimVal].coolTgt += (r.targetedCool || 0);
           map[dimVal].otherAch += (r.otherCoverage || 0);
           map[dimVal].otherTgt += (r.targetedOther || 0);
+          map[dimVal].visAch += (r.visitAch || 0);
+          map[dimVal].visTgt += (r.visitsTarget || 0);
           if (r.branch) map[dimVal].branches.add(r.branch);
         });
         return map;
       };
 
-      // Stacked column data labels plugin factory with permanent inside and top labels
-      const createStackedColumnPlugin = (achData, targetData, pendingData, pctData) => ({
-        id: 'stackedDataLabels_' + Math.random().toString(36).substring(2, 7),
+      // Multi-stack column data labels plugin factory with permanent inside and top labels
+      const createMultiStackedColumnPlugin = (achData, targetData, pendingData, pctData, visAchData, visTargetData, visPendingData, visPctData) => ({
+        id: 'multiStackedDataLabels_' + Math.random().toString(36).substring(2, 7),
         afterDatasetsDraw(chart) {
           const { ctx } = chart;
           ctx.save();
@@ -1849,6 +2062,9 @@
 
           const metaAch = chart.getDatasetMeta(0);
           const metaPending = chart.getDatasetMeta(1);
+          const metaVisAch = chart.getDatasetMeta(2);
+          const metaVisPending = chart.getDatasetMeta(3);
+
           if (!metaAch || !metaAch.data.length) {
             ctx.restore();
             return;
@@ -1856,42 +2072,81 @@
 
           const count = metaAch.data.length;
           for (let i = 0; i < count; i++) {
+            // ---- 1. OUTLETS STACK (Dataset 0: Covered, Dataset 1: Pending) ----
             const elAch = metaAch.data[i];
             const elPending = metaPending ? metaPending.data[i] : null;
-
             const achVal = achData[i] || 0;
-            const tgtVal = targetData[i] || 0;
-            const pct = pctData[i] || 0;
             const pendingVal = pendingData[i] || 0;
+            const pct = pctData[i] || 0;
 
-            const x = elAch.x;
-
-            // 1. Percentage permanently at the top of the column
-            const topY = elPending && pendingVal > 0 ? Math.min(elAch.y, elPending.y) : elAch.y;
-            ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText(pct + '%', x, topY - 3);
-
-            // 2. Achieved count inside Achieved bar (bottom segment)
-            const achBase = elAch.base !== undefined ? elAch.base : (elAch.y + (elAch.height || 0));
-            const achHeight = Math.abs(achBase - elAch.y);
-            if (achHeight >= 14 && achVal > 0) {
+            if (elAch) {
+              const xCov = elAch.x;
+              // Percentage above top of outlets column
+              const topCovY = (elPending && pendingVal > 0) ? Math.min(elAch.y, elPending.y) : elAch.y;
               ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
-              ctx.fillStyle = '#ffffff';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(Utils.fmtNum(achVal), x, elAch.y + achHeight / 2);
+              ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+              ctx.textBaseline = 'bottom';
+              ctx.fillText(pct + '%', xCov, topCovY - 3);
+
+              // Covered count inside achieved bar (bottom segment)
+              const achBase = elAch.base !== undefined ? elAch.base : (elAch.y + (elAch.height || 0));
+              const achHeight = Math.abs(achBase - elAch.y);
+              if (achHeight >= 13 && achVal > 0) {
+                ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Utils.fmtNum(achVal), xCov, elAch.y + achHeight / 2);
+              }
+
+              // Pending count inside pending bar (top segment)
+              if (elPending && pendingVal > 0) {
+                const pendingBase = elPending.base !== undefined ? elPending.base : (elPending.y + (elPending.height || 0));
+                const pendingHeight = Math.abs(pendingBase - elPending.y);
+                if (pendingHeight >= 13) {
+                  ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+                  ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(Utils.fmtNum(pendingVal), xCov, elPending.y + pendingHeight / 2);
+                }
+              }
             }
 
-            // 3. Target count inside Pending bar (top segment)
-            if (elPending && pendingVal > 0) {
-              const pendingBase = elPending.base !== undefined ? elPending.base : (elPending.y + (elPending.height || 0));
-              const pendingHeight = Math.abs(pendingBase - elPending.y);
-              if (pendingHeight >= 14 && tgtVal > 0) {
-                ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
-                ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+            // ---- 2. VISITS STACK (Dataset 2: Visits Achieved, Dataset 3: Visits Pending) ----
+            if (metaVisAch && metaVisAch.data[i]) {
+              const elVisAch = metaVisAch.data[i];
+              const elVisPending = metaVisPending ? metaVisPending.data[i] : null;
+              const visAchVal = visAchData[i] || 0;
+              const visPendingVal = visPendingData[i] || 0;
+              const visPct = visPctData[i] || 0;
+              const xVis = elVisAch.x;
+
+              // Visits Achievement % above top of visits column
+              const topVisY = (elVisPending && visPendingVal > 0) ? Math.min(elVisAch.y, elVisPending.y) : elVisAch.y;
+              ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
+              ctx.fillStyle = isDark ? '#34d399' : '#059669';
+              ctx.textBaseline = 'bottom';
+              ctx.fillText(visPct + '%', xVis, topVisY - 3);
+
+              // Visits Achieved count inside achieved bar (bottom segment)
+              const visAchBase = elVisAch.base !== undefined ? elVisAch.base : (elVisAch.y + (elVisAch.height || 0));
+              const visAchHeight = Math.abs(visAchBase - elVisAch.y);
+              if (visAchHeight >= 13 && visAchVal > 0) {
+                ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+                ctx.fillStyle = '#ffffff';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(Utils.fmtNum(tgtVal), x, elPending.y + pendingHeight / 2);
+                ctx.fillText(Utils.fmtNum(visAchVal), xVis, elVisAch.y + visAchHeight / 2);
+              }
+
+              // Visits Pending count inside pending bar (top segment)
+              if (elVisPending && visPendingVal > 0) {
+                const visPendingBase = elVisPending.base !== undefined ? elVisPending.base : (elVisPending.y + (elVisPending.height || 0));
+                const visPendingHeight = Math.abs(visPendingBase - elVisPending.y);
+                if (visPendingHeight >= 13) {
+                  ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
+                  ctx.fillStyle = isDark ? '#a7f3d0' : '#047857';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(Utils.fmtNum(visPendingVal), xVis, elVisPending.y + visPendingHeight / 2);
+                }
               }
             }
           }
@@ -1918,6 +2173,11 @@
       const tmmTargetData = [];
       const tmmPctData = [];
 
+      const tmmVisAchData = [];
+      const tmmVisPendingData = [];
+      const tmmVisTargetData = [];
+      const tmmVisPctData = [];
+
       tmmLabels.forEach(k => {
         const v = getCatData(tmmMap[k], tmmCat);
         const ach = v.ach;
@@ -1928,44 +2188,77 @@
         tmmPendingData.push(pending);
         tmmTargetData.push(tgt);
         tmmPctData.push(pct);
+
+        const vAch = tmmMap[k].visAch || 0;
+        const vTgt = tmmMap[k].visTgt || 0;
+        const vPending = Math.max(0, vTgt - vAch);
+        const vPct = vTgt > 0 ? Math.round((vAch / vTgt) * 100) : 0;
+        tmmVisAchData.push(vAch);
+        tmmVisPendingData.push(vPending);
+        tmmVisTargetData.push(vTgt);
+        tmmVisPctData.push(vPct);
       });
 
-      const tmmMaxVal = Math.max(...tmmTargetData, ...tmmAchData, 10);
-      const tmmYMax = Math.ceil((tmmMaxVal * 1.18 + 10) / 10) * 10;
+      const tmmMaxVal = Math.max(...tmmTargetData, ...tmmVisTargetData, ...tmmAchData, ...tmmVisAchData, 10);
+      const tmmYMax = Math.ceil((tmmMaxVal * 1.20 + 10) / 10) * 10;
 
       const tmmTitleEl = document.getElementById('tmmChartTitle');
-      if (tmmTitleEl) tmmTitleEl.textContent = `TMM-wise ${tmmMeta.name} Coverage %`;
+      if (tmmTitleEl) tmmTitleEl.textContent = `TMM-wise ${tmmMeta.name} Coverage & Visits`;
       const tmmSubEl = document.getElementById('tmmChartSubtitle');
-      if (tmmSubEl) tmmSubEl.textContent = `Showing ${tmmMeta.label} (Target vs Achieved) across Territory Merchandising Managers. Click any column bar to filter by TMM.`;
+      if (tmmSubEl) tmmSubEl.textContent = `Showing ${tmmMeta.label} alongside Total Visits (Target vs Achieved) across Territory Merchandising Managers. Click any column to filter by TMM.`;
 
       const ctxTMM = document.getElementById('chartTMMCoverage');
       if (ctxTMM) {
         if (State.charts.tmm) State.charts.tmm.destroy();
         State.charts.tmm = new Chart(ctxTMM, {
           type: 'bar',
-          plugins: [createStackedColumnPlugin(tmmAchData, tmmTargetData, tmmPendingData, tmmPctData)],
+          plugins: [createMultiStackedColumnPlugin(tmmAchData, tmmTargetData, tmmPendingData, tmmPctData, tmmVisAchData, tmmVisTargetData, tmmVisPendingData, tmmVisPctData)],
           data: {
             labels: tmmLabels,
             datasets: [
               {
-                label: 'Achieved Outlets',
+                label: `${tmmMeta.name} Outlets Covered`,
+                stack: 'coverage',
                 data: tmmAchData,
                 backgroundColor: tmmMeta.color,
                 hoverBackgroundColor: '#e4002b',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.68,
-                categoryPercentage: 0.82
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
               },
               {
-                label: 'Pending to Target',
+                label: `${tmmMeta.name} Outlets Pending`,
+                stack: 'coverage',
                 data: tmmPendingData,
                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                 hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.68,
-                categoryPercentage: 0.82
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Achieved',
+                stack: 'visits',
+                data: tmmVisAchData,
+                backgroundColor: '#10b981',
+                hoverBackgroundColor: '#059669',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Pending',
+                stack: 'visits',
+                data: tmmVisPendingData,
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
               }
             ]
           },
@@ -1987,17 +2280,20 @@
                   title: (items) => `TMM: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    return item.datasetIndex === 0 
-                      ? `Achieved: ${Utils.fmtNum(tmmAchData[idx])}` 
-                      : `Pending: ${Utils.fmtNum(tmmPendingData[idx])}`;
+                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(tmmAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(tmmPendingData[idx])} (Target: ${Utils.fmtNum(tmmTargetData[idx])}, ${tmmPctData[idx]}%)`;
+                    if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(tmmVisAchData[idx])}`;
+                    if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(tmmVisPendingData[idx])} (Target: ${Utils.fmtNum(tmmVisTargetData[idx])}, ${tmmVisPctData[idx]}%)`;
+                    return '';
                   },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     const k = tmmLabels[idx];
                     const d = tmmMap[k];
                     return [
-                      `Target: ${Utils.fmtNum(tmmTargetData[idx])}`,
-                      `Coverage: ${tmmPctData[idx]}%`,
+                      '----------------------------',
+                      `Outlets: ${tmmPctData[idx]}% Covered (${Utils.fmtNum(tmmAchData[idx])} / ${Utils.fmtNum(tmmTargetData[idx])})`,
+                      `Visits: ${tmmVisPctData[idx]}% Achieved (${Utils.fmtNum(tmmVisAchData[idx])} / ${Utils.fmtNum(tmmVisTargetData[idx])})`,
                       `Branches Managed: ${d.branches.size}`,
                       '----------------------------',
                       '👉 Click bar to filter dashboard by ' + k
@@ -2008,7 +2304,7 @@
             },
             scales: {
               x: {
-                stacked: true,
+                stacked: false,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10.5, weight: '600', family: 'Plus Jakarta Sans' } }
               },
@@ -2037,6 +2333,11 @@
       const branchTargetData = [];
       const branchPctData = [];
 
+      const branchVisAchData = [];
+      const branchVisPendingData = [];
+      const branchVisTargetData = [];
+      const branchVisPctData = [];
+
       branchLabels.forEach(k => {
         const v = getCatData(branchMap[k], branchCat);
         const ach = v.ach;
@@ -2047,43 +2348,76 @@
         branchPendingData.push(pending);
         branchTargetData.push(tgt);
         branchPctData.push(pct);
+
+        const vAch = branchMap[k].visAch || 0;
+        const vTgt = branchMap[k].visTgt || 0;
+        const vPending = Math.max(0, vTgt - vAch);
+        const vPct = vTgt > 0 ? Math.round((vAch / vTgt) * 100) : 0;
+        branchVisAchData.push(vAch);
+        branchVisPendingData.push(vPending);
+        branchVisTargetData.push(vTgt);
+        branchVisPctData.push(vPct);
       });
 
-      const branchMaxVal = Math.max(...branchTargetData, ...branchAchData, 10);
-      const branchYMax = Math.ceil((branchMaxVal * 1.18 + 10) / 10) * 10;
+      const branchMaxVal = Math.max(...branchTargetData, ...branchVisTargetData, ...branchAchData, ...branchVisAchData, 10);
+      const branchYMax = Math.ceil((branchMaxVal * 1.20 + 10) / 10) * 10;
 
       const branchTitleEl = document.getElementById('branchChartTitle');
-      if (branchTitleEl) branchTitleEl.textContent = `Branch-wise ${branchMeta.name} Coverage %`;
+      if (branchTitleEl) branchTitleEl.textContent = `Branch-wise ${branchMeta.name} Coverage & Visits`;
       const branchSubEl = document.getElementById('branchChartSubtitle');
-      if (branchSubEl) branchSubEl.textContent = `Showing ${branchMeta.label} (Target vs Achieved) across all branches. Click any column bar to filter by Branch.`;
+      if (branchSubEl) branchSubEl.textContent = `Showing ${branchMeta.label} alongside Total Visits (Target vs Achieved) across all branches. Click any column bar to filter by Branch.`;
 
       const ctxBranch = document.getElementById('chartBranchCoverage');
       if (ctxBranch) {
         if (State.charts.branch) State.charts.branch.destroy();
         State.charts.branch = new Chart(ctxBranch, {
           type: 'bar',
-          plugins: [createStackedColumnPlugin(branchAchData, branchTargetData, branchPendingData, branchPctData)],
+          plugins: [createMultiStackedColumnPlugin(branchAchData, branchTargetData, branchPendingData, branchPctData, branchVisAchData, branchVisTargetData, branchVisPendingData, branchVisPctData)],
           data: {
             labels: branchLabels,
             datasets: [
               {
-                label: 'Achieved Outlets',
+                label: `${branchMeta.name} Outlets Covered`,
+                stack: 'coverage',
                 data: branchAchData,
                 backgroundColor: branchMeta.color,
                 hoverBackgroundColor: '#e4002b',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.70,
+                barPercentage: 0.85,
                 categoryPercentage: 0.85
               },
               {
-                label: 'Pending to Target',
+                label: `${branchMeta.name} Outlets Pending`,
+                stack: 'coverage',
                 data: branchPendingData,
                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                 hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.70,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Achieved',
+                stack: 'visits',
+                data: branchVisAchData,
+                backgroundColor: '#10b981',
+                hoverBackgroundColor: '#059669',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Pending',
+                stack: 'visits',
+                data: branchVisPendingData,
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
                 categoryPercentage: 0.85
               }
             ]
@@ -2106,15 +2440,18 @@
                   title: (items) => `Branch: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    return item.datasetIndex === 0 
-                      ? `Achieved: ${Utils.fmtNum(branchAchData[idx])}` 
-                      : `Pending: ${Utils.fmtNum(branchPendingData[idx])}`;
+                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(branchAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(branchPendingData[idx])} (Target: ${Utils.fmtNum(branchTargetData[idx])}, ${branchPctData[idx]}%)`;
+                    if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(branchVisAchData[idx])}`;
+                    if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(branchVisPendingData[idx])} (Target: ${Utils.fmtNum(branchVisTargetData[idx])}, ${branchVisPctData[idx]}%)`;
+                    return '';
                   },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     return [
-                      `Target: ${Utils.fmtNum(branchTargetData[idx])}`,
-                      `Coverage: ${branchPctData[idx]}%`,
+                      '----------------------------',
+                      `Outlets: ${branchPctData[idx]}% Covered (${Utils.fmtNum(branchAchData[idx])} / ${Utils.fmtNum(branchTargetData[idx])})`,
+                      `Visits: ${branchVisPctData[idx]}% Achieved (${Utils.fmtNum(branchVisAchData[idx])} / ${Utils.fmtNum(branchVisTargetData[idx])})`,
                       '----------------------------',
                       '👉 Click bar to filter dashboard by ' + branchLabels[idx]
                     ];
@@ -2124,7 +2461,7 @@
             },
             scales: {
               x: {
-                stacked: true,
+                stacked: false,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' } }
               },
@@ -2153,6 +2490,11 @@
       const zoneTargetData = [];
       const zonePctData = [];
 
+      const zoneVisAchData = [];
+      const zoneVisPendingData = [];
+      const zoneVisTargetData = [];
+      const zoneVisPctData = [];
+
       zoneLabels.forEach(k => {
         const v = getCatData(zoneMap[k], zoneCat);
         const ach = v.ach;
@@ -2163,44 +2505,77 @@
         zonePendingData.push(pending);
         zoneTargetData.push(tgt);
         zonePctData.push(pct);
+
+        const vAch = zoneMap[k].visAch || 0;
+        const vTgt = zoneMap[k].visTgt || 0;
+        const vPending = Math.max(0, vTgt - vAch);
+        const vPct = vTgt > 0 ? Math.round((vAch / vTgt) * 100) : 0;
+        zoneVisAchData.push(vAch);
+        zoneVisPendingData.push(vPending);
+        zoneVisTargetData.push(vTgt);
+        zoneVisPctData.push(vPct);
       });
 
-      const zoneMaxVal = Math.max(...zoneTargetData, ...zoneAchData, 10);
-      const zoneYMax = Math.ceil((zoneMaxVal * 1.18 + 10) / 10) * 10;
+      const zoneMaxVal = Math.max(...zoneTargetData, ...zoneVisTargetData, ...zoneAchData, ...zoneVisAchData, 10);
+      const zoneYMax = Math.ceil((zoneMaxVal * 1.20 + 10) / 10) * 10;
 
       const zoneTitleEl = document.getElementById('zoneChartTitle');
-      if (zoneTitleEl) zoneTitleEl.textContent = `Zone-wise ${zoneMeta.name} Coverage %`;
+      if (zoneTitleEl) zoneTitleEl.textContent = `Zone-wise ${zoneMeta.name} Coverage & Visits`;
       const zoneSubEl = document.getElementById('zoneChartSubtitle');
-      if (zoneSubEl) zoneSubEl.textContent = `Showing ${zoneMeta.label} (Target vs Achieved) across all zones. Click any column bar to filter by Zone.`;
+      if (zoneSubEl) zoneSubEl.textContent = `Showing ${zoneMeta.label} alongside Total Visits (Target vs Achieved) across all zones. Click any column bar to filter by Zone.`;
 
       const ctxZone = document.getElementById('chartZoneCoverage');
       if (ctxZone) {
         if (State.charts.zone) State.charts.zone.destroy();
         State.charts.zone = new Chart(ctxZone, {
           type: 'bar',
-          plugins: [createStackedColumnPlugin(zoneAchData, zoneTargetData, zonePendingData, zonePctData)],
+          plugins: [createMultiStackedColumnPlugin(zoneAchData, zoneTargetData, zonePendingData, zonePctData, zoneVisAchData, zoneVisTargetData, zoneVisPendingData, zoneVisPctData)],
           data: {
             labels: zoneLabels,
             datasets: [
               {
-                label: 'Achieved Outlets',
+                label: `${zoneMeta.name} Outlets Covered`,
+                stack: 'coverage',
                 data: zoneAchData,
                 backgroundColor: zoneMeta.color,
                 hoverBackgroundColor: '#e4002b',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.65,
-                categoryPercentage: 0.80
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
               },
               {
-                label: 'Pending to Target',
+                label: `${zoneMeta.name} Outlets Pending`,
+                stack: 'coverage',
                 data: zonePendingData,
                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                 hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 4,
+                borderRadius: 3,
                 borderSkipped: false,
-                barPercentage: 0.65,
-                categoryPercentage: 0.80
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Achieved',
+                stack: 'visits',
+                data: zoneVisAchData,
+                backgroundColor: '#10b981',
+                hoverBackgroundColor: '#059669',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Visits Pending',
+                stack: 'visits',
+                data: zoneVisPendingData,
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+                borderRadius: 3,
+                borderSkipped: false,
+                barPercentage: 0.85,
+                categoryPercentage: 0.85
               }
             ]
           },
@@ -2222,17 +2597,20 @@
                   title: (items) => `Zone: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    return item.datasetIndex === 0 
-                      ? `Achieved: ${Utils.fmtNum(zoneAchData[idx])}` 
-                      : `Pending: ${Utils.fmtNum(zonePendingData[idx])}`;
+                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(zoneAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(zonePendingData[idx])} (Target: ${Utils.fmtNum(zoneTargetData[idx])}, ${zonePctData[idx]}%)`;
+                    if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(zoneVisAchData[idx])}`;
+                    if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(zoneVisPendingData[idx])} (Target: ${Utils.fmtNum(zoneVisTargetData[idx])}, ${zoneVisPctData[idx]}%)`;
+                    return '';
                   },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     const k = zoneLabels[idx];
                     const d = zoneMap[k];
                     return [
-                      `Target: ${Utils.fmtNum(zoneTargetData[idx])}`,
-                      `Coverage: ${zonePctData[idx]}%`,
+                      '----------------------------',
+                      `Outlets: ${zonePctData[idx]}% Covered (${Utils.fmtNum(zoneAchData[idx])} / ${Utils.fmtNum(zoneTargetData[idx])})`,
+                      `Visits: ${zoneVisPctData[idx]}% Achieved (${Utils.fmtNum(zoneVisAchData[idx])} / ${Utils.fmtNum(zoneVisTargetData[idx])})`,
                       `Branches in Zone: ${d.branches.size}`,
                       '----------------------------',
                       '👉 Click bar to filter dashboard by ' + k
@@ -2243,7 +2621,7 @@
             },
             scales: {
               x: {
-                stacked: true,
+                stacked: false,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 11, weight: '700', family: 'Plus Jakarta Sans' } }
               },
@@ -2504,6 +2882,228 @@
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
       link.setAttribute('download', `Godrej_Branch_Performance_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+
+    /* -------------------------------------------------------------
+       ZONE & STATE BRANCH-WISE COVERAGE & VISITS AUDIT TABLE (REPLICA)
+       ------------------------------------------------------------- */
+    renderAuditTable(records) {
+      if (!records) records = this.getFilteredRecords();
+      let rows = [...records];
+
+      // Quick Search for Audit Table
+      const searchInput = document.getElementById('auditTableSearchInput');
+      const q = (State.auditSearchQuery || (searchInput ? searchInput.value : '') || '').trim().toLowerCase();
+      if (q) {
+        rows = rows.filter(r => 
+          (r.branch && r.branch.toLowerCase().includes(q)) ||
+          (r.zone && r.zone.toLowerCase().includes(q)) ||
+          (r.state && r.state.toLowerCase().includes(q))
+        );
+      }
+
+      // Sorting
+      const k = State.auditSortKey || 'default';
+      const asc = State.auditSortAsc ? 1 : -1;
+
+      rows.sort((a, b) => {
+        if (k === 'default') {
+          const ordA = (BRANCH_METADATA[a.branch] && BRANCH_METADATA[a.branch].order) || 999;
+          const ordB = (BRANCH_METADATA[b.branch] && BRANCH_METADATA[b.branch].order) || 999;
+          return (ordA - ordB) * asc;
+        }
+        if (k === 'zone') return (a.zone || '').localeCompare(b.zone || '') * asc;
+        if (k === 'state') return (a.state || '').localeCompare(b.state || '') * asc;
+        if (k === 'branch') return (a.branch || '').localeCompare(b.branch || '') * asc;
+        if (k === 'coverageTarget') return ((a.coverageTarget || 0) - (b.coverageTarget || 0)) * asc;
+        if (k === 'coverageAch') return ((a.coverageAch || 0) - (b.coverageAch || 0)) * asc;
+        if (k === 'coveragePct') return ((a.coveragePct || 0) - (b.coveragePct || 0)) * asc;
+        if (k === 'visitsTarget') return ((a.visitsTarget || 0) - (b.visitsTarget || 0)) * asc;
+        if (k === 'visitAch') return ((a.visitAch || 0) - (b.visitAch || 0)) * asc;
+        if (k === 'visitAchPct') return ((a.visitAchPct || 0) - (b.visitAchPct || 0)) * asc;
+        if (k === 'productiveVisits') return ((a.productiveVisits || 0) - (b.productiveVisits || 0)) * asc;
+        if (k === 'productiveVisitPct') return ((a.productiveVisitPct || 0) - (b.productiveVisitPct || 0)) * asc;
+        if (k === 'unproductiveVisits') return ((a.unproductiveVisits || 0) - (b.unproductiveVisits || 0)) * asc;
+        if (k === 'unproVisitPct') return ((a.unproVisitPct || 0) - (b.unproVisitPct || 0)) * asc;
+        return 0;
+      });
+
+      // Totals
+      let totCovTgt = 0, totCovAch = 0;
+      let totVisTgt = 0, totVisAch = 0;
+      let totProd = 0, totUnprod = 0;
+
+      rows.forEach(r => {
+        totCovTgt += (r.coverageTarget || 0);
+        totCovAch += (r.coverageAch || 0);
+        totVisTgt += (r.visitsTarget || 0);
+        totVisAch += (r.visitAch || 0);
+        totProd += (r.productiveVisits || 0);
+        totUnprod += (r.unproductiveVisits || 0);
+      });
+
+      const totCovPct = totCovTgt > 0 ? Math.round((totCovAch / totCovTgt) * 100) : 0;
+      const totVisPct = totVisTgt > 0 ? Math.round((totVisAch / totVisTgt) * 100) : 0;
+      const totProdPct = totVisAch > 0 ? Math.round((totProd / totVisAch) * 100) : 0;
+      const totUnprodPct = totVisAch > 0 ? Math.round((totUnprod / totVisAch) * 100) : 0;
+
+      const tbody = document.getElementById('auditReplicaTableBody');
+      if (!tbody) return;
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:var(--ink-faint);">No matching branch records found</td></tr>';
+      } else {
+        const rowsHtml = rows.map(r => {
+          const covPct = r.coverageTarget > 0 ? Math.round((r.coverageAch / r.coverageTarget) * 100) : 0;
+          const visPct = r.visitsTarget > 0 ? Math.round((r.visitAch / r.visitsTarget) * 100) : 0;
+          const prodPct = r.visitAch > 0 ? Math.round((r.productiveVisits / r.visitAch) * 100) : 0;
+          const unprodPct = r.visitAch > 0 ? Math.round((r.unproductiveVisits / r.visitAch) * 100) : 0;
+          const stateStr = r.state || (BRANCH_METADATA[r.branch] ? BRANCH_METADATA[r.branch].state : '—');
+
+          return `
+            <tr>
+              <td>${r.zone}</td>
+              <td>${stateStr}</td>
+              <td><b>${r.branch}</b></td>
+              <td>${Utils.fmtNum(r.coverageTarget)}</td>
+              <td>${Utils.fmtNum(r.coverageAch)}</td>
+              <td>${covPct}%</td>
+              <td>${Utils.fmtNum(r.visitsTarget)}</td>
+              <td>${Utils.fmtNum(r.visitAch)}</td>
+              <td>${visPct}%</td>
+              <td>${Utils.fmtNum(r.productiveVisits)}</td>
+              <td>${prodPct}%</td>
+              <td>${Utils.fmtNum(r.unproductiveVisits)}</td>
+              <td>${unprodPct}%</td>
+            </tr>
+          `;
+        }).join('');
+
+        const footerHtml = `
+          <tr style="background:var(--surface-sunken); font-weight:700; border-top:2px solid var(--ink-faint);">
+            <td colspan="3" style="text-align:left; font-weight:800;">Total / National (${rows.length} Branches)</td>
+            <td>${Utils.fmtNum(totCovTgt)}</td>
+            <td>${Utils.fmtNum(totCovAch)}</td>
+            <td><b>${totCovPct}%</b></td>
+            <td>${Utils.fmtNum(totVisTgt)}</td>
+            <td>${Utils.fmtNum(totVisAch)}</td>
+            <td><b>${totVisPct}%</b></td>
+            <td>${Utils.fmtNum(totProd)}</td>
+            <td><b>${totProdPct}%</b></td>
+            <td>${Utils.fmtNum(totUnprod)}</td>
+            <td><b>${totUnprodPct}%</b></td>
+          </tr>
+        `;
+
+        tbody.innerHTML = rowsHtml + footerHtml;
+      }
+
+      // Update counters
+      const countEl = document.getElementById('auditRowCountText');
+      if (countEl) countEl.textContent = `Showing ${rows.length} of ${records.length} branches`;
+      const badgeEl = document.getElementById('auditTableBadge');
+      if (badgeEl) badgeEl.textContent = `${rows.length} Branches`;
+    },
+
+    sortAuditTable(key) {
+      if (State.auditSortKey === key) {
+        State.auditSortAsc = !State.auditSortAsc;
+      } else {
+        State.auditSortKey = key;
+        State.auditSortAsc = true;
+      }
+      this.renderAuditTable();
+    },
+
+    handleAuditSearch(q) {
+      State.auditSearchQuery = (q || '').trim().toLowerCase();
+      this.renderAuditTable();
+    },
+
+    exportAuditCSV() {
+      let records = this.getFilteredRecords();
+      const q = State.auditSearchQuery || '';
+      if (q) {
+        records = records.filter(r => 
+          (r.branch && r.branch.toLowerCase().includes(q)) ||
+          (r.zone && r.zone.toLowerCase().includes(q)) ||
+          (r.state && r.state.toLowerCase().includes(q))
+        );
+      }
+      if (!records.length) return;
+
+      const k = State.auditSortKey || 'default';
+      const asc = State.auditSortAsc ? 1 : -1;
+      const sorted = [...records].sort((a, b) => {
+        if (k === 'default') {
+          const ordA = (BRANCH_METADATA[a.branch] && BRANCH_METADATA[a.branch].order) || 999;
+          const ordB = (BRANCH_METADATA[b.branch] && BRANCH_METADATA[b.branch].order) || 999;
+          return (ordA - ordB) * asc;
+        }
+        if (k === 'zone') return (a.zone || '').localeCompare(b.zone || '') * asc;
+        if (k === 'state') return (a.state || '').localeCompare(b.state || '') * asc;
+        if (k === 'branch') return (a.branch || '').localeCompare(b.branch || '') * asc;
+        if (k === 'coverageTarget') return ((a.coverageTarget || 0) - (b.coverageTarget || 0)) * asc;
+        if (k === 'coverageAch') return ((a.coverageAch || 0) - (b.coverageAch || 0)) * asc;
+        if (k === 'coveragePct') return ((a.coveragePct || 0) - (b.coveragePct || 0)) * asc;
+        if (k === 'visitsTarget') return ((a.visitsTarget || 0) - (b.visitsTarget || 0)) * asc;
+        if (k === 'visitAch') return ((a.visitAch || 0) - (b.visitAch || 0)) * asc;
+        if (k === 'visitAchPct') return ((a.visitAchPct || 0) - (b.visitAchPct || 0)) * asc;
+        if (k === 'productiveVisits') return ((a.productiveVisits || 0) - (b.productiveVisits || 0)) * asc;
+        if (k === 'productiveVisitPct') return ((a.productiveVisitPct || 0) - (b.productiveVisitPct || 0)) * asc;
+        if (k === 'unproductiveVisits') return ((a.unproductiveVisits || 0) - (b.unproductiveVisits || 0)) * asc;
+        if (k === 'unproVisitPct') return ((a.unproVisitPct || 0) - (b.unproVisitPct || 0)) * asc;
+        return 0;
+      });
+
+      const headers = [
+        'Zone',
+        'State',
+        'Branch Name',
+        'Unique Target',
+        'Unique Achievement',
+        'Unique Achievement %',
+        'Visit Target',
+        'Visits Achievement',
+        'Visits Achievement %',
+        'Productive Visits',
+        'Productive Visits %',
+        'Unproductive Visits',
+        'Unproductive Visits %'
+      ];
+
+      const rows = sorted.map(r => {
+        const covPct = r.coverageTarget > 0 ? Math.round((r.coverageAch / r.coverageTarget) * 100) : 0;
+        const visPct = r.visitsTarget > 0 ? Math.round((r.visitAch / r.visitsTarget) * 100) : 0;
+        const prodPct = r.visitAch > 0 ? Math.round((r.productiveVisits / r.visitAch) * 100) : 0;
+        const unprodPct = r.visitAch > 0 ? Math.round((r.unproductiveVisits / r.visitAch) * 100) : 0;
+        const stateStr = r.state || (BRANCH_METADATA[r.branch] ? BRANCH_METADATA[r.branch].state : '');
+
+        return [
+          `"${r.zone}"`,
+          `"${stateStr}"`,
+          `"${r.branch}"`,
+          r.coverageTarget,
+          r.coverageAch,
+          covPct + '%',
+          r.visitsTarget,
+          r.visitAch,
+          visPct + '%',
+          r.productiveVisits,
+          prodPct + '%',
+          r.unproductiveVisits,
+          unprodPct + '%'
+        ];
+      });
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Godrej_Zone_State_Branch_Summary_${new Date().toISOString().slice(0,10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
