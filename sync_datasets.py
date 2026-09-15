@@ -128,6 +128,21 @@ def embed_sample_data(html_file, rows):
         idx2 = html.find(tag_end, idx1)
         if idx2 != -1:
             html = html[:idx1 + len(tag_start)] + compact_json + html[idx2:]
+            
+            # Also update static dataUpdatedTillMeta if present in rows[0]
+            updated_date = None
+            if len(rows) > 0:
+                for item in rows[0]:
+                    if isinstance(item, str) and len(item) == 10 and item[4] == '-' and item[7] == '-':
+                        updated_date = item
+                        break
+            if updated_date:
+                html = re.sub(
+                    r'(<b id="dataUpdatedTillMeta">)[^<]*(</b>)',
+                    r'\g<1>' + updated_date + r'\g<2>',
+                    html
+                )
+
             with open(html_file, "w", encoding="utf-8") as f:
                 f.write(html)
             print(f"✓ Successfully embedded {len(rows):,} rows into {html_file}")

@@ -468,7 +468,8 @@
 </head>
 <body>
 
-  <div class="app-layout">
+  <!-- MAIN APP CONTAINER (Wraps Header & Content for Exact Alignment) -->
+  <div class="app-container">
 
     <!-- PINNED STATIC HEADER WRAPPER (DOES NOT SCROLL UP) -->
     <header class="sticky-header-wrapper">
@@ -614,9 +615,9 @@
           <h3>Overall KPI</h3>
           <span class="kpi-section-subtitle">Core branch execution, overall coverage attainment, visit volume and field deployments</span>
         </div>
-        <div class="grid-5" id="group1Grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+        <div class="grid-4" id="group1Grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;">
           
-          <!-- Tile 1: Overall Coverage % (Donut) -->
+          <!-- Tile 1: Overall Coverage % (Merged Coverage Target vs Achievement with Donut & Bottom Stats) -->
           <div class="kpi-card-prog accent-sky">
             <div class="kpi-card-header">
               <span class="kpi-card-title">Overall Coverage %</span>
@@ -631,51 +632,32 @@
                 <div class="donut-text-center" id="donut_cov_text">0%</div>
               </div>
             </div>
-          </div>
-
-          <!-- Tile 2: Target Coverage vs Coverage Achievement -->
-          <div class="kpi-card-prog accent-blue">
-            <div class="kpi-card-header">
-              <span class="kpi-card-title">Target Coverage vs Achievement</span>
-              <span class="kpi-tag-badge tag-secondary">REACH</span>
-            </div>
-            <div class="kpi-metric-dual-body">
-              <div class="kpi-metric-primary-row">
-                <span class="kpi-big-value" id="kpi2_val1">0</span>
-                <span class="kpi-metric-sublabel">Coverage Target</span>
-              </div>
-              <div class="kpi-accent-bar">
-                <div id="kpi2_bar" style="height:100%; width:0%; background:linear-gradient(90deg, #0284c7, #06b6d4); border-radius:2px;"></div>
-              </div>
-              <div class="kpi-metric-secondary-row">
-                <span class="kpi-mid-value" id="kpi2_val2" style="color:var(--accent-green);">0</span>
-                <span class="kpi-metric-sublabel">Achieved (<span id="kpi2_sub">0 Pending</span>)</span>
-              </div>
+            <div class="kpi-stat-row" id="kpiCov_sub">
+              <!-- Injected via JS: Target, Achieved, Pending -->
             </div>
           </div>
 
-          <!-- Tile 3: Target Visits vs Total Visits Achieved -->
+          <!-- Tile 2: Target Visits vs Total Visits (Donut with Metrics at Bottom) -->
           <div class="kpi-card-prog accent-green">
             <div class="kpi-card-header">
               <span class="kpi-card-title">Target Visits vs Total Visits</span>
-              <span class="kpi-tag-badge tag-secondary">VOLUME</span>
+              <span class="kpi-tag-badge tag-primary">VOLUME</span>
             </div>
-            <div class="kpi-metric-dual-body">
-              <div class="kpi-metric-primary-row">
-                <span class="kpi-big-value" id="kpi3_val1">0</span>
-                <span class="kpi-metric-sublabel">Target Visits</span>
+            <div class="kpi-donut-centered">
+              <div class="kpi-donut-svg-wrap">
+                <svg class="kpi-donut-svg" viewBox="0 0 52 52">
+                  <circle class="donut-track" cx="26" cy="26" r="20.5"/>
+                  <circle class="donut-fill" id="donut_visits" cx="26" cy="26" r="20.5" stroke="#10b981" stroke-dasharray="128.8" stroke-dashoffset="128.8"/>
+                </svg>
+                <div class="donut-text-center" id="donut_visits_text">0%</div>
               </div>
-              <div class="kpi-accent-bar">
-                <div id="kpi3_bar" style="height:100%; width:0%; background:linear-gradient(90deg, #10b981, #059669); border-radius:2px;"></div>
-              </div>
-              <div class="kpi-metric-secondary-row">
-                <span class="kpi-mid-value" id="kpi3_val2" style="color:var(--accent-green);">0</span>
-                <span class="kpi-metric-sublabel">Achieved (<span id="kpi3_sub">0%</span>)</span>
-              </div>
+            </div>
+            <div class="kpi-stat-row" id="kpiVisits_sub">
+              <!-- Injected via JS: Target, Achieved, Pending -->
             </div>
           </div>
 
-          <!-- Tile 4: Productive Visits % (Donut) -->
+          <!-- Tile 3: Productive Visits % (Donut) -->
           <div class="kpi-card-prog accent-purple">
             <div class="kpi-card-header">
               <span class="kpi-card-title">Productive Visits %</span>
@@ -690,9 +672,12 @@
                 <div class="donut-text-center" id="donut_prod_text">0%</div>
               </div>
             </div>
+            <div class="kpi-stat-row" id="kpiProd_sub">
+              <!-- Injected via JS -->
+            </div>
           </div>
 
-          <!-- Tile 5: POSM & Product Display -->
+          <!-- Tile 4: POSM & Product Display -->
           <div class="kpi-card-prog accent-red">
             <div class="kpi-card-header">
               <span class="kpi-card-title">POSM &amp; Product Display</span>
@@ -1112,7 +1097,7 @@
 
     </div> <!-- /dashboard -->
 
-  </div> <!-- /app-layout -->
+  </div> <!-- /.app-container -->
 
   <!-- Embedded Initial Data Snapshot -->
   <script id="sample-data" type="application/json">[[null,null,null,null,"Data updated till","2026-09-14",null,null,null,6094.0,2863.0,0.46980636691828026,1.0,156.0,66.0,0.4230769230769231,2724.0,1303.0,0.47834067547723935,4.0,2.0,0.5,3210.0,1492.0,0.464797507788162,7042.0,2966.0,0.42118716273785856,0.902543920152554,2959.0,0.99763991908294,9.0,0.0030343897505057315,226578.0,42889.0,0.5486810910002465,null],["START WORK","BRMM Name","Region","Branch","Month","Zone","Branch","TMM Name","AOM Name","Coverage Target","Coverage Achievement","Coverage %","Projected Coverage","Targeted EBO","EBO Coverage","EBO Coverage %","Targeted Chain Store","Chain Store Coverage","Chain Store Coverage %","Targeted Cool Studio","Cool Studio Coverage","Cool Studio Coverage %","Targeted Other Categories","Other Categories Coverage","Other Category Coverage %","Visits Target","Visit Achievement","Visit Achievement %","Visits Projection","Productive Visits","Productive Visit %","Unproductive visits","Unpro Visit %","POSM Deployment","Product Display","Final Achievement","Rank"],[0.0,"0x17",285429.0,"0x17","Sep'26","West - MH","Pune","Razi Anwar","Akil",241.0,125.0,0.5186721991701245,1.0,5.0,2.0,0.4,81.0,48.0,0.5925925925925926,0.0,0.0,1.0,155.0,75.0,0.4838709677419355,331.0,134.0,0.40483383685800606,0.8675010789814416,134.0,1.0,0.0,0.0,8421.0,1560.0,0.5561707412558053,14.0],[0.0,"0x17",280896.0,"0x17","Sep'26","South - APT","Hyderabad","Kaushik ","Rameez",180.0,107.0,0.5944444444444444,1.0,0.0,0.0,1.0,148.0,87.0,0.5878378378378378,0.0,0.0,1.0,32.0,20.0,0.625,209.0,110.0,0.5263157894736842,1.0,106.0,0.9636363636363636,0.0,0.0,9011.0,1681.0,0.700623177004756,3.0],[0.0,"0x17",282314.0,"0x17","Sep'26","North - DR","Delhi","Ashutosh Sharma","Sitaram",266.0,156.0,0.5864661654135338,1.0,0.0,0.0,1.0,99.0,69.0,0.696969696969697,0.0,0.0,1.0,167.0,87.0,0.5209580838323353,309.0,163.0,0.5275080906148867,1.0,163.0,1.0,0.0,0.0,9339.0,1830.0,0.705484018325989,1.0],[0.0,"0x17",287359.0,"0x17","Sep'26","East - OBJ","Patna","Aman Ramdas","Prawez",125.0,45.0,0.36,0.7714285714285715,8.0,1.0,0.125,114.0,33.0,0.2894736842105263,0.0,0.0,1.0,3.0,11.0,3.6666666666666665,139.0,48.0,0.34532374100719426,0.7399794450154163,48.0,1.0,0.0,0.0,4451.0,831.0,0.5032358008330178,21.0],[0.0,"0x17",291170.0,"0x17","Sep'26","South - KL","Cochin","Gautham Menon","Imran",201.0,86.0,0.42786069651741293,0.9168443496801706,4.0,2.0,0.5,109.0,55.0,0.5045871559633027,0.0,0.0,1.0,88.0,29.0,0.32954545454545453,213.0,86.0,0.40375586854460094,0.8651911468812877,86.0,1.0,0.0,0.0,7471.0,1353.0,0.5164432045887164,18.0],[0.0,"0x17",310444.0,"0x17","Sep'26","West - MH","Mumbai","Shreyas Sawantdesai","Akil",295.0,127.0,0.43050847457627117,0.9225181598062954,1.0,1.0,1.0,161.0,67.0,0.4161490683229814,0.0,0.0,1.0,133.0,59.0,0.44360902255639095,312.0,128.0,0.41025641025641024,0.8791208791208791,127.0,0.9921875,1.0,0.0078125,8190.0,1537.0,0.5959448155984421,11.0],[0.0,"0x17",305519.0,"0x17","Sep'26","West - MH","Aurangabad","Razi Anwar","Akil",106.0,43.0,0.4056603773584906,0.8692722371967656,12.0,7.0,0.5833333333333334,15.0,5.0,0.3333333333333333,0.0,0.0,1.0,79.0,31.0,0.3924050632911392,118.0,51.0,0.4322033898305085,0.9261501210653753,50.0,0.9803921568627451,1.0,0.0196078431372549,3980.0,741.0,0.5109923364608824,19.0],[0.0,"0x17",268135.0,"0x17","Sep'26","East - WNE","Guwahati","Dhiraj Sharma","Prawez",221.0,79.0,0.3574660633484163,0.7659987071751777,15.0,2.0,0.13333333333333333,12.0,9.0,0.75,1.0,1.0,1.0,193.0,67.0,0.3471502590673575,227.0,79.0,0.34801762114537443,0.7457520453115166,79.0,1.0,0.0,0.0,5631.0,1100.0,0.47566927575886175,23.0],[0.0,"0x17",301459.0,"0x17","Sep'26","West - MH","Ahmedabad","Pathik Shah","Akil",393.0,128.0,0.3256997455470738,0.6979280261723011,11.0,3.0,0.2727272727272727,140.0,29.0,0.20714285714285716,0.0,0.0,1.0,242.0,96.0,0.39669421487603307,404.0,129.0,0.3193069306930693,0.6842291371994342,127.0,0.9844961240310077,2.0,0.015503875968992248,4778.0,884.0,0.4081604055646042,25.0],[0.0,"0x17",311699.0,"0x17","Sep'26","East - WNE","Kolkata","Nirmal Bag","Prawez",289.0,173.0,0.5986159169550173,1.0,0.0,0.0,1.0,237.0,143.0,0.6033755274261603,0.0,0.0,1.0,52.0,30.0,0.5769230769230769,351.0,174.0,0.49572649572649574,1.0,174.0,1.0,0.0,0.0,12223.0,2418.0,0.6959132731886881,4.0],[0.0,"0x17",287462.0,"0x17","Sep'26","North - PHY","Chandigarh","Satyam ","Sitaram",239.0,57.0,0.2384937238493724,0.5110579796772265,6.0,1.0,0.16666666666666666,14.0,2.0,0.14285714285714285,0.0,0.0,1.0,219.0,54.0,0.2465753424657534,239.0,58.0,0.24267782426778242,0.5200239091452481,58.0,1.0,0.0,0.0,4611.0,956.0,0.32964918242186536,27.0],[0.0,"0x17",310445.0,"0x17","Sep'26","North - UP","Lucknow","Manish Agarwal","Sitaram",454.0,226.0,0.4977973568281938,1.0,4.0,1.0,0.25,112.0,63.0,0.5625,0.0,0.0,1.0,338.0,162.0,0.47928994082840237,482.0,227.0,0.470954356846473,1.0,227.0,1.0,0.0,0.0,15894.0,3016.0,0.5375188338591937,15.0],[0.0,"0x17",307335.0,"0x17","Sep'26","North - UP","Bhopal","Gaurav Gulwani","Akil",182.0,111.0,0.6098901098901099,1.0,8.0,3.0,0.375,63.0,37.0,0.5873015873015873,0.0,0.0,1.0,111.0,71.0,0.6396396396396397,233.0,111.0,0.47639484978540775,1.0,111.0,1.0,1.0,0.009009009009009009,7772.0,1470.0,0.6075481759762876,9.0],[0.0,"0x17",303174.0,"0x17","Sep'26","North - DR","Jaipur","Mradul ","Sitaram",241.0,113.0,0.46887966804979253,1.0,12.0,5.0,0.4166666666666667,59.0,22.0,0.3728813559322034,2.0,1.0,0.5,168.0,85.0,0.5059523809523809,290.0,123.0,0.4241379310344828,0.9088669950738917,123.0,1.0,0.0,0.0,9191.0,1764.0,0.5229285803495427,17.0],[0.0,"0x17",287358.0,"0x17","Sep'26","South - KA","Bengaluru","Sharan Rai","Rameez",433.0,236.0,0.5450346420323325,1.0,13.0,8.0,0.6153846153846154,230.0,130.0,0.5652173913043478,0.0,0.0,1.0,190.0,98.0,0.5157894736842106,606.0,249.0,0.41089108910891087,0.8804809052333804,210.0,0.8433734939759037,1.0,0.004016064257028112,22135.0,4052.0,0.5721498923806103,13.0],[0.0,"0x17",293300.0,"0x17","Sep'26","South - TN","Chennai","Sidharth ","Imran",314.0,120.0,0.3821656050955414,0.8189262966333031,2.0,1.0,0.5,250.0,89.0,0.356,0.0,0.0,1.0,62.0,30.0,0.4838709677419355,364.0,124.0,0.34065934065934067,0.7299843014128728,122.0,0.9838709677419355,2.0,0.016129032258064516,7593.0,1400.0,0.493126279473557,22.0],[0.0,"0x17",288388.0,"0x17","Sep'26","East - OBJ","Bhubaneswar","Premansu Das","Prawez",129.0,69.0,0.5348837209302325,1.0,15.0,9.0,0.6,79.0,40.0,0.5063291139240507,1.0,0.0,0.0,34.0,20.0,0.5882352941176471,152.0,69.0,0.45394736842105265,0.9727443609022557,69.0,1.0,0.0,0.0,8627.0,1659.0,0.6019508790765117,10.0],[0.0,"0x17",291213.0,"0x17","Sep'26","East - WNE","Durgapur","Nirmal Bag","Prawez",168.0,100.0,0.5952380952380952,1.0,6.0,5.0,0.8333333333333334,61.0,30.0,0.4918032786885246,0.0,0.0,1.0,101.0,65.0,0.6435643564356436,181.0,100.0,0.5524861878453039,1.0,100.0,1.0,0.0,0.0,9217.0,1741.0,0.6748500018853051,5.0],[0.0,"0x17",268143.0,"0x17","Sep'26","East - OBJ","Ranchi","Aman Ramdas","Prawez",67.0,36.0,0.5373134328358209,1.0,1.0,0.0,0.0,40.0,18.0,0.45,0.0,0.0,1.0,26.0,18.0,0.6923076923076923,70.0,36.0,0.5142857142857142,1.0,35.0,0.9722222222222222,1.0,0.027777777777777776,4074.0,755.0,0.5274993166037942,16.0],[0.0,"0x17",287944.0,"0x17","Sep'26","South - KA","Mangalore","Sharan Rai","Rameez",139.0,43.0,0.30935251798561153,0.6628982528263104,5.0,2.0,0.4,59.0,16.0,0.2711864406779661,0.0,0.0,1.0,75.0,25.0,0.3333333333333333,180.0,44.0,0.24444444444444444,0.5238095238095238,81.0,1.8409090909090908,0.0,0.0,9420.0,1744.0,0.41143735858770614,24.0],[0.0,"0x17",270551.0,"0x17","Sep'26","North - UP","Ghaziabad","Surbhi ","Sitaram",291.0,146.0,0.5017182130584192,1.0,8.0,6.0,0.75,58.0,19.0,0.3275862068965517,0.0,0.0,1.0,225.0,121.0,0.5377777777777778,312.0,147.0,0.47115384615384615,1.0,146.0,0.9931972789115646,0.0,0.0,14490.0,2871.0,0.5858586013803372,12.0],[0.0,"0x17",299824.0,"0x17","Sep'26","West - MH","Nagpur","Sourabh Shrivastava","Akil",187.0,134.0,0.7165775401069518,1.0,8.0,4.0,0.5,37.0,29.0,0.7837837837837838,0.0,0.0,1.0,142.0,101.0,0.7112676056338029,278.0,154.0,0.5539568345323741,1.0,154.0,1.0,0.0,0.0,9180.0,1768.0,0.7033645833405032,2.0],[0.0,"0x17",287796.0,"0x17","Sep'26","North - PHY","Gurugram","Jitender ","Sitaram",155.0,36.0,0.23225806451612904,0.4976958525345623,6.0,0.0,0.0,26.0,6.0,0.23076923076923078,0.0,0.0,1.0,123.0,30.0,0.24390243902439024,160.0,41.0,0.25625,0.5491071428571428,43.0,1.048780487804878,0.0,0.0,2653.0,539.0,0.31890236337226896,28.0],[0.0,"0x17",296830.0,"0x17","Sep'26","North - PHY","Coimbatore","Dheenadhayalan Nagarajan","Imran",242.0,126.0,0.5206611570247934,1.0,1.0,1.0,1.0,191.0,108.0,0.5654450261780105,0.0,0.0,1.0,50.0,17.0,0.34,277.0,126.0,0.4548736462093863,0.9747292418772564,126.0,1.0,0.0,0.0,10391.0,1914.0,0.6309237145735375,8.0],[0.0,"0x17",311301.0,"0x17","Sep'26","North - PHY","Vijayawada","Shiny Merugu","Rameez",223.0,113.0,0.5067264573991032,1.0,0.0,0.0,1.0,143.0,77.0,0.5384615384615384,0.0,0.0,1.0,80.0,36.0,0.45,269.0,123.0,0.45724907063197023,0.9798194370685077,128.0,1.0406504065040652,0.0,0.0,7248.0,1326.0,0.6410643363754455,7.0],[0.0,"0x17",0.0,"0x17","Sep'26","North - PHY","Calicut","Binu Davis","Imran",157.0,80.0,0.5095541401273885,1.0,2.0,2.0,1.0,73.0,36.0,0.4931506849315068,0.0,0.0,1.0,82.0,42.0,0.5121951219512195,162.0,84.0,0.5185185185185185,1.0,84.0,1.0,0.0,0.0,6710.0,1262.0,0.6564164027615904,6.0],[0.0,"0x17",294190.0,"0x17","Sep'26","North - PHY","Madurai","Dheenadhayalan Nagarajan","Imran",142.0,44.0,0.30985915492957744,0.6639839034205232,0.0,0.0,1.0,105.0,33.0,0.3142857142857143,0.0,0.0,1.0,37.0,11.0,0.2972972972972973,160.0,44.0,0.275,0.5892857142857144,44.0,1.0,0.0,0.0,3419.0,631.0,0.5087092827233672,20.0],[0.0,"0x17",268121.0,"0x17","Sep'26","North - PHY","Goa","Sharan Rai","Rameez",14.0,4.0,0.2857142857142857,0.6122448979591836,3.0,0.0,0.0,8.0,3.0,0.375,0.0,0.0,1.0,3.0,1.0,0.3333333333333333,14.0,4.0,0.2857142857142857,0.6122448979591836,4.0,1.0,0.0,0.0,458.0,86.0,0.37053571428571425,26.0]]</script>
@@ -1211,10 +1196,16 @@
         const idx = headers.findIndex(h => regex.test(h));
         return idx !== -1 ? idx : fallback;
       };
+      const findLastCol = (regex, fallback) => {
+        for (let i = headers.length - 1; i >= 0; i--) {
+          if (regex.test(headers[i])) return i;
+        }
+        return fallback;
+      };
 
       const colMonth = findCol(/^month$/i, 4);
       const colZone = findCol(/^zone$/i, 5);
-      const colBranch = findCol(/^branch$/i, 6);
+      const colBranch = findLastCol(/^branch$/i, 6);
       const colTMM = findCol(/tmm\s*name/i, 7);
       const colAOM = findCol(/aom\s*name/i, 8);
       const colCovTgt = findCol(/coverage\s*target/i, 9);
@@ -1602,22 +1593,26 @@
 
     renderAll() {
       const filtered = this.getFilteredRecords();
-      this.renderChips();
-      this.renderKPIs(filtered);
-      this.renderCharts(filtered);
-      this.renderPerformanceTables(filtered);
-      this.renderMasterTable(filtered);
 
-      // Meta counts
+      // Meta counts set immediately
       const branchBadge = document.getElementById('branchCountBadge');
       if (branchBadge) branchBadge.textContent = filtered.length + ' Branches';
-      document.getElementById('totalBranchCount').textContent = filtered.length;
+      const totalBranchCountEl = document.getElementById('totalBranchCount');
+      if (totalBranchCountEl) totalBranchCountEl.textContent = filtered.length;
       const zones = new Set(filtered.map(r => r.zone).filter(Boolean));
-      document.getElementById('totalZoneCount').textContent = zones.size;
+      const totalZoneCountEl = document.getElementById('totalZoneCount');
+      if (totalZoneCountEl) totalZoneCountEl.textContent = zones.size;
 
-      if (State.metadata.dataUpdatedTill) {
-        document.getElementById('dataUpdatedTillMeta').textContent = State.metadata.dataUpdatedTill;
+      if (State.metadata && State.metadata.dataUpdatedTill) {
+        const dEl = document.getElementById('dataUpdatedTillMeta');
+        if (dEl) dEl.textContent = State.metadata.dataUpdatedTill;
       }
+
+      try { this.renderChips(); } catch(e) { console.error('Error in renderChips:', e); }
+      try { this.renderKPIs(filtered); } catch(e) { console.error('Error in renderKPIs:', e); }
+      try { this.renderCharts(filtered); } catch(e) { console.error('Error in renderCharts:', e); }
+      try { this.renderPerformanceTables(filtered); } catch(e) { console.error('Error in renderPerformanceTables:', e); }
+      try { this.renderMasterTable(filtered); } catch(e) { console.error('Error in renderMasterTable:', e); }
     },
 
     renderChips() {
@@ -1691,32 +1686,51 @@
       document.getElementById('metaTotalCoverageAch').textContent = Utils.fmtNum(sumCovAch);
       document.getElementById('metaTotalVisits').textContent = Utils.fmtNum(sumVisitsAch);
 
-      /* ---------------- OVERALL KPI ---------------- */
-      // 1. Overall Coverage %
+      /* ---------------- OVERALL KPI (4 TILES) ---------------- */
+      // 1. Merged Overall Coverage % (Donut + Target / Achieved / Pending)
       const overallCovPct = sumCovTgt > 0 ? (sumCovAch / sumCovTgt) * 100 : 0;
-      this.setDonut('donut_cov', 'donut_cov_text', overallCovPct, '#0ea5e9');
-
-      // 2. Target vs Achieved Coverage
       const pendingCov = Math.max(0, sumCovTgt - sumCovAch);
-      document.getElementById('kpi2_val1').textContent = Utils.fmtNum(sumCovTgt);
-      document.getElementById('kpi2_val2').textContent = Utils.fmtNum(sumCovAch);
-      document.getElementById('kpi2_sub').textContent = Utils.fmtNum(pendingCov) + ' Pending';
-      document.getElementById('kpi2_bar').style.width = Math.min(100, overallCovPct) + '%';
+      this.setDonut('donut_cov', 'donut_cov_text', overallCovPct, '#0ea5e9');
+      const kpiCovSub = document.getElementById('kpiCov_sub');
+      if (kpiCovSub) {
+        kpiCovSub.innerHTML = `
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Target</span><span class="kpi-stat-val">${Utils.fmtNum(sumCovTgt)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Achieved</span><span class="kpi-stat-val">${Utils.fmtNum(sumCovAch)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Pending</span><span class="kpi-stat-val">${Utils.fmtNum(pendingCov)}</span></div>
+        `;
+      }
 
-      // 3. Target Visits vs Total Visits Achieved
+      // 2. Target Visits vs Total Visits (Donut + Target / Achieved / Pending)
       const visitPct = sumVisitsTgt > 0 ? (sumVisitsAch / sumVisitsTgt) * 100 : 0;
-      document.getElementById('kpi3_val1').textContent = Utils.fmtNum(sumVisitsTgt);
-      document.getElementById('kpi3_val2').textContent = Utils.fmtNum(sumVisitsAch);
-      document.getElementById('kpi3_sub').textContent = Utils.fmtPct(visitPct, 1);
-      document.getElementById('kpi3_bar').style.width = Math.min(100, visitPct) + '%';
+      const visitsPending = Math.max(0, sumVisitsTgt - sumVisitsAch);
+      this.setDonut('donut_visits', 'donut_visits_text', visitPct, '#10b981');
+      const kpiVisitsSub = document.getElementById('kpiVisits_sub');
+      if (kpiVisitsSub) {
+        kpiVisitsSub.innerHTML = `
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Target</span><span class="kpi-stat-val">${Utils.fmtNum(sumVisitsTgt)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Achieved</span><span class="kpi-stat-val">${Utils.fmtNum(sumVisitsAch)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Pending</span><span class="kpi-stat-val">${Utils.fmtNum(visitsPending)}</span></div>
+        `;
+      }
 
-      // 4. Productive Visits %
+      // 3. Productive Visits % (Donut + Total / Productive / Unproductive)
       const prodVisitPct = sumVisitsAch > 0 ? (sumProdVisits / sumVisitsAch) * 100 : 0;
+      const unprodVisits = Math.max(0, sumVisitsAch - sumProdVisits);
       this.setDonut('donut_prod', 'donut_prod_text', prodVisitPct, '#8b5cf6');
+      const kpiProdSub = document.getElementById('kpiProd_sub');
+      if (kpiProdSub) {
+        kpiProdSub.innerHTML = `
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Total</span><span class="kpi-stat-val">${Utils.fmtNum(sumVisitsAch)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Productive</span><span class="kpi-stat-val">${Utils.fmtNum(sumProdVisits)}</span></div>
+          <div class="kpi-stat-item"><span class="kpi-stat-label">Unproductive</span><span class="kpi-stat-val">${Utils.fmtNum(unprodVisits)}</span></div>
+        `;
+      }
 
-      // 5. POSM & Product Display
-      document.getElementById('kpi5_val1').textContent = Utils.fmtNum(sumPOSM);
-      document.getElementById('kpi5_val2').textContent = Utils.fmtNum(sumDisplay);
+      // 4. POSM & Product Display
+      const kpi5Val1 = document.getElementById('kpi5_val1');
+      if (kpi5Val1) kpi5Val1.textContent = Utils.fmtNum(sumPOSM);
+      const kpi5Val2 = document.getElementById('kpi5_val2');
+      if (kpi5Val2) kpi5Val2.textContent = Utils.fmtNum(sumDisplay);
 
       /* ---------------- DETAILED KPI (STORE CATEGORIES) ---------------- */
       // EBO
@@ -1761,7 +1775,7 @@
     },
 
     /* -------------------------------------------------------------
-       3 COLUMN CHARTS (TMM-WISE, BRANCH-WISE, ZONE-WISE)
+       3 COLUMN CHARTS (TMM-WISE, BRANCH-WISE, ZONE-WISE) - STACKED
        ------------------------------------------------------------- */
     renderCharts(records) {
       if (!records) records = this.getFilteredRecords();
@@ -1784,35 +1798,14 @@
         other: { label: 'Other Categories Coverage %', color: palette.other, name: 'Other Categories' }
       };
 
-      // Custom plugin for bold, unclipped data labels above columns
-      const columnDataLabelsPlugin = {
-        id: 'columnDataLabels',
-        afterDatasetsDraw(chart) {
-          const { ctx } = chart;
-          ctx.save();
-          ctx.font = 'bold 10.5px "Plus Jakarta Sans", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-
-          chart.data.datasets.forEach((dataset, datasetIdx) => {
-            const meta = chart.getDatasetMeta(datasetIdx);
-            if (!meta.hidden) {
-              meta.data.forEach((element, index) => {
-                const val = dataset.data[index];
-                if (val !== null && val !== undefined) {
-                  const text = val + '%';
-                  ctx.fillStyle = isDark ? '#f1f5f9' : '#1e293b';
-                  const x = element.x;
-                  const y = element.y - 3;
-                  if (y >= chart.chartArea.top - 20) {
-                    ctx.fillText(text, x, y);
-                  }
-                }
-              });
-            }
-          });
-          ctx.restore();
-        }
+      // Helper function to extract category data { ach, tgt }
+      const getCatData = (d, cat) => {
+        if (!d) return { ach: 0, tgt: 0 };
+        if (cat === 'ebo') return { ach: d.eboAch || 0, tgt: d.eboTgt || 0 };
+        if (cat === 'chain') return { ach: d.chainAch || 0, tgt: d.chainTgt || 0 };
+        if (cat === 'cool') return { ach: d.coolAch || 0, tgt: d.coolTgt || 0 };
+        if (cat === 'other') return { ach: d.otherAch || 0, tgt: d.otherTgt || 0 };
+        return { ach: d.ach || 0, tgt: d.tgt || 0 };
       };
 
       // Helper function to aggregate records by dimension (tmm, branch, zone)
@@ -1831,70 +1824,155 @@
               branches: new Set()
             };
           }
-          map[dimVal].ach += r.coverageAch;
-          map[dimVal].tgt += r.coverageTarget;
-          map[dimVal].eboAch += r.eboCoverage;
-          map[dimVal].eboTgt += r.targetedEBO;
-          map[dimVal].chainAch += r.chainCoverage;
-          map[dimVal].chainTgt += r.targetedChain;
-          map[dimVal].coolAch += r.coolCoverage;
-          map[dimVal].coolTgt += r.targetedCool;
-          map[dimVal].otherAch += r.otherCoverage;
-          map[dimVal].otherTgt += r.targetedOther;
+          map[dimVal].ach += (r.coverageAch || 0);
+          map[dimVal].tgt += (r.coverageTarget || 0);
+          map[dimVal].eboAch += (r.eboCoverage || 0);
+          map[dimVal].eboTgt += (r.targetedEBO || 0);
+          map[dimVal].chainAch += (r.chainCoverage || 0);
+          map[dimVal].chainTgt += (r.targetedChain || 0);
+          map[dimVal].coolAch += (r.coolCoverage || 0);
+          map[dimVal].coolTgt += (r.targetedCool || 0);
+          map[dimVal].otherAch += (r.otherCoverage || 0);
+          map[dimVal].otherTgt += (r.targetedOther || 0);
           if (r.branch) map[dimVal].branches.add(r.branch);
         });
         return map;
       };
 
-      const calcValue = (d, cat) => {
-        if (!d) return 0;
-        if (cat === 'ebo') return d.eboTgt > 0 ? Math.round((d.eboAch / d.eboTgt) * 100) : (d.eboAch > 0 ? 100 : 0);
-        if (cat === 'chain') return d.chainTgt > 0 ? Math.round((d.chainAch / d.chainTgt) * 100) : (d.chainAch > 0 ? 100 : 0);
-        if (cat === 'cool') return d.coolTgt > 0 ? Math.round((d.coolAch / d.coolTgt) * 100) : (d.coolAch > 0 ? 100 : 0);
-        if (cat === 'other') return d.otherTgt > 0 ? Math.round((d.otherAch / d.otherTgt) * 100) : (d.otherAch > 0 ? 100 : 0);
-        return d.tgt > 0 ? Math.round((d.ach / d.tgt) * 100) : 0;
-      };
+      // Stacked column data labels plugin factory with permanent inside and top labels
+      const createStackedColumnPlugin = (achData, targetData, pendingData, pctData) => ({
+        id: 'stackedDataLabels_' + Math.random().toString(36).substring(2, 7),
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.textAlign = 'center';
+
+          const metaAch = chart.getDatasetMeta(0);
+          const metaPending = chart.getDatasetMeta(1);
+          if (!metaAch || !metaAch.data.length) {
+            ctx.restore();
+            return;
+          }
+
+          const count = metaAch.data.length;
+          for (let i = 0; i < count; i++) {
+            const elAch = metaAch.data[i];
+            const elPending = metaPending ? metaPending.data[i] : null;
+
+            const achVal = achData[i] || 0;
+            const tgtVal = targetData[i] || 0;
+            const pct = pctData[i] || 0;
+            const pendingVal = pendingData[i] || 0;
+
+            const x = elAch.x;
+
+            // 1. Percentage permanently at the top of the column
+            const topY = elPending && pendingVal > 0 ? Math.min(elAch.y, elPending.y) : elAch.y;
+            ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(pct + '%', x, topY - 3);
+
+            // 2. Achieved count inside Achieved bar (bottom segment)
+            const achBase = elAch.base !== undefined ? elAch.base : (elAch.y + (elAch.height || 0));
+            const achHeight = Math.abs(achBase - elAch.y);
+            if (achHeight >= 14 && achVal > 0) {
+              ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
+              ctx.fillStyle = '#ffffff';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(Utils.fmtNum(achVal), x, elAch.y + achHeight / 2);
+            }
+
+            // 3. Target count inside Pending bar (top segment)
+            if (elPending && pendingVal > 0) {
+              const pendingBase = elPending.base !== undefined ? elPending.base : (elPending.y + (elPending.height || 0));
+              const pendingHeight = Math.abs(pendingBase - elPending.y);
+              if (pendingHeight >= 14 && tgtVal > 0) {
+                ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
+                ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Utils.fmtNum(tgtVal), x, elPending.y + pendingHeight / 2);
+              }
+            }
+          }
+          ctx.restore();
+        }
+      });
 
       /* ---------------- 1. TMM-wise Column Chart ---------------- */
       const tmmMap = aggregateBy('tmm');
       const tmmCat = State.chartCategories.tmm || 'all';
-      const tmmMeta = catMeta[tmmCat];
+      const tmmMeta = catMeta[tmmCat] || catMeta.all;
 
       const tmmLabels = Object.keys(tmmMap).sort((a, b) => {
-        const valA = calcValue(tmmMap[a], tmmCat);
-        const valB = calcValue(tmmMap[b], tmmCat);
-        if (valB !== valA) return valB - valA;
-        return tmmMap[b].ach - tmmMap[a].ach;
+        const vA = getCatData(tmmMap[a], tmmCat);
+        const vB = getCatData(tmmMap[b], tmmCat);
+        const pctA = vA.tgt > 0 ? (vA.ach / vA.tgt) : 0;
+        const pctB = vB.tgt > 0 ? (vB.ach / vB.tgt) : 0;
+        if (pctB !== pctA) return pctB - pctA;
+        return vB.ach - vA.ach;
       });
-      const tmmValues = tmmLabels.map(k => calcValue(tmmMap[k], tmmCat));
-      const tmmYMax = Math.max(100, Math.ceil((Math.max(...tmmValues, 0) + 20) / 10) * 10);
 
-      document.getElementById('tmmChartTitle').textContent = `TMM-wise ${tmmMeta.name} Coverage %`;
-      document.getElementById('tmmChartSubtitle').textContent = `Showing ${tmmMeta.label} across Territory Merchandising Managers. Click any column bar to filter by TMM.`;
+      const tmmAchData = [];
+      const tmmPendingData = [];
+      const tmmTargetData = [];
+      const tmmPctData = [];
+
+      tmmLabels.forEach(k => {
+        const v = getCatData(tmmMap[k], tmmCat);
+        const ach = v.ach;
+        const tgt = v.tgt;
+        const pending = Math.max(0, tgt - ach);
+        const pct = tgt > 0 ? Math.round((ach / tgt) * 100) : 0;
+        tmmAchData.push(ach);
+        tmmPendingData.push(pending);
+        tmmTargetData.push(tgt);
+        tmmPctData.push(pct);
+      });
+
+      const tmmMaxVal = Math.max(...tmmTargetData, ...tmmAchData, 10);
+      const tmmYMax = Math.ceil((tmmMaxVal * 1.18 + 10) / 10) * 10;
+
+      const tmmTitleEl = document.getElementById('tmmChartTitle');
+      if (tmmTitleEl) tmmTitleEl.textContent = `TMM-wise ${tmmMeta.name} Coverage %`;
+      const tmmSubEl = document.getElementById('tmmChartSubtitle');
+      if (tmmSubEl) tmmSubEl.textContent = `Showing ${tmmMeta.label} (Target vs Achieved) across Territory Merchandising Managers. Click any column bar to filter by TMM.`;
 
       const ctxTMM = document.getElementById('chartTMMCoverage');
       if (ctxTMM) {
         if (State.charts.tmm) State.charts.tmm.destroy();
         State.charts.tmm = new Chart(ctxTMM, {
           type: 'bar',
-          plugins: [columnDataLabelsPlugin],
+          plugins: [createStackedColumnPlugin(tmmAchData, tmmTargetData, tmmPendingData, tmmPctData)],
           data: {
             labels: tmmLabels,
-            datasets: [{
-              label: tmmMeta.label,
-              data: tmmValues,
-              backgroundColor: tmmMeta.color,
-              hoverBackgroundColor: '#e4002b',
-              borderRadius: 4,
-              borderSkipped: false,
-              barPercentage: 0.68,
-              categoryPercentage: 0.82
-            }]
+            datasets: [
+              {
+                label: 'Achieved Outlets',
+                data: tmmAchData,
+                backgroundColor: tmmMeta.color,
+                hoverBackgroundColor: '#e4002b',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.68,
+                categoryPercentage: 0.82
+              },
+              {
+                label: 'Pending to Target',
+                data: tmmPendingData,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.68,
+                categoryPercentage: 0.82
+              }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 22, bottom: 5, left: 10, right: 10 } },
+            layout: { padding: { top: 24, bottom: 5, left: 10, right: 10 } },
             interaction: { mode: 'index', intersect: false },
             onClick: (evt, elements) => {
               if (elements.length > 0) {
@@ -1907,12 +1985,19 @@
               tooltip: {
                 callbacks: {
                   title: (items) => `TMM: ${items[0].label}`,
-                  label: (item) => `${tmmMeta.label}: ${item.parsed.y}%`,
+                  label: (item) => {
+                    const idx = item.dataIndex;
+                    return item.datasetIndex === 0 
+                      ? `Achieved: ${Utils.fmtNum(tmmAchData[idx])}` 
+                      : `Pending: ${Utils.fmtNum(tmmPendingData[idx])}`;
+                  },
                   afterBody: (context) => {
-                    const k = tmmLabels[context[0].dataIndex];
+                    const idx = context[0].dataIndex;
+                    const k = tmmLabels[idx];
                     const d = tmmMap[k];
                     return [
-                      `Outlets Achieved: ${Utils.fmtNum(d.ach)} / ${Utils.fmtNum(d.tgt)}`,
+                      `Target: ${Utils.fmtNum(tmmTargetData[idx])}`,
+                      `Coverage: ${tmmPctData[idx]}%`,
                       `Branches Managed: ${d.branches.size}`,
                       '----------------------------',
                       '👉 Click bar to filter dashboard by ' + k
@@ -1923,10 +2008,11 @@
             },
             scales: {
               x: {
+                stacked: true,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10.5, weight: '600', family: 'Plus Jakarta Sans' } }
               },
-              y: { display: false, beginAtZero: true, max: tmmYMax, grid: { display: false } }
+              y: { stacked: true, display: false, beginAtZero: true, max: tmmYMax, grid: { display: false } }
             }
           }
         });
@@ -1935,43 +2021,77 @@
       /* ---------------- 2. Branch-wise Column Chart ---------------- */
       const branchMap = aggregateBy('branch');
       const branchCat = State.chartCategories.branch || 'all';
-      const branchMeta = catMeta[branchCat];
+      const branchMeta = catMeta[branchCat] || catMeta.all;
 
       const branchLabels = Object.keys(branchMap).sort((a, b) => {
-        const valA = calcValue(branchMap[a], branchCat);
-        const valB = calcValue(branchMap[b], branchCat);
-        if (valB !== valA) return valB - valA;
-        return branchMap[b].ach - branchMap[a].ach;
+        const vA = getCatData(branchMap[a], branchCat);
+        const vB = getCatData(branchMap[b], branchCat);
+        const pctA = vA.tgt > 0 ? (vA.ach / vA.tgt) : 0;
+        const pctB = vB.tgt > 0 ? (vB.ach / vB.tgt) : 0;
+        if (pctB !== pctA) return pctB - pctA;
+        return vB.ach - vA.ach;
       });
-      const branchValues = branchLabels.map(k => calcValue(branchMap[k], branchCat));
-      const branchYMax = Math.max(100, Math.ceil((Math.max(...branchValues, 0) + 20) / 10) * 10);
 
-      document.getElementById('branchChartTitle').textContent = `Branch-wise ${branchMeta.name} Coverage %`;
-      document.getElementById('branchChartSubtitle').textContent = `Showing ${branchMeta.label} across all branches. Click any column bar to filter by Branch.`;
+      const branchAchData = [];
+      const branchPendingData = [];
+      const branchTargetData = [];
+      const branchPctData = [];
+
+      branchLabels.forEach(k => {
+        const v = getCatData(branchMap[k], branchCat);
+        const ach = v.ach;
+        const tgt = v.tgt;
+        const pending = Math.max(0, tgt - ach);
+        const pct = tgt > 0 ? Math.round((ach / tgt) * 100) : 0;
+        branchAchData.push(ach);
+        branchPendingData.push(pending);
+        branchTargetData.push(tgt);
+        branchPctData.push(pct);
+      });
+
+      const branchMaxVal = Math.max(...branchTargetData, ...branchAchData, 10);
+      const branchYMax = Math.ceil((branchMaxVal * 1.18 + 10) / 10) * 10;
+
+      const branchTitleEl = document.getElementById('branchChartTitle');
+      if (branchTitleEl) branchTitleEl.textContent = `Branch-wise ${branchMeta.name} Coverage %`;
+      const branchSubEl = document.getElementById('branchChartSubtitle');
+      if (branchSubEl) branchSubEl.textContent = `Showing ${branchMeta.label} (Target vs Achieved) across all branches. Click any column bar to filter by Branch.`;
 
       const ctxBranch = document.getElementById('chartBranchCoverage');
       if (ctxBranch) {
         if (State.charts.branch) State.charts.branch.destroy();
         State.charts.branch = new Chart(ctxBranch, {
           type: 'bar',
-          plugins: [columnDataLabelsPlugin],
+          plugins: [createStackedColumnPlugin(branchAchData, branchTargetData, branchPendingData, branchPctData)],
           data: {
             labels: branchLabels,
-            datasets: [{
-              label: branchMeta.label,
-              data: branchValues,
-              backgroundColor: branchMeta.color,
-              hoverBackgroundColor: '#e4002b',
-              borderRadius: 4,
-              borderSkipped: false,
-              barPercentage: 0.70,
-              categoryPercentage: 0.85
-            }]
+            datasets: [
+              {
+                label: 'Achieved Outlets',
+                data: branchAchData,
+                backgroundColor: branchMeta.color,
+                hoverBackgroundColor: '#e4002b',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.70,
+                categoryPercentage: 0.85
+              },
+              {
+                label: 'Pending to Target',
+                data: branchPendingData,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.70,
+                categoryPercentage: 0.85
+              }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 22, bottom: 5, left: 10, right: 10 } },
+            layout: { padding: { top: 24, bottom: 5, left: 10, right: 10 } },
             interaction: { mode: 'index', intersect: false },
             onClick: (evt, elements) => {
               if (elements.length > 0) {
@@ -1984,14 +2104,19 @@
               tooltip: {
                 callbacks: {
                   title: (items) => `Branch: ${items[0].label}`,
-                  label: (item) => `${branchMeta.label}: ${item.parsed.y}%`,
+                  label: (item) => {
+                    const idx = item.dataIndex;
+                    return item.datasetIndex === 0 
+                      ? `Achieved: ${Utils.fmtNum(branchAchData[idx])}` 
+                      : `Pending: ${Utils.fmtNum(branchPendingData[idx])}`;
+                  },
                   afterBody: (context) => {
-                    const k = branchLabels[context[0].dataIndex];
-                    const d = branchMap[k];
+                    const idx = context[0].dataIndex;
                     return [
-                      `Outlets Achieved: ${Utils.fmtNum(d.ach)} / ${Utils.fmtNum(d.tgt)}`,
+                      `Target: ${Utils.fmtNum(branchTargetData[idx])}`,
+                      `Coverage: ${branchPctData[idx]}%`,
                       '----------------------------',
-                      '👉 Click bar to filter dashboard by ' + k
+                      '👉 Click bar to filter dashboard by ' + branchLabels[idx]
                     ];
                   }
                 }
@@ -1999,10 +2124,11 @@
             },
             scales: {
               x: {
+                stacked: true,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' } }
               },
-              y: { display: false, beginAtZero: true, max: branchYMax, grid: { display: false } }
+              y: { stacked: true, display: false, beginAtZero: true, max: branchYMax, grid: { display: false } }
             }
           }
         });
@@ -2011,43 +2137,77 @@
       /* ---------------- 3. Zone-wise Column Chart ---------------- */
       const zoneMap = aggregateBy('zone');
       const zoneCat = State.chartCategories.zone || 'all';
-      const zoneMeta = catMeta[zoneCat];
+      const zoneMeta = catMeta[zoneCat] || catMeta.all;
 
       const zoneLabels = Object.keys(zoneMap).sort((a, b) => {
-        const valA = calcValue(zoneMap[a], zoneCat);
-        const valB = calcValue(zoneMap[b], zoneCat);
-        if (valB !== valA) return valB - valA;
+        const vA = getCatData(zoneMap[a], zoneCat);
+        const vB = getCatData(zoneMap[b], zoneCat);
+        const pctA = vA.tgt > 0 ? (vA.ach / vA.tgt) : 0;
+        const pctB = vB.tgt > 0 ? (vB.ach / vB.tgt) : 0;
+        if (pctB !== pctA) return pctB - pctA;
         return zoneMap[b].ach - zoneMap[a].ach;
       });
-      const zoneValues = zoneLabels.map(k => calcValue(zoneMap[k], zoneCat));
-      const zoneYMax = Math.max(100, Math.ceil((Math.max(...zoneValues, 0) + 20) / 10) * 10);
 
-      document.getElementById('zoneChartTitle').textContent = `Zone-wise ${zoneMeta.name} Coverage %`;
-      document.getElementById('zoneChartSubtitle').textContent = `Showing ${zoneMeta.label} across all zones. Click any column bar to filter by Zone.`;
+      const zoneAchData = [];
+      const zonePendingData = [];
+      const zoneTargetData = [];
+      const zonePctData = [];
+
+      zoneLabels.forEach(k => {
+        const v = getCatData(zoneMap[k], zoneCat);
+        const ach = v.ach;
+        const tgt = v.tgt;
+        const pending = Math.max(0, tgt - ach);
+        const pct = tgt > 0 ? Math.round((ach / tgt) * 100) : 0;
+        zoneAchData.push(ach);
+        zonePendingData.push(pending);
+        zoneTargetData.push(tgt);
+        zonePctData.push(pct);
+      });
+
+      const zoneMaxVal = Math.max(...zoneTargetData, ...zoneAchData, 10);
+      const zoneYMax = Math.ceil((zoneMaxVal * 1.18 + 10) / 10) * 10;
+
+      const zoneTitleEl = document.getElementById('zoneChartTitle');
+      if (zoneTitleEl) zoneTitleEl.textContent = `Zone-wise ${zoneMeta.name} Coverage %`;
+      const zoneSubEl = document.getElementById('zoneChartSubtitle');
+      if (zoneSubEl) zoneSubEl.textContent = `Showing ${zoneMeta.label} (Target vs Achieved) across all zones. Click any column bar to filter by Zone.`;
 
       const ctxZone = document.getElementById('chartZoneCoverage');
       if (ctxZone) {
         if (State.charts.zone) State.charts.zone.destroy();
         State.charts.zone = new Chart(ctxZone, {
           type: 'bar',
-          plugins: [columnDataLabelsPlugin],
+          plugins: [createStackedColumnPlugin(zoneAchData, zoneTargetData, zonePendingData, zonePctData)],
           data: {
             labels: zoneLabels,
-            datasets: [{
-              label: zoneMeta.label,
-              data: zoneValues,
-              backgroundColor: zoneMeta.color,
-              hoverBackgroundColor: '#e4002b',
-              borderRadius: 4,
-              borderSkipped: false,
-              barPercentage: 0.65,
-              categoryPercentage: 0.80
-            }]
+            datasets: [
+              {
+                label: 'Achieved Outlets',
+                data: zoneAchData,
+                backgroundColor: zoneMeta.color,
+                hoverBackgroundColor: '#e4002b',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.65,
+                categoryPercentage: 0.80
+              },
+              {
+                label: 'Pending to Target',
+                data: zonePendingData,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+                borderRadius: 4,
+                borderSkipped: false,
+                barPercentage: 0.65,
+                categoryPercentage: 0.80
+              }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 22, bottom: 5, left: 10, right: 10 } },
+            layout: { padding: { top: 24, bottom: 5, left: 10, right: 10 } },
             interaction: { mode: 'index', intersect: false },
             onClick: (evt, elements) => {
               if (elements.length > 0) {
@@ -2060,12 +2220,19 @@
               tooltip: {
                 callbacks: {
                   title: (items) => `Zone: ${items[0].label}`,
-                  label: (item) => `${zoneMeta.label}: ${item.parsed.y}%`,
+                  label: (item) => {
+                    const idx = item.dataIndex;
+                    return item.datasetIndex === 0 
+                      ? `Achieved: ${Utils.fmtNum(zoneAchData[idx])}` 
+                      : `Pending: ${Utils.fmtNum(zonePendingData[idx])}`;
+                  },
                   afterBody: (context) => {
-                    const k = zoneLabels[context[0].dataIndex];
+                    const idx = context[0].dataIndex;
+                    const k = zoneLabels[idx];
                     const d = zoneMap[k];
                     return [
-                      `Outlets Achieved: ${Utils.fmtNum(d.ach)} / ${Utils.fmtNum(d.tgt)}`,
+                      `Target: ${Utils.fmtNum(zoneTargetData[idx])}`,
+                      `Coverage: ${zonePctData[idx]}%`,
                       `Branches in Zone: ${d.branches.size}`,
                       '----------------------------',
                       '👉 Click bar to filter dashboard by ' + k
@@ -2076,10 +2243,11 @@
             },
             scales: {
               x: {
+                stacked: true,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 11, weight: '700', family: 'Plus Jakarta Sans' } }
               },
-              y: { display: false, beginAtZero: true, max: zoneYMax, grid: { display: false } }
+              y: { stacked: true, display: false, beginAtZero: true, max: zoneYMax, grid: { display: false } }
             }
           }
         });
