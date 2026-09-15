@@ -25,7 +25,8 @@ SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
     "training": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBRmCEH6nI8TLFuK-RVqPu0ATXbidF7rGfITZvpZH7PyAA?download=1",
     "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQAaW2sHEFKnRrqPtppHxBH2ARgiE7222JHi46SCAbbXkQ8?download=1",
-    "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
+    "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1",
+    "branch": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
 }
 
 ONEDRIVE_BASE = "/Users/bikash/Library/CloudStorage/OneDrive-ChannelplayLimited/My Laptop/0 Active Projects/Godrej VM 100838/0 Project 2.0/Reports for dashboard"
@@ -45,6 +46,10 @@ LOCAL_FALLBACKS = {
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS.xlsb"),
     ],
     "program_performance": [
+        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej VM Productivity Report.xlsb"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej VM Productivity Report.xlsb"),
+    ],
+    "branch": [
         os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej VM Productivity Report.xlsb"),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej VM Productivity Report.xlsb"),
     ]
@@ -202,10 +207,38 @@ def sync_program_performance(opener):
                 rows.append(r_vals)
             embed_sample_data("program_performance.html", rows)
 
+def sync_branch(opener):
+    print("\n--- Syncing branch.html (Branch Performance) ---")
+    data = fetch_url_data(opener, SHAREPOINT_URLS["branch"], LOCAL_FALLBACKS.get("branch"), label="branch")
+    if not data:
+        print("Warning: Could not fetch Branch Performance data.")
+        return
+
+    with open_workbook(io.BytesIO(data)) as wb:
+        with wb.get_sheet("Branch Performance") as sheet:
+            rows = []
+            for i, row in enumerate(sheet):
+                r_vals = [cell.v for cell in row]
+                # Format serial date in row 0 if present
+                if i == 0:
+                    for idx, val in enumerate(r_vals):
+                        if isinstance(val, str) and "data updated" in val.lower():
+                            for k in range(idx + 1, min(idx + 4, len(r_vals))):
+                                if isinstance(r_vals[k], (int, float)) and r_vals[k] > 20000:
+                                    r_vals[k] = (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(r_vals[k]))).strftime("%Y-%m-%d")
+                                    break
+                    rows.append(r_vals)
+                elif i == 1:
+                    rows.append(r_vals)
+                # For data rows, ensure branch name (column 6) exists and is not blank
+                elif len(r_vals) > 6 and r_vals[6] and str(r_vals[6]).strip():
+                    rows.append(r_vals)
+            embed_sample_data("branch.html", rows)
+
 def auto_push_to_github():
     print("\n--- Pushing updates to GitHub ---")
     try:
-        subprocess.run(["git", "add", "index.html", "training.html", "m_score.html", "program_performance.html"], check=True)
+        subprocess.run(["git", "add", "index.html", "training.html", "m_score.html", "program_performance.html", "branch.html", "sync_datasets.py"], check=True)
         # Check if there are changes to commit
         res = subprocess.run(["git", "diff", "--staged", "--quiet"])
         if res.returncode != 0:
@@ -240,7 +273,8 @@ def run_sync_once():
         ("index.html (QC Tracker)", sync_index),
         ("training.html (Training Details)", sync_training),
         ("m_score.html (Product-VM-Score)", sync_m_score),
-        ("program_performance.html (Program Performance)", sync_program_performance),
+        ("program_performance.html (VM Performance)", sync_program_performance),
+        ("branch.html (Branch Performance)", sync_branch),
     ]
 
     success_count = 0
