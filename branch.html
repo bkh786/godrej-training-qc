@@ -1267,7 +1267,9 @@
   <script>
   "use strict";
 
-  const SHAREPOINT_DIRECT_URL = "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1";
+  const BRANCH_SHARE_ID = "IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E";
+  const SHAREPOINT_DIRECT_DOWNLOAD_URL = `https://teamchannelplay-my.sharepoint.com/personal/bikash_roy1_channelplay_in/_layouts/15/download.aspx?share=${BRANCH_SHARE_ID}`;
+  const SHAREPOINT_DIRECT_URL = `https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/${BRANCH_SHARE_ID}?e=2dQVkl&download=1`;
 
   const State = {
     rawRows: [],
@@ -2052,23 +2054,66 @@
         return map;
       };
 
-      // Multi-stack column data labels plugin factory with permanent inside and top labels
+      // Helper to draw clean contrasting badges for chart labels
+      const drawChartBadge = (ctx, text, x, y, opts = {}) => {
+        if (!text && text !== 0) return;
+        const sText = String(text);
+        const {
+          bgColor = 'rgba(15, 23, 42, 0.90)',
+          textColor = '#ffffff',
+          borderColor = 'rgba(255, 255, 255, 0.3)',
+          fontSize = 9,
+          fontWeight = '700',
+          paddingX = 3.5,
+          paddingY = 1.5,
+          radius = 3,
+          alignY = 'center'
+        } = opts;
+
+        ctx.save();
+        ctx.font = `${fontWeight} ${fontSize}px "Plus Jakarta Sans", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const metrics = ctx.measureText(sText);
+        const textWidth = metrics.width;
+        const boxWidth = textWidth + paddingX * 2;
+        const boxHeight = fontSize + paddingY * 2;
+        const boxX = x - boxWidth / 2;
+        const boxY = alignY === 'bottom' ? (y - boxHeight) : (y - boxHeight / 2);
+        const centerY = boxY + boxHeight / 2;
+
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(boxX, boxY, boxWidth, boxHeight, radius);
+        } else {
+          ctx.rect(boxX, boxY, boxWidth, boxHeight);
+        }
+        ctx.fillStyle = bgColor;
+        ctx.fill();
+
+        if (borderColor) {
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = textColor;
+        ctx.fillText(sText, x, centerY + 0.5);
+        ctx.restore();
+      };
+
+      // Multi-stack column data labels plugin factory with contrasting background badges
       const createMultiStackedColumnPlugin = (achData, targetData, pendingData, pctData, visAchData, visTargetData, visPendingData, visPctData) => ({
         id: 'multiStackedDataLabels_' + Math.random().toString(36).substring(2, 7),
         afterDatasetsDraw(chart) {
           const { ctx } = chart;
-          ctx.save();
-          ctx.textAlign = 'center';
-
           const metaAch = chart.getDatasetMeta(0);
           const metaPending = chart.getDatasetMeta(1);
           const metaVisAch = chart.getDatasetMeta(2);
           const metaVisPending = chart.getDatasetMeta(3);
 
-          if (!metaAch || !metaAch.data.length) {
-            ctx.restore();
-            return;
-          }
+          if (!metaAch || !metaAch.data.length) return;
 
           const count = metaAch.data.length;
           for (let i = 0; i < count; i++) {
@@ -2081,32 +2126,48 @@
 
             if (elAch) {
               const xCov = elAch.x;
-              // Percentage above top of outlets column
+              // Percentage badge above top of outlets column
               const topCovY = (elPending && pendingVal > 0) ? Math.min(elAch.y, elPending.y) : elAch.y;
-              ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
-              ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
-              ctx.textBaseline = 'bottom';
-              ctx.fillText(pct + '%', xCov, topCovY - 3);
+              drawChartBadge(ctx, pct + '%', xCov, topCovY - 3, {
+                bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                textColor: isDark ? '#93c5fd' : '#1d4ed8',
+                borderColor: isDark ? 'rgba(59, 130, 246, 0.5)' : 'rgba(29, 78, 216, 0.35)',
+                fontSize: 9,
+                fontWeight: '700',
+                paddingX: 3.5,
+                paddingY: 1.5,
+                alignY: 'bottom'
+              });
 
               // Covered count inside achieved bar (bottom segment)
               const achBase = elAch.base !== undefined ? elAch.base : (elAch.y + (elAch.height || 0));
               const achHeight = Math.abs(achBase - elAch.y);
-              if (achHeight >= 13 && achVal > 0) {
-                ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
-                ctx.fillStyle = '#ffffff';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(Utils.fmtNum(achVal), xCov, elAch.y + achHeight / 2);
+              if (achHeight >= 10 && achVal > 0) {
+                drawChartBadge(ctx, Utils.fmtNum(achVal), xCov, elAch.y + achHeight / 2, {
+                  bgColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.90)',
+                  textColor: '#ffffff',
+                  borderColor: isDark ? 'rgba(59, 130, 246, 0.6)' : 'rgba(30, 58, 138, 0.5)',
+                  fontSize: 8.5,
+                  fontWeight: '700',
+                  paddingX: 3,
+                  paddingY: 1
+                });
               }
 
               // Pending count inside pending bar (top segment)
               if (elPending && pendingVal > 0) {
                 const pendingBase = elPending.base !== undefined ? elPending.base : (elPending.y + (elPending.height || 0));
                 const pendingHeight = Math.abs(pendingBase - elPending.y);
-                if (pendingHeight >= 13) {
-                  ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
-                  ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(Utils.fmtNum(pendingVal), xCov, elPending.y + pendingHeight / 2);
+                if (pendingHeight >= 10) {
+                  drawChartBadge(ctx, Utils.fmtNum(pendingVal), xCov, elPending.y + pendingHeight / 2, {
+                    bgColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(241, 245, 249, 0.96)',
+                    textColor: isDark ? '#f1f5f9' : '#0f172a',
+                    borderColor: isDark ? 'rgba(148, 163, 184, 0.5)' : 'rgba(71, 85, 105, 0.45)',
+                    fontSize: 8.5,
+                    fontWeight: '700',
+                    paddingX: 3,
+                    paddingY: 1
+                  });
                 }
               }
             }
@@ -2122,35 +2183,50 @@
 
               // Visits Achievement % above top of visits column
               const topVisY = (elVisPending && visPendingVal > 0) ? Math.min(elVisAch.y, elVisPending.y) : elVisAch.y;
-              ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
-              ctx.fillStyle = isDark ? '#34d399' : '#059669';
-              ctx.textBaseline = 'bottom';
-              ctx.fillText(visPct + '%', xVis, topVisY - 3);
+              drawChartBadge(ctx, visPct + '%', xVis, topVisY - 3, {
+                bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                textColor: isDark ? '#34d399' : '#059669',
+                borderColor: isDark ? 'rgba(52, 211, 153, 0.5)' : 'rgba(5, 150, 105, 0.35)',
+                fontSize: 9,
+                fontWeight: '700',
+                paddingX: 3.5,
+                paddingY: 1.5,
+                alignY: 'bottom'
+              });
 
               // Visits Achieved count inside achieved bar (bottom segment)
               const visAchBase = elVisAch.base !== undefined ? elVisAch.base : (elVisAch.y + (elVisAch.height || 0));
               const visAchHeight = Math.abs(visAchBase - elVisAch.y);
-              if (visAchHeight >= 13 && visAchVal > 0) {
-                ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
-                ctx.fillStyle = '#ffffff';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(Utils.fmtNum(visAchVal), xVis, elVisAch.y + visAchHeight / 2);
+              if (visAchHeight >= 10 && visAchVal > 0) {
+                drawChartBadge(ctx, Utils.fmtNum(visAchVal), xVis, elVisAch.y + visAchHeight / 2, {
+                  bgColor: isDark ? 'rgba(6, 78, 59, 0.94)' : 'rgba(6, 78, 59, 0.92)',
+                  textColor: '#ffffff',
+                  borderColor: isDark ? 'rgba(52, 211, 153, 0.6)' : 'rgba(5, 150, 105, 0.5)',
+                  fontSize: 8.5,
+                  fontWeight: '700',
+                  paddingX: 3,
+                  paddingY: 1
+                });
               }
 
               // Visits Pending count inside pending bar (top segment)
               if (elVisPending && visPendingVal > 0) {
                 const visPendingBase = elVisPending.base !== undefined ? elVisPending.base : (elVisPending.y + (elVisPending.height || 0));
                 const visPendingHeight = Math.abs(visPendingBase - elVisPending.y);
-                if (visPendingHeight >= 13) {
-                  ctx.font = 'bold 9px "Plus Jakarta Sans", sans-serif';
-                  ctx.fillStyle = isDark ? '#a7f3d0' : '#047857';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(Utils.fmtNum(visPendingVal), xVis, elVisPending.y + visPendingHeight / 2);
+                if (visPendingHeight >= 10) {
+                  drawChartBadge(ctx, Utils.fmtNum(visPendingVal), xVis, elVisPending.y + visPendingHeight / 2, {
+                    bgColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(240, 253, 244, 0.96)',
+                    textColor: isDark ? '#a7f3d0' : '#047857',
+                    borderColor: isDark ? 'rgba(52, 211, 153, 0.4)' : 'rgba(5, 150, 105, 0.4)',
+                    fontSize: 8.5,
+                    fontWeight: '700',
+                    paddingX: 3,
+                    paddingY: 1
+                  });
                 }
               }
             }
           }
-          ctx.restore();
         }
       });
 
@@ -3112,17 +3188,28 @@
     /* -------------------------------------------------------------
        REALTIME SHAREPOINT LIVE SYNC ENGINE
        ------------------------------------------------------------- */
-    async fetchWithTimeout(url, ms = 4500) {
+    async fetchWithTimeout(url, ms = 7000) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), ms);
+      const sep = url.includes('?') ? '&' : '?';
+      const freshUrl = `${url}${sep}_cb=${Date.now()}`;
       try {
-        const resp = await fetch(url, { signal: controller.signal });
+        const resp = await fetch(freshUrl, {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
+        });
         clearTimeout(id);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        return await resp.arrayBuffer();
+        const buf = await resp.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        if (bytes.length < 1000 || (bytes[0] === 0x3C && bytes[1] === 0x21) || (bytes[0] === 0x0D && bytes[1] === 0x0A)) {
+          throw new Error('Received non-binary or HTML response');
+        }
+        return buf;
       } catch(e) {
         clearTimeout(id);
-        return null;
+        throw e;
       }
     },
 
@@ -3135,9 +3222,20 @@
         if (statusPill) statusPill.classList.add('syncing');
       }
 
+      let buf = null;
       try {
-        const buf = await this.fetchWithTimeout(SHAREPOINT_DIRECT_URL, 6000);
-        if (buf && buf.byteLength > 2000) {
+        buf = await this.fetchWithTimeout(SHAREPOINT_DIRECT_DOWNLOAD_URL, 8000);
+      } catch(err1) {
+        console.warn('Direct SharePoint download failed or timed out, trying standard share URL...', err1);
+        try {
+          buf = await this.fetchWithTimeout(SHAREPOINT_DIRECT_URL, 6000);
+        } catch(err2) {
+          console.warn('SharePoint share URL also failed:', err2);
+        }
+      }
+
+      if (buf && buf.byteLength > 2000) {
+        try {
           const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
           const sheetName = wb.SheetNames.find(n => /branch/i.test(n)) || wb.SheetNames[0];
           const sheet = wb.Sheets[sheetName];
@@ -3162,9 +3260,9 @@
               return;
             }
           }
+        } catch(err) {
+          console.warn('Realtime SharePoint fetch parse error; using embedded snapshot:', err);
         }
-      } catch(err) {
-        console.warn('Realtime SharePoint fetch skipped or timed out; using embedded snapshot:', err);
       }
 
       if (statusText) statusText.textContent = 'Live data connected';
@@ -3178,6 +3276,18 @@
   // Initialize application on DOM ready
   document.addEventListener('DOMContentLoaded', () => {
     App.init();
+  });
+
+  // Auto re-fetch on navigation or back/forward cache restore
+  window.addEventListener('pageshow', () => {
+    App.syncFromSharePoint(true);
+  });
+
+  // Auto refresh when returning to tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      App.syncFromSharePoint(true);
+    }
   });
   </script>
 </body>

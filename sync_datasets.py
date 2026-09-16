@@ -25,7 +25,7 @@ print = functools.partial(print, flush=True)
 SHAREPOINT_URLS = {
     "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
     "training": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBRmCEH6nI8TLFuK-RVqPu0ATXbidF7rGfITZvpZH7PyAA?download=1",
-    "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQAaW2sHEFKnRrqPtppHxBH2ARgiE7222JHi46SCAbbXkQ8?download=1",
+    "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQALwrJKNKLQTIXnzWX8IQrXAUJP1FnSVdMZD7jPMrqpxvo?e=yACydV&download=1",
     "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1",
     "branch": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
 }
@@ -43,7 +43,9 @@ LOCAL_FALLBACKS = {
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "Training Tracker.xlsx"),
     ],
     "m_score": [
+        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej MS Value.xlsx"),
         os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej MS.xlsb"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS Value.xlsx"),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS.xlsb"),
     ],
     "program_performance": [
@@ -63,6 +65,15 @@ def get_opener():
         urllib.request.HTTPRedirectHandler
     )
 
+def to_direct_sharepoint_url(url):
+    m = re.search(r'/personal/[^/]+/([A-Za-z0-9_-]+)', url)
+    if not m:
+        m = re.search(r'share=([A-Za-z0-9_-]+)', url)
+    if m:
+        share_id = m.group(1)
+        return f"https://teamchannelplay-my.sharepoint.com/personal/bikash_roy1_channelplay_in/_layouts/15/download.aspx?share={share_id}"
+    return url
+
 def fetch_url_data(opener, url, fallback_paths=None, timeout=90, retries=3, label="dataset"):
     # When running on local machine where OneDrive files exist and user hasn't requested --remote:
     # Read the active local file directly. This guarantees instant updates with zero SharePoint cache delay!
@@ -75,31 +86,33 @@ def fetch_url_data(opener, url, fallback_paths=None, timeout=90, retries=3, labe
                     return f.read()
 
     print(f"Fetching latest {label} from SharePoint...")
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
-    )
+    urls_to_try = [to_direct_sharepoint_url(url), url]
     last_err = None
-    for attempt in range(1, retries + 1):
-        try:
-            resp = opener.open(req, timeout=timeout)
-            chunks = []
-            while True:
-                chunk = resp.read(1024 * 1024)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-            data = b"".join(chunks)
-            if len(data) > 3000:
-                print(f"✓ Downloaded {len(data):,} bytes for {label}")
-                return data
-            else:
-                print(f"Warning: Downloaded data for {label} was too small ({len(data)} bytes).")
-        except Exception as e:
-            last_err = e
-            if attempt < retries:
-                print(f"Warning: Download attempt {attempt} failed ({e}), retrying in 3 seconds...")
-                time.sleep(3)
+
+    for target_url in urls_to_try:
+        req = urllib.request.Request(
+            target_url,
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+        )
+        for attempt in range(1, retries + 1):
+            try:
+                resp = opener.open(req, timeout=timeout)
+                chunks = []
+                while True:
+                    chunk = resp.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                data = b"".join(chunks)
+                if len(data) > 3000 and not (data.startswith(b"<!") or data.startswith(b"<html")):
+                    print(f"✓ Downloaded {len(data):,} bytes for {label}")
+                    return data
+                else:
+                    print(f"Warning: Downloaded data for {label} was too small or HTML error page.")
+            except Exception as e:
+                last_err = e
+                if attempt < retries:
+                    time.sleep(2)
 
     if fallback_paths:
         print(f"SharePoint fetch failed for {label}: {last_err}. Checking local fallbacks...")
@@ -118,88 +131,88 @@ def embed_sample_data(html_file, rows):
         print(f"File {html_file} not found, skipping.")
         return
     with open(html_file, "r", encoding="utf-8") as f:
-        html = f.read()
+        content = f.read()
 
-    compact_json = json.dumps(rows, separators=(",", ":"))
-    tag_start = '<script id="sample-data" type="application/json">'
-    tag_end = '</script>'
-    
-    idx1 = html.find(tag_start)
-    if idx1 != -1:
-        idx2 = html.find(tag_end, idx1)
-        if idx2 != -1:
-            html = html[:idx1 + len(tag_start)] + compact_json + html[idx2:]
-            
-            # Also update static dataUpdatedTillMeta if present in rows[0]
-            updated_date = None
-            if len(rows) > 0:
-                for item in rows[0]:
-                    if isinstance(item, str) and len(item) == 10 and item[4] == '-' and item[7] == '-':
-                        updated_date = item
-                        break
-            if updated_date:
-                html = re.sub(
-                    r'(<b id="dataUpdatedTillMeta">)[^<]*(</b>)',
-                    r'\g<1>' + updated_date + r'\g<2>',
-                    html
-                )
+    # Minify JSON string safely
+    json_str = json.dumps(rows, separators=(",", ":"))
+    new_tag = f'<script id="sample-data" type="application/json">{json_str}</script>'
+    pattern = r'<script id="sample-data" type="application/json">.*?</script>'
 
-            with open(html_file, "w", encoding="utf-8") as f:
-                f.write(html)
-            print(f"✓ Successfully embedded {len(rows):,} rows into {html_file}")
+    if re.search(pattern, content, flags=re.DOTALL):
+        updated_content = re.sub(pattern, lambda m: new_tag, content, count=1, flags=re.DOTALL)
+    else:
+        # Fallback if tag doesn't exist yet: insert before </body>
+        updated_content = content.replace("</body>", f"{new_tag}\n</body>")
+
+    with open(html_file, "w", encoding="utf-8") as f:
+        f.write(updated_content)
+    print(f"✓ Embedded {len(rows):,} rows into {html_file} ({len(json_str):,} chars)")
 
 def sync_index(opener):
-    print("\n--- Syncing index.html (QC Tracker) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], LOCAL_FALLBACKS.get("index"), timeout=45, label="QC Audit Report (index)")
-    wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
-    sheet_name = next((s for s in wb.sheetnames if "qc" in s.lower()), wb.sheetnames[0])
-    ws = wb[sheet_name]
+    print("\n--- Syncing index.html (QC Audit Report) ---")
+    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], LOCAL_FALLBACKS.get("index"), label="QC Audit Report (index)")
+    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    ws = wb[wb.sheetnames[0]]
     rows = []
-    for r in ws.iter_rows(values_only=True):
-        if any(v is not None for v in r):
-            row_clean = []
-            for cell in r:
-                if isinstance(cell, (datetime.date, datetime.datetime)):
-                    row_clean.append(cell.strftime("%Y-%m-%d"))
-                else:
-                    row_clean.append(cell)
-            rows.append(row_clean)
+    for row in ws.iter_rows(values_only=True):
+        row_clean = []
+        for cell in row:
+            if isinstance(cell, (datetime.date, datetime.datetime)):
+                row_clean.append(cell.strftime("%Y-%m-%d"))
+            else:
+                row_clean.append(cell)
+        rows.append(row_clean)
     embed_sample_data("index.html", rows)
 
 def sync_training(opener):
-    print("\n--- Syncing training.html (Training Details) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["training"], LOCAL_FALLBACKS.get("training"), timeout=45, label="Training Tracker (training)")
-    wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
-    sheet_name = next((s for s in wb.sheetnames if "training" in s.lower()), wb.sheetnames[0])
-    ws = wb[sheet_name]
+    print("\n--- Syncing training.html (Training Tracker) ---")
+    data = fetch_url_data(opener, SHAREPOINT_URLS["training"], LOCAL_FALLBACKS.get("training"), label="Training Tracker (training)")
+    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    target_sheet = "Training Data" if "Training Data" in wb.sheetnames else wb.sheetnames[0]
+    ws = wb[target_sheet]
     rows = []
-    for r in ws.iter_rows(values_only=True):
-        if any(v is not None for v in r):
-            row_clean = []
-            for cell in r:
-                if isinstance(cell, (datetime.date, datetime.datetime)):
-                    row_clean.append(cell.strftime("%Y-%m-%d"))
-                else:
-                    row_clean.append(cell)
-            rows.append(row_clean)
+    for row in ws.iter_rows(values_only=True):
+        row_clean = []
+        for cell in row:
+            if isinstance(cell, (datetime.date, datetime.datetime)):
+                row_clean.append(cell.strftime("%Y-%m-%d"))
+            else:
+                row_clean.append(cell)
+        rows.append(row_clean)
     embed_sample_data("training.html", rows)
 
 def sync_m_score(opener):
     print("\n--- Syncing m_score.html (Product-VM-Score) ---")
     data = fetch_url_data(opener, SHAREPOINT_URLS["m_score"], LOCAL_FALLBACKS.get("m_score"), timeout=120, label="Godrej MS (m_score)")
-    with open_workbook(io.BytesIO(data)) as wb:
-        sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheets else wb.sheets[0]
-        with wb.get_sheet(sheet_name) as s:
-            rows = []
-            for i, row in enumerate(s.rows()):
-                r_vals = [c.v for c in row[:30]]
-                if i > 0 and len(r_vals) > 14:
-                    d = r_vals[14]
-                    if isinstance(d, (int, float)):
-                        dt = datetime.date(1899, 12, 30) + datetime.timedelta(days=int(d))
-                        r_vals[14] = dt.strftime("%Y-%m-%d")
-                rows.append(r_vals)
-            embed_sample_data("m_score.html", rows)
+    
+    rows = []
+    if data[:4] == b"PK\x03\x04":
+        wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+        sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheetnames else wb.sheetnames[0]
+        ws = wb[sheet_name]
+        for i, row in enumerate(ws.iter_rows(values_only=True)):
+            r_vals = list(row[:30])
+            if i > 0 and len(r_vals) > 14:
+                d = r_vals[14]
+                if isinstance(d, (int, float)):
+                    dt = datetime.date(1899, 12, 30) + datetime.timedelta(days=int(d))
+                    r_vals[14] = dt.strftime("%Y-%m-%d")
+                elif isinstance(d, (datetime.date, datetime.datetime)):
+                    r_vals[14] = d.strftime("%Y-%m-%d")
+            rows.append(r_vals)
+    else:
+        with open_workbook(io.BytesIO(data)) as wb:
+            sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheets else wb.sheets[0]
+            with wb.get_sheet(sheet_name) as s:
+                for i, row in enumerate(s.rows()):
+                    r_vals = [c.v for c in row[:30]]
+                    if i > 0 and len(r_vals) > 14:
+                        d = r_vals[14]
+                        if isinstance(d, (int, float)):
+                            dt = datetime.date(1899, 12, 30) + datetime.timedelta(days=int(d))
+                            r_vals[14] = dt.strftime("%Y-%m-%d")
+                    rows.append(r_vals)
+    embed_sample_data("m_score.html", rows)
 
 def sync_program_performance(opener):
     print("\n--- Syncing program_performance.html (Program Performance) ---")

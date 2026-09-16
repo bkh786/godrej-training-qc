@@ -1207,7 +1207,9 @@
      GODREJ PROGRAM PERFORMANCE INTELLIGENCE ENGINE
      ===================================================================== */
   
-  const SHAREPOINT_EXCEL_URL = 'https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1';
+  const PROGRAM_SHARE_ID = 'IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E';
+  const DIRECT_DOWNLOAD_URL = `https://teamchannelplay-my.sharepoint.com/personal/bikash_roy1_channelplay_in/_layouts/15/download.aspx?share=${PROGRAM_SHARE_ID}`;
+  const SHAREPOINT_EXCEL_URL = `https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/${PROGRAM_SHARE_ID}?e=2dQVkl&download=1`;
   
   const CORS_PROXIES = [
     url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
@@ -2168,62 +2170,117 @@
       const subEl = document.getElementById('aomChartSubtitle');
       if (subEl) subEl.textContent = `Showing ${activeMeta.label} (Target vs Achieved) across all Area Operations Managers. Click any column bar to filter by AOM.`;
 
-      // Stacked column data labels plugin
+      // Helper to draw clean contrasting badges for chart labels
+      const drawChartBadge = (ctx, text, x, y, opts = {}) => {
+        if (!text && text !== 0) return;
+        const sText = String(text);
+        const {
+          bgColor = 'rgba(15, 23, 42, 0.90)',
+          textColor = '#ffffff',
+          borderColor = 'rgba(255, 255, 255, 0.3)',
+          fontSize = 10,
+          fontWeight = '700',
+          paddingX = 4,
+          paddingY = 2,
+          radius = 3,
+          alignY = 'center'
+        } = opts;
+
+        ctx.save();
+        ctx.font = `${fontWeight} ${fontSize}px "Plus Jakarta Sans", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const metrics = ctx.measureText(sText);
+        const textWidth = metrics.width;
+        const boxWidth = textWidth + paddingX * 2;
+        const boxHeight = fontSize + paddingY * 2;
+        const boxX = x - boxWidth / 2;
+        const boxY = alignY === 'bottom' ? (y - boxHeight) : (y - boxHeight / 2);
+        const centerY = boxY + boxHeight / 2;
+
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(boxX, boxY, boxWidth, boxHeight, radius);
+        } else {
+          ctx.rect(boxX, boxY, boxWidth, boxHeight);
+        }
+        ctx.fillStyle = bgColor;
+        ctx.fill();
+
+        if (borderColor) {
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = textColor;
+        ctx.fillText(sText, x, centerY + 0.5);
+        ctx.restore();
+      };
+
+      // Stacked column data labels plugin with high-contrast pill backgrounds
       const stackedColumnDataLabelsPlugin = {
         id: 'stackedColumnDataLabels',
         afterDatasetsDraw(chart) {
           const { ctx } = chart;
-          ctx.save();
-          ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-          ctx.textAlign = 'center';
-
           const metaAch = chart.getDatasetMeta(0);
           const metaPending = chart.getDatasetMeta(1);
-          if (!metaAch || !metaAch.data.length) {
-            ctx.restore();
-            return;
-          }
+          if (!metaAch || !metaAch.data.length) return;
 
           const count = metaAch.data.length;
           for (let i = 0; i < count; i++) {
             const elAch = metaAch.data[i];
             const elPending = metaPending ? metaPending.data[i] : null;
 
-            const achVal = achData[i];
-            const tgtVal = targetData[i];
-            const pct = pctData[i];
-            const pendingVal = pendingData[i];
-
+            const achVal = achData[i] || 0;
+            const pct = pctData[i] || 0;
+            const pendingVal = pendingData[i] || 0;
             const x = elAch.x;
 
-            // 1. Percentage at the top of the column
+            // 1. Percentage badge at the top of the column
             const topY = elPending && pendingVal > 0 ? Math.min(elAch.y, elPending.y) : elAch.y;
-            ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText(pct + '%', x, topY - 4);
+            drawChartBadge(ctx, pct + '%', x, topY - 3, {
+              bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+              textColor: isDark ? '#38bdf8' : '#0284c7',
+              borderColor: isDark ? 'rgba(56, 189, 248, 0.5)' : 'rgba(2, 132, 199, 0.4)',
+              fontSize: 10,
+              fontWeight: '700',
+              paddingX: 4.5,
+              paddingY: 2,
+              alignY: 'bottom'
+            });
 
             // 2. Achieved count inside Achieved bar (bottom segment)
             const achHeight = Math.abs(elAch.base - elAch.y);
-            if (achHeight >= 16 && achVal > 0) {
-              ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-              ctx.fillStyle = '#ffffff';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(Utils.fmtNum(achVal), x, elAch.y + achHeight / 2);
+            if (achHeight >= 11 && achVal > 0) {
+              drawChartBadge(ctx, Utils.fmtNum(achVal), x, elAch.y + achHeight / 2, {
+                bgColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.90)',
+                textColor: '#ffffff',
+                borderColor: isDark ? 'rgba(59, 130, 246, 0.6)' : 'rgba(30, 58, 138, 0.5)',
+                fontSize: 9.5,
+                fontWeight: '700',
+                paddingX: 3.5,
+                paddingY: 1.5
+              });
             }
 
             // 3. Pending count inside Pending bar (top segment)
             if (elPending && pendingVal > 0) {
               const pendingHeight = Math.abs(elPending.base - elPending.y);
-              if (pendingHeight >= 16) {
-                ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-                ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(Utils.fmtNum(pendingVal), x, elPending.y + pendingHeight / 2);
+              if (pendingHeight >= 11) {
+                drawChartBadge(ctx, Utils.fmtNum(pendingVal), x, elPending.y + pendingHeight / 2, {
+                  bgColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(241, 245, 249, 0.96)',
+                  textColor: isDark ? '#f1f5f9' : '#0f172a',
+                  borderColor: isDark ? 'rgba(148, 163, 184, 0.5)' : 'rgba(71, 85, 105, 0.45)',
+                  fontSize: 9.5,
+                  fontWeight: '700',
+                  paddingX: 3.5,
+                  paddingY: 1.5
+                });
               }
             }
           }
-          ctx.restore();
         }
       };
 
@@ -2583,17 +2640,28 @@
     /* -------------------------------------------------------------
        REALTIME SHAREPOINT LIVE SYNC ENGINE
        ------------------------------------------------------------- */
-    async fetchWithTimeout(url, ms = 4500) {
+    async fetchWithTimeout(url, ms = 7000) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), ms);
+      const sep = url.includes('?') ? '&' : '?';
+      const freshUrl = `${url}${sep}_cb=${Date.now()}`;
       try {
-        const resp = await fetch(url, { signal: controller.signal });
+        const resp = await fetch(freshUrl, {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
+        });
         clearTimeout(id);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        return await resp.arrayBuffer();
+        const buf = await resp.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        if (bytes.length < 1000 || (bytes[0] === 0x3C && bytes[1] === 0x21) || (bytes[0] === 0x0D && bytes[1] === 0x0A)) {
+          throw new Error('Received non-binary or HTML response');
+        }
+        return buf;
       } catch(e) {
         clearTimeout(id);
-        return null;
+        throw e;
       }
     },
 
@@ -2607,26 +2675,24 @@
         statusText.textContent = 'Syncing Live...';
       }
 
-      // Race multiple endpoints (Direct fetch + CORS proxies)
-      const fetchPromises = CORS_PROXIES.map(p => this.fetchWithTimeout(p(SHAREPOINT_EXCEL_URL), 5000));
-      fetchPromises.push(this.fetchWithTimeout(SHAREPOINT_EXCEL_URL, 3500));
-
       let buffer = null;
+      // 1. Primary: Direct SharePoint binary download (No CORS barrier, fastest)
       try {
-        const results = await Promise.allSettled(fetchPromises);
-        for (const r of results) {
-          if (r.status === 'fulfilled' && r.value && r.value.byteLength > 1000) {
-            buffer = r.value;
-            break;
-          }
+        buffer = await this.fetchWithTimeout(DIRECT_DOWNLOAD_URL, 8000);
+      } catch(err1) {
+        console.warn('Direct SharePoint download failed or timed out, trying CORS proxies...', err1);
+        // 2. Fallback: CORS proxies
+        const fetchPromises = CORS_PROXIES.map(p => this.fetchWithTimeout(p(SHAREPOINT_EXCEL_URL), 6000));
+        try {
+          buffer = await Promise.any(fetchPromises);
+        } catch(err2) {
+          console.warn('CORS proxies also failed:', err2);
         }
-      } catch(e) {
-        console.warn('Realtime fetch warning:', e);
       }
 
       if (buffer && buffer.byteLength > 1000) {
         try {
-          const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+          const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true, dense: true });
           const targetSheetName = wb.SheetNames.find(n => n.trim().toLowerCase() === 'program performance') || wb.SheetNames[0];
           const ws = wb.Sheets[targetSheetName];
           const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
@@ -2659,6 +2725,18 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     App.init();
+  });
+
+  // Auto re-fetch on navigation or back/forward cache restore
+  window.addEventListener('pageshow', () => {
+    App.syncFromSharePoint(true);
+  });
+
+  // Auto refresh when returning to tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      App.syncFromSharePoint(true);
+    }
   });
   </script>
 </body>
