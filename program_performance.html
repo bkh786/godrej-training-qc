@@ -1245,9 +1245,21 @@
 
   const Utils = {
     num(v) {
-      if (typeof v === 'number') return v;
+      if (typeof v === 'number') {
+        if (isNaN(v) || !isFinite(v)) return 0;
+        return v;
+      }
+      if (v instanceof Date) {
+        // If an Excel time was parsed into a Date object, convert to day fraction
+        const hrs = v.getHours();
+        const mins = v.getMinutes();
+        const secs = v.getSeconds();
+        return (hrs * 3600 + mins * 60 + secs) / 86400;
+      }
       if (!v) return 0;
-      const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''));
+      const s = String(v).trim();
+      if (s === '-' || s === 'NA' || s === 'N/A' || s === 'NaN' || s === 'null' || s === 'undefined') return 0;
+      const n = parseFloat(s.replace(/[^0-9.-]/g, ''));
       return isNaN(n) ? 0 : n;
     },
     fmtNum(v, dec = 0) {
@@ -1264,8 +1276,16 @@
       return (Number(v) || 0).toFixed(dec);
     },
     fmtHrs(fraction) {
-      if (!fraction || isNaN(fraction)) return '0h 0m';
-      const totalHrs = fraction * 24;
+      if (!fraction || isNaN(fraction) || !isFinite(fraction)) return '0h 0m';
+      let totalHrs = Number(fraction);
+      // If fraction <= 1.5, it represents fraction of a 24-hour day
+      if (totalHrs <= 1.5) {
+        totalHrs = totalHrs * 24;
+      }
+      // Guard against corrupted huge numbers
+      if (totalHrs > 500) {
+        totalHrs = 0;
+      }
       const h = Math.floor(totalHrs);
       const m = Math.round((totalHrs - h) * 60);
       return `${h}h ${m}m`;
@@ -1326,19 +1346,48 @@
         }
       }
 
-      // Convert Excel serial number or Date object to YYYY-MM-DD
+      // Convert Excel serial number or Date object to YYYY-MM-DD using local/UTC getters (prevents timezone day shift)
       if (typeof dataUpdatedTill === 'number' && dataUpdatedTill > 20000) {
-        const dt = new Date(Math.round((dataUpdatedTill - 25569) * 86400 * 1000));
-        dataUpdatedTill = dt.toISOString().slice(0, 10);
+        const dt = new Date(Date.UTC(1899, 11, 30 + Math.floor(dataUpdatedTill)));
+        const yr = dt.getUTCFullYear();
+        const mo = String(dt.getUTCMonth() + 1).padStart(2, '0');
+        const da = String(dt.getUTCDate()).padStart(2, '0');
+        dataUpdatedTill = `${yr}-${mo}-${da}`;
       } else if (dataUpdatedTill instanceof Date) {
-        dataUpdatedTill = dataUpdatedTill.toISOString().slice(0, 10);
+        const yr = dataUpdatedTill.getFullYear();
+        const mo = String(dataUpdatedTill.getMonth() + 1).padStart(2, '0');
+        const da = String(dataUpdatedTill.getDate()).padStart(2, '0');
+        dataUpdatedTill = `${yr}-${mo}-${da}`;
       } else if (typeof dataUpdatedTill === 'string' && dataUpdatedTill.trim()) {
-        dataUpdatedTill = dataUpdatedTill.trim();
+        const s = dataUpdatedTill.trim();
+        const mIso = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/);
+        const mText = s.match(/^(\d{1,2})[-/]([A-Za-z]{3})[-/](\d{2,4})$/);
+        if (mIso) {
+          dataUpdatedTill = `${mIso[1]}-${mIso[2]}-${mIso[3]}`;
+        } else if (mText) {
+          const day = String(mText[1]).padStart(2, '0');
+          const monMap = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+          const mon = monMap[mText[2].toLowerCase().slice(0, 3)];
+          let yr = mText[3];
+          if (yr.length === 2) yr = '20' + yr;
+          if (mon) dataUpdatedTill = `${yr}-${mon}-${day}`;
+          else dataUpdatedTill = s;
+        } else {
+          const dObj = new Date(s);
+          if (!isNaN(dObj.getTime())) {
+            const yr = dObj.getFullYear();
+            const mo = String(dObj.getMonth() + 1).padStart(2, '0');
+            const da = String(dObj.getDate()).padStart(2, '0');
+            dataUpdatedTill = `${yr}-${mo}-${da}`;
+          } else {
+            dataUpdatedTill = s;
+          }
+        }
       } else {
-        dataUpdatedTill = '2026-08-02';
+        dataUpdatedTill = '2026-09-14';
       }
 
-      const defaultDerivedMonth = DataParser.formatMonthFromDate(dataUpdatedTill) || "Aug'26";
+      const defaultDerivedMonth = DataParser.formatMonthFromDate(dataUpdatedTill) || "Sep'26";
 
       // Dynamically locate column indices from Row 1 headers
       const headers = (rows[1] || []).map(h => String(h || '').trim());
@@ -1720,7 +1769,7 @@
       }
 
       if (!d || isNaN(d.getTime())) {
-        return availableMonths[0] || "Aug'26";
+        return availableMonths[0] || "Sep'26";
       }
 
       const mIdx = d.getMonth();
@@ -2692,7 +2741,7 @@
 
       if (buffer && buffer.byteLength > 1000) {
         try {
-          const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true, dense: true });
+          const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: false, dense: true });
           const targetSheetName = wb.SheetNames.find(n => n.trim().toLowerCase() === 'program performance') || wb.SheetNames[0];
           const ws = wb.Sheets[targetSheetName];
           const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
