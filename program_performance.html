@@ -1969,6 +1969,7 @@
       let targetManDaysSum = 0;
       let sumAvgProd = 0;
       let sumMktHrsFraction = 0;
+      let sumTimeSpentOutlet = 0;
       let sumTotalMktHrs = 0;
 
       records.forEach(r => {
@@ -2002,6 +2003,7 @@
         targetManDaysSum += (r.targetManDays || 0);
         sumAvgProd += r.avgProductivity;
         sumMktHrsFraction += r.marketWorkingHrs;
+        sumTimeSpentOutlet += (r.avgTimeSpentOutlet || 0);
         sumTotalMktHrs += (r.marketWorkingHrs * 24 * r.manDaysAchieved);
       });
 
@@ -2135,22 +2137,23 @@
         `;
       }
 
-      // 3. Market Working Hrs. (Target: 6.0 hrs)
-      const avgMktHrsFraction = count > 0 ? (sumMktHrsFraction / count) : 0;
-      const sumAdherence = records.reduce((s, r) => s + (r.marketHrsAdherencePct || 0), 0);
-      const mktHrsAdherence = count > 0 ? (sumAdherence / count) * 100 : 0;
+      // 3. Time Spent / Outlet
+      const avgTimeSpentFraction = count > 0 ? (sumTimeSpentOutlet / count) : 0;
       const kpiMktHrsVal = document.getElementById('kpiMktHrs_val');
-      if (kpiMktHrsVal) kpiMktHrsVal.textContent = Utils.fmtHrs(avgMktHrsFraction);
-      const kpiMktHrsAdh = document.getElementById('kpiMktHrs_adh');
-      if (kpiMktHrsAdh) kpiMktHrsAdh.textContent = Utils.fmtPct(mktHrsAdherence, 1);
+      if (kpiMktHrsVal) kpiMktHrsVal.textContent = count > 0 ? Utils.fmtMins(avgTimeSpentFraction) : '--';
 
-      // 4. Working Hrs.
-      const totalHrs = Math.round(sumTotalMktHrs);
-      const avgHrsPerVM = count > 0 ? (totalHrs / count).toFixed(1) : 0;
+      // 4. Working Hours (Target: 6.0 hrs)
+      let avgWorkingHrs = count > 0 ? (sumMktHrsFraction / count) : 0;
+      if (avgWorkingHrs > 0 && avgWorkingHrs <= 1.5) {
+        avgWorkingHrs = avgWorkingHrs * 24;
+      }
+      const rawAvgAdh = count > 0 ? (records.reduce((s, r) => s + (r.marketHrsAdherencePct || 0), 0) / count) : 0;
+      const mktHrsAdherence = rawAvgAdh > 0 ? rawAvgAdh : (avgWorkingHrs > 0 ? (avgWorkingHrs / 6.0) : 0);
+
       const kpiTotHrsVal = document.getElementById('kpiTotHrs_val');
-      if (kpiTotHrsVal) kpiTotHrsVal.textContent = Utils.fmtNum(totalHrs) + ' hrs';
-      const kpiTotHrsSubVal = document.getElementById('kpiTotHrs_sub_val');
-      if (kpiTotHrsSubVal) kpiTotHrsSubVal.textContent = `${avgHrsPerVM} hrs / VM`;
+      if (kpiTotHrsVal) kpiTotHrsVal.textContent = count > 0 ? `${avgWorkingHrs.toFixed(1)} hrs` : '--';
+      const kpiTotHrsAdh = document.getElementById('kpiTotHrs_adh');
+      if (kpiTotHrsAdh) kpiTotHrsAdh.textContent = count > 0 ? Utils.fmtPct(mktHrsAdherence, 1) : '--';
     },
 
     /* -------------------------------------------------------------
