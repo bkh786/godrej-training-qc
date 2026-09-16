@@ -927,8 +927,8 @@
             <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-tmm-cov"></span> Outlets Covered</span>
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+              <span class="chart-legend-badge leg-tmm-visit"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge leg-tmm-visit"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
             </div>
             <div style="height:380px; position:relative;">
               <canvas id="chartTMMCoverage"></canvas>
@@ -973,8 +973,8 @@
             <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-br-cov"></span> Outlets Covered</span>
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+              <span class="chart-legend-badge leg-br-visit"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge leg-br-visit"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
             </div>
             <div style="height:380px; position:relative;">
               <canvas id="chartBranchCoverage"></canvas>
@@ -1019,8 +1019,8 @@
             <div class="chart-legend-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-zn-cov"></span> Outlets Covered</span>
               <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
-              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
+              <span class="chart-legend-badge leg-zn-visit"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge leg-zn-visit"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
             </div>
             <div style="height:380px; position:relative;">
               <canvas id="chartZoneCoverage"></canvas>
@@ -2134,14 +2134,14 @@
       };
 
       // Multi-stack column data labels plugin factory with contrasting background badges
-      const createMultiStackedColumnPlugin = (achData, targetData, pendingData, pctData, visAchData, visTargetData, visPendingData, visPctData) => ({
+      const createMultiStackedColumnPlugin = (achData, targetData, pendingData, pctData, visAchData, visTargetData, visPendingData, visPctData, showVisits = true) => ({
         id: 'multiStackedDataLabels_' + Math.random().toString(36).substring(2, 7),
         afterDatasetsDraw(chart) {
           const { ctx } = chart;
           const metaAch = chart.getDatasetMeta(0);
           const metaPending = chart.getDatasetMeta(1);
-          const metaVisAch = chart.getDatasetMeta(2);
-          const metaVisPending = chart.getDatasetMeta(3);
+          const metaVisAch = showVisits ? chart.getDatasetMeta(2) : null;
+          const metaVisPending = showVisits ? chart.getDatasetMeta(3) : null;
 
           if (!metaAch || !metaAch.data.length) return;
 
@@ -2203,12 +2203,12 @@
             }
 
             // ---- 2. VISITS STACK (Dataset 2: Visits Achieved, Dataset 3: Visits Pending) ----
-            if (metaVisAch && metaVisAch.data[i]) {
+            if (showVisits && metaVisAch && metaVisAch.data && metaVisAch.data[i]) {
               const elVisAch = metaVisAch.data[i];
               const elVisPending = metaVisPending ? metaVisPending.data[i] : null;
-              const visAchVal = visAchData[i] || 0;
-              const visPendingVal = visPendingData[i] || 0;
-              const visPct = visPctData[i] || 0;
+              const visAchVal = (visAchData && visAchData[i]) || 0;
+              const visPendingVal = (visPendingData && visPendingData[i]) || 0;
+              const visPct = (visPctData && visPctData[i]) || 0;
               const xVis = elVisAch.x;
 
               // Visits Achievement % above top of visits column
@@ -2264,6 +2264,7 @@
       const tmmMap = aggregateBy('tmm');
       const tmmCat = State.chartCategories.tmm || 'all';
       const tmmMeta = catMeta[tmmCat] || catMeta.all;
+      const isTMMOverall = tmmCat === 'all';
 
       const tmmLabels = Object.keys(tmmMap).sort((a, b) => {
         const vA = getCatData(tmmMap[a], tmmCat);
@@ -2305,68 +2306,92 @@
         tmmVisPctData.push(vPct);
       });
 
-      const tmmMaxVal = Math.max(...tmmTargetData, ...tmmVisTargetData, ...tmmAchData, ...tmmVisAchData, 10);
+      const tmmMaxVal = isTMMOverall 
+        ? Math.max(...tmmTargetData, ...tmmVisTargetData, ...tmmAchData, ...tmmVisAchData, 10)
+        : Math.max(...tmmTargetData, ...tmmAchData, 10);
       const tmmYMax = Math.ceil((tmmMaxVal * 1.20 + 10) / 10) * 10;
 
       const tmmTitleEl = document.getElementById('tmmChartTitle');
-      if (tmmTitleEl) tmmTitleEl.textContent = `TMM-wise ${tmmMeta.name} Coverage & Visits`;
+      if (tmmTitleEl) {
+        tmmTitleEl.textContent = isTMMOverall 
+          ? `TMM-wise Overall Coverage & Visits` 
+          : `TMM-wise ${tmmMeta.name} Coverage %`;
+      }
       const tmmSubEl = document.getElementById('tmmChartSubtitle');
-      if (tmmSubEl) tmmSubEl.textContent = `Showing ${tmmMeta.label} alongside Total Visits (Target vs Achieved) across Territory Merchandising Managers. Click any column to filter by TMM.`;
+      if (tmmSubEl) {
+        tmmSubEl.textContent = isTMMOverall
+          ? `Showing Overall Coverage % alongside Total Visits (Target vs Achieved) across Territory Merchandising Managers. Click any column to filter by TMM.`
+          : `Showing ${tmmMeta.label} across Territory Merchandising Managers. Click any column to filter by TMM.`;
+      }
+
+      document.querySelectorAll('.leg-tmm-visit').forEach(el => {
+        el.style.display = isTMMOverall ? 'inline-flex' : 'none';
+      });
+      document.querySelectorAll('.leg-tmm-cov').forEach(el => {
+        el.style.backgroundColor = tmmMeta.color;
+      });
+
+      const tmmDatasets = [
+        {
+          label: `${tmmMeta.name} Outlets Covered`,
+          stack: 'coverage',
+          data: tmmAchData,
+          backgroundColor: tmmMeta.color,
+          hoverBackgroundColor: '#e4002b',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isTMMOverall ? 0.85 : 0.65,
+          categoryPercentage: isTMMOverall ? 0.85 : 0.75
+        },
+        {
+          label: `${tmmMeta.name} Outlets Pending`,
+          stack: 'coverage',
+          data: tmmPendingData,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+          hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isTMMOverall ? 0.85 : 0.65,
+          categoryPercentage: isTMMOverall ? 0.85 : 0.75
+        }
+      ];
+
+      if (isTMMOverall) {
+        tmmDatasets.push(
+          {
+            label: 'Visits Achieved',
+            stack: 'visits',
+            data: tmmVisAchData,
+            backgroundColor: '#10b981',
+            hoverBackgroundColor: '#059669',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          },
+          {
+            label: 'Visits Pending',
+            stack: 'visits',
+            data: tmmVisPendingData,
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+            hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          }
+        );
+      }
 
       const ctxTMM = document.getElementById('chartTMMCoverage');
       if (ctxTMM) {
         if (State.charts.tmm) State.charts.tmm.destroy();
         State.charts.tmm = new Chart(ctxTMM, {
           type: 'bar',
-          plugins: [createMultiStackedColumnPlugin(tmmAchData, tmmTargetData, tmmPendingData, tmmPctData, tmmVisAchData, tmmVisTargetData, tmmVisPendingData, tmmVisPctData)],
+          plugins: [createMultiStackedColumnPlugin(tmmAchData, tmmTargetData, tmmPendingData, tmmPctData, tmmVisAchData, tmmVisTargetData, tmmVisPendingData, tmmVisPctData, isTMMOverall)],
           data: {
             labels: tmmLabels,
-            datasets: [
-              {
-                label: `${tmmMeta.name} Outlets Covered`,
-                stack: 'coverage',
-                data: tmmAchData,
-                backgroundColor: tmmMeta.color,
-                hoverBackgroundColor: '#e4002b',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: `${tmmMeta.name} Outlets Pending`,
-                stack: 'coverage',
-                data: tmmPendingData,
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Achieved',
-                stack: 'visits',
-                data: tmmVisAchData,
-                backgroundColor: '#10b981',
-                hoverBackgroundColor: '#059669',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Pending',
-                stack: 'visits',
-                data: tmmVisPendingData,
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
-                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              }
-            ]
+            datasets: tmmDatasets
           },
           options: {
             responsive: true,
@@ -2386,8 +2411,8 @@
                   title: (items) => `TMM: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(tmmAchData[idx])}`;
-                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(tmmPendingData[idx])} (Target: ${Utils.fmtNum(tmmTargetData[idx])}, ${tmmPctData[idx]}%)`;
+                    if (item.datasetIndex === 0) return `${tmmMeta.name} Outlets Covered: ${Utils.fmtNum(tmmAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `${tmmMeta.name} Outlets Pending: ${Utils.fmtNum(tmmPendingData[idx])} (Target: ${Utils.fmtNum(tmmTargetData[idx])}, ${tmmPctData[idx]}%)`;
                     if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(tmmVisAchData[idx])}`;
                     if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(tmmVisPendingData[idx])} (Target: ${Utils.fmtNum(tmmVisTargetData[idx])}, ${tmmVisPctData[idx]}%)`;
                     return '';
@@ -2396,21 +2421,24 @@
                     const idx = context[0].dataIndex;
                     const k = tmmLabels[idx];
                     const d = tmmMap[k];
-                    return [
+                    const lines = [
                       '----------------------------',
-                      `Outlets: ${tmmPctData[idx]}% Covered (${Utils.fmtNum(tmmAchData[idx])} / ${Utils.fmtNum(tmmTargetData[idx])})`,
-                      `Visits: ${tmmVisPctData[idx]}% Achieved (${Utils.fmtNum(tmmVisAchData[idx])} / ${Utils.fmtNum(tmmVisTargetData[idx])})`,
-                      `Branches Managed: ${d.branches.size}`,
-                      '----------------------------',
-                      '👉 Click bar to filter dashboard by ' + k
+                      `Outlets: ${tmmPctData[idx]}% Covered (${Utils.fmtNum(tmmAchData[idx])} / ${Utils.fmtNum(tmmTargetData[idx])})`
                     ];
+                    if (isTMMOverall) {
+                      lines.push(`Visits: ${tmmVisPctData[idx]}% Achieved (${Utils.fmtNum(tmmVisAchData[idx])} / ${Utils.fmtNum(tmmVisTargetData[idx])})`);
+                    }
+                    lines.push(`Branches Managed: ${d.branches.size}`);
+                    lines.push('----------------------------');
+                    lines.push('👉 Click bar to filter dashboard by ' + k);
+                    return lines;
                   }
                 }
               }
             },
             scales: {
               x: {
-                stacked: false,
+                stacked: !isTMMOverall,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10.5, weight: '600', family: 'Plus Jakarta Sans' } }
               },
@@ -2424,6 +2452,7 @@
       const branchMap = aggregateBy('branch');
       const branchCat = State.chartCategories.branch || 'all';
       const branchMeta = catMeta[branchCat] || catMeta.all;
+      const isBranchOverall = branchCat === 'all';
 
       const branchLabels = Object.keys(branchMap).sort((a, b) => {
         const vA = getCatData(branchMap[a], branchCat);
@@ -2465,68 +2494,92 @@
         branchVisPctData.push(vPct);
       });
 
-      const branchMaxVal = Math.max(...branchTargetData, ...branchVisTargetData, ...branchAchData, ...branchVisAchData, 10);
+      const branchMaxVal = isBranchOverall
+        ? Math.max(...branchTargetData, ...branchVisTargetData, ...branchAchData, ...branchVisAchData, 10)
+        : Math.max(...branchTargetData, ...branchAchData, 10);
       const branchYMax = Math.ceil((branchMaxVal * 1.20 + 10) / 10) * 10;
 
       const branchTitleEl = document.getElementById('branchChartTitle');
-      if (branchTitleEl) branchTitleEl.textContent = `Branch-wise ${branchMeta.name} Coverage & Visits`;
+      if (branchTitleEl) {
+        branchTitleEl.textContent = isBranchOverall 
+          ? `Branch-wise Overall Coverage & Visits` 
+          : `Branch-wise ${branchMeta.name} Coverage %`;
+      }
       const branchSubEl = document.getElementById('branchChartSubtitle');
-      if (branchSubEl) branchSubEl.textContent = `Showing ${branchMeta.label} alongside Total Visits (Target vs Achieved) across all branches. Click any column bar to filter by Branch.`;
+      if (branchSubEl) {
+        branchSubEl.textContent = isBranchOverall
+          ? `Showing Overall Coverage % alongside Total Visits (Target vs Achieved) across all branches. Click any column bar to filter by Branch.`
+          : `Showing ${branchMeta.label} across all branches. Click any column bar to filter by Branch.`;
+      }
+
+      document.querySelectorAll('.leg-br-visit').forEach(el => {
+        el.style.display = isBranchOverall ? 'inline-flex' : 'none';
+      });
+      document.querySelectorAll('.leg-br-cov').forEach(el => {
+        el.style.backgroundColor = branchMeta.color;
+      });
+
+      const branchDatasets = [
+        {
+          label: `${branchMeta.name} Outlets Covered`,
+          stack: 'coverage',
+          data: branchAchData,
+          backgroundColor: branchMeta.color,
+          hoverBackgroundColor: '#e4002b',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isBranchOverall ? 0.85 : 0.65,
+          categoryPercentage: isBranchOverall ? 0.85 : 0.75
+        },
+        {
+          label: `${branchMeta.name} Outlets Pending`,
+          stack: 'coverage',
+          data: branchPendingData,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+          hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isBranchOverall ? 0.85 : 0.65,
+          categoryPercentage: isBranchOverall ? 0.85 : 0.75
+        }
+      ];
+
+      if (isBranchOverall) {
+        branchDatasets.push(
+          {
+            label: 'Visits Achieved',
+            stack: 'visits',
+            data: branchVisAchData,
+            backgroundColor: '#10b981',
+            hoverBackgroundColor: '#059669',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          },
+          {
+            label: 'Visits Pending',
+            stack: 'visits',
+            data: branchVisPendingData,
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+            hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          }
+        );
+      }
 
       const ctxBranch = document.getElementById('chartBranchCoverage');
       if (ctxBranch) {
         if (State.charts.branch) State.charts.branch.destroy();
         State.charts.branch = new Chart(ctxBranch, {
           type: 'bar',
-          plugins: [createMultiStackedColumnPlugin(branchAchData, branchTargetData, branchPendingData, branchPctData, branchVisAchData, branchVisTargetData, branchVisPendingData, branchVisPctData)],
+          plugins: [createMultiStackedColumnPlugin(branchAchData, branchTargetData, branchPendingData, branchPctData, branchVisAchData, branchVisTargetData, branchVisPendingData, branchVisPctData, isBranchOverall)],
           data: {
             labels: branchLabels,
-            datasets: [
-              {
-                label: `${branchMeta.name} Outlets Covered`,
-                stack: 'coverage',
-                data: branchAchData,
-                backgroundColor: branchMeta.color,
-                hoverBackgroundColor: '#e4002b',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: `${branchMeta.name} Outlets Pending`,
-                stack: 'coverage',
-                data: branchPendingData,
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Achieved',
-                stack: 'visits',
-                data: branchVisAchData,
-                backgroundColor: '#10b981',
-                hoverBackgroundColor: '#059669',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Pending',
-                stack: 'visits',
-                data: branchVisPendingData,
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
-                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              }
-            ]
+            datasets: branchDatasets
           },
           options: {
             responsive: true,
@@ -2546,28 +2599,31 @@
                   title: (items) => `Branch: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(branchAchData[idx])}`;
-                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(branchPendingData[idx])} (Target: ${Utils.fmtNum(branchTargetData[idx])}, ${branchPctData[idx]}%)`;
+                    if (item.datasetIndex === 0) return `${branchMeta.name} Outlets Covered: ${Utils.fmtNum(branchAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `${branchMeta.name} Outlets Pending: ${Utils.fmtNum(branchPendingData[idx])} (Target: ${Utils.fmtNum(branchTargetData[idx])}, ${branchPctData[idx]}%)`;
                     if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(branchVisAchData[idx])}`;
                     if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(branchVisPendingData[idx])} (Target: ${Utils.fmtNum(branchVisTargetData[idx])}, ${branchVisPctData[idx]}%)`;
                     return '';
                   },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
-                    return [
+                    const lines = [
                       '----------------------------',
-                      `Outlets: ${branchPctData[idx]}% Covered (${Utils.fmtNum(branchAchData[idx])} / ${Utils.fmtNum(branchTargetData[idx])})`,
-                      `Visits: ${branchVisPctData[idx]}% Achieved (${Utils.fmtNum(branchVisAchData[idx])} / ${Utils.fmtNum(branchVisTargetData[idx])})`,
-                      '----------------------------',
-                      '👉 Click bar to filter dashboard by ' + branchLabels[idx]
+                      `Outlets: ${branchPctData[idx]}% Covered (${Utils.fmtNum(branchAchData[idx])} / ${Utils.fmtNum(branchTargetData[idx])})`
                     ];
+                    if (isBranchOverall) {
+                      lines.push(`Visits: ${branchVisPctData[idx]}% Achieved (${Utils.fmtNum(branchVisAchData[idx])} / ${Utils.fmtNum(branchVisTargetData[idx])})`);
+                    }
+                    lines.push('----------------------------');
+                    lines.push('👉 Click bar to filter dashboard by ' + branchLabels[idx]);
+                    return lines;
                   }
                 }
               }
             },
             scales: {
               x: {
-                stacked: false,
+                stacked: !isBranchOverall,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' } }
               },
@@ -2581,6 +2637,7 @@
       const zoneMap = aggregateBy('zone');
       const zoneCat = State.chartCategories.zone || 'all';
       const zoneMeta = catMeta[zoneCat] || catMeta.all;
+      const isZoneOverall = zoneCat === 'all';
 
       const zoneLabels = Object.keys(zoneMap).sort((a, b) => {
         const vA = getCatData(zoneMap[a], zoneCat);
@@ -2622,68 +2679,92 @@
         zoneVisPctData.push(vPct);
       });
 
-      const zoneMaxVal = Math.max(...zoneTargetData, ...zoneVisTargetData, ...zoneAchData, ...zoneVisAchData, 10);
+      const zoneMaxVal = isZoneOverall
+        ? Math.max(...zoneTargetData, ...zoneVisTargetData, ...zoneAchData, ...zoneVisAchData, 10)
+        : Math.max(...zoneTargetData, ...zoneAchData, 10);
       const zoneYMax = Math.ceil((zoneMaxVal * 1.20 + 10) / 10) * 10;
 
       const zoneTitleEl = document.getElementById('zoneChartTitle');
-      if (zoneTitleEl) zoneTitleEl.textContent = `Zone-wise ${zoneMeta.name} Coverage & Visits`;
+      if (zoneTitleEl) {
+        zoneTitleEl.textContent = isZoneOverall 
+          ? `Zone-wise Overall Coverage & Visits` 
+          : `Zone-wise ${zoneMeta.name} Coverage %`;
+      }
       const zoneSubEl = document.getElementById('zoneChartSubtitle');
-      if (zoneSubEl) zoneSubEl.textContent = `Showing ${zoneMeta.label} alongside Total Visits (Target vs Achieved) across all zones. Click any column bar to filter by Zone.`;
+      if (zoneSubEl) {
+        zoneSubEl.textContent = isZoneOverall
+          ? `Showing Overall Coverage % alongside Total Visits (Target vs Achieved) across all zones. Click any column bar to filter by Zone.`
+          : `Showing ${zoneMeta.label} across all zones. Click any column bar to filter by Zone.`;
+      }
+
+      document.querySelectorAll('.leg-zn-visit').forEach(el => {
+        el.style.display = isZoneOverall ? 'inline-flex' : 'none';
+      });
+      document.querySelectorAll('.leg-zn-cov').forEach(el => {
+        el.style.backgroundColor = zoneMeta.color;
+      });
+
+      const zoneDatasets = [
+        {
+          label: `${zoneMeta.name} Outlets Covered`,
+          stack: 'coverage',
+          data: zoneAchData,
+          backgroundColor: zoneMeta.color,
+          hoverBackgroundColor: '#e4002b',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isZoneOverall ? 0.85 : 0.65,
+          categoryPercentage: isZoneOverall ? 0.85 : 0.75
+        },
+        {
+          label: `${zoneMeta.name} Outlets Pending`,
+          stack: 'coverage',
+          data: zonePendingData,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+          hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+          borderRadius: 3,
+          borderSkipped: false,
+          barPercentage: isZoneOverall ? 0.85 : 0.65,
+          categoryPercentage: isZoneOverall ? 0.85 : 0.75
+        }
+      ];
+
+      if (isZoneOverall) {
+        zoneDatasets.push(
+          {
+            label: 'Visits Achieved',
+            stack: 'visits',
+            data: zoneVisAchData,
+            backgroundColor: '#10b981',
+            hoverBackgroundColor: '#059669',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          },
+          {
+            label: 'Visits Pending',
+            stack: 'visits',
+            data: zoneVisPendingData,
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+            hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+            borderRadius: 3,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          }
+        );
+      }
 
       const ctxZone = document.getElementById('chartZoneCoverage');
       if (ctxZone) {
         if (State.charts.zone) State.charts.zone.destroy();
         State.charts.zone = new Chart(ctxZone, {
           type: 'bar',
-          plugins: [createMultiStackedColumnPlugin(zoneAchData, zoneTargetData, zonePendingData, zonePctData, zoneVisAchData, zoneVisTargetData, zoneVisPendingData, zoneVisPctData)],
+          plugins: [createMultiStackedColumnPlugin(zoneAchData, zoneTargetData, zonePendingData, zonePctData, zoneVisAchData, zoneVisTargetData, zoneVisPendingData, zoneVisPctData, isZoneOverall)],
           data: {
             labels: zoneLabels,
-            datasets: [
-              {
-                label: `${zoneMeta.name} Outlets Covered`,
-                stack: 'coverage',
-                data: zoneAchData,
-                backgroundColor: zoneMeta.color,
-                hoverBackgroundColor: '#e4002b',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: `${zoneMeta.name} Outlets Pending`,
-                stack: 'coverage',
-                data: zonePendingData,
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Achieved',
-                stack: 'visits',
-                data: zoneVisAchData,
-                backgroundColor: '#10b981',
-                hoverBackgroundColor: '#059669',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              },
-              {
-                label: 'Visits Pending',
-                stack: 'visits',
-                data: zoneVisPendingData,
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
-                hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
-                borderRadius: 3,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.85
-              }
-            ]
+            datasets: zoneDatasets
           },
           options: {
             responsive: true,
@@ -2703,8 +2784,8 @@
                   title: (items) => `Zone: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    if (item.datasetIndex === 0) return `Outlets Covered: ${Utils.fmtNum(zoneAchData[idx])}`;
-                    if (item.datasetIndex === 1) return `Outlets Pending: ${Utils.fmtNum(zonePendingData[idx])} (Target: ${Utils.fmtNum(zoneTargetData[idx])}, ${zonePctData[idx]}%)`;
+                    if (item.datasetIndex === 0) return `${zoneMeta.name} Outlets Covered: ${Utils.fmtNum(zoneAchData[idx])}`;
+                    if (item.datasetIndex === 1) return `${zoneMeta.name} Outlets Pending: ${Utils.fmtNum(zonePendingData[idx])} (Target: ${Utils.fmtNum(zoneTargetData[idx])}, ${zonePctData[idx]}%)`;
                     if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(zoneVisAchData[idx])}`;
                     if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(zoneVisPendingData[idx])} (Target: ${Utils.fmtNum(zoneVisTargetData[idx])}, ${zoneVisPctData[idx]}%)`;
                     return '';
@@ -2713,21 +2794,24 @@
                     const idx = context[0].dataIndex;
                     const k = zoneLabels[idx];
                     const d = zoneMap[k];
-                    return [
+                    const lines = [
                       '----------------------------',
-                      `Outlets: ${zonePctData[idx]}% Covered (${Utils.fmtNum(zoneAchData[idx])} / ${Utils.fmtNum(zoneTargetData[idx])})`,
-                      `Visits: ${zoneVisPctData[idx]}% Achieved (${Utils.fmtNum(zoneVisAchData[idx])} / ${Utils.fmtNum(zoneVisTargetData[idx])})`,
-                      `Branches in Zone: ${d.branches.size}`,
-                      '----------------------------',
-                      '👉 Click bar to filter dashboard by ' + k
+                      `Outlets: ${zonePctData[idx]}% Covered (${Utils.fmtNum(zoneAchData[idx])} / ${Utils.fmtNum(zoneTargetData[idx])})`
                     ];
+                    if (isZoneOverall) {
+                      lines.push(`Visits: ${zoneVisPctData[idx]}% Achieved (${Utils.fmtNum(zoneVisAchData[idx])} / ${Utils.fmtNum(zoneVisTargetData[idx])})`);
+                    }
+                    lines.push(`Branches in Zone: ${d.branches.size}`);
+                    lines.push('----------------------------');
+                    lines.push('👉 Click bar to filter dashboard by ' + k);
+                    return lines;
                   }
                 }
               }
             },
             scales: {
               x: {
-                stacked: false,
+                stacked: !isZoneOverall,
                 grid: { display: false },
                 ticks: { color: textColor, font: { size: 11, weight: '700', family: 'Plus Jakarta Sans' } }
               },

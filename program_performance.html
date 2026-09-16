@@ -555,6 +555,18 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .chart-legend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--surface-hover);
+      border: 1px solid var(--surface-border);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
   </style>
 </head>
 <body>
@@ -935,21 +947,21 @@
             </div>
           </div>
 
-          <!-- Tile 3: Time Spent in Market -->
+          <!-- Tile 3: Time Spent / Outlet -->
           <div class="kpi-card-prog accent-sky">
             <div class="kpi-card-header">
-              <span class="kpi-card-title">Time Spent in Market</span>
-              <span class="kpi-tag-badge tag-mkthrs">MARKET HOURS</span>
+              <span class="kpi-card-title">Time Spent / Outlet</span>
+              <span class="kpi-tag-badge tag-mkthrs">PER OUTLET</span>
             </div>
             <div class="kpi-metric-dual-body">
               <div class="kpi-metric-primary-row">
                 <span class="kpi-big-value" id="kpiMktHrs_val">--</span>
-                <span class="kpi-metric-sublabel">(Avg. Market Time)</span>
+                <span class="kpi-metric-sublabel">(Avg. per Outlet)</span>
               </div>
               <div class="kpi-accent-bar" style="background:#0ea5e9;"></div>
               <div class="kpi-metric-secondary-row">
-                <span class="kpi-mid-value">6.0 hrs</span>
-                <span class="kpi-metric-sublabel">(Target &middot; Adh: <b id="kpiMktHrs_adh" style="color:var(--ink);">--</b>)</span>
+                <span class="kpi-mid-value">Outlet Dwell</span>
+                <span class="kpi-metric-sublabel">(Avg. Time per Store)</span>
               </div>
             </div>
           </div>
@@ -958,17 +970,17 @@
           <div class="kpi-card-prog accent-purple">
             <div class="kpi-card-header">
               <span class="kpi-card-title">Working Hours</span>
-              <span class="kpi-tag-badge tag-tothrs">TOTAL HOURS</span>
+              <span class="kpi-tag-badge tag-tothrs">HRS / DAY</span>
             </div>
             <div class="kpi-metric-dual-body">
               <div class="kpi-metric-primary-row">
                 <span class="kpi-big-value" id="kpiTotHrs_val">--</span>
-                <span class="kpi-metric-sublabel">(Cumulative Total)</span>
+                <span class="kpi-metric-sublabel">(Avg. per VM / Day)</span>
               </div>
               <div class="kpi-accent-bar" style="background:#8b5cf6;"></div>
               <div class="kpi-metric-secondary-row">
-                <span class="kpi-mid-value" id="kpiTotHrs_sub_val">--</span>
-                <span class="kpi-metric-sublabel">(Avg. per VM)</span>
+                <span class="kpi-mid-value" id="kpiTotHrs_target">6.0 hrs</span>
+                <span class="kpi-metric-sublabel">(Target &middot; Adh: <b id="kpiTotHrs_adh" style="color:var(--ink);">--</b>)</span>
               </div>
             </div>
           </div>
@@ -1020,6 +1032,12 @@
                 <span class="cat-dot" style="background:#06b6d4;"></span>
                 Other Categories
               </button>
+            </div>
+            <div class="chart-legend-row" id="aomChartLegendRow" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#0284c7;" class="leg-aom-cov"></span> Outlets Covered</span>
+              <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:rgba(148,163,184,0.3); border:1px dashed #94a3b8;"></span> Outlets Pending</span>
+              <span class="chart-legend-badge leg-aom-visit"><span style="width:10px; height:10px; border-radius:2px; background:#10b981;"></span> Visits Achieved</span>
+              <span class="chart-legend-badge leg-aom-visit"><span style="width:10px; height:10px; border-radius:2px; background:rgba(16,185,129,0.25); border:1px dashed #10b981;"></span> Visits Pending</span>
             </div>
             <div style="height:350px; position:relative;">
               <canvas id="chartAOMCoverage"></canvas>
@@ -1289,6 +1307,21 @@
       const h = Math.floor(totalHrs);
       const m = Math.round((totalHrs - h) * 60);
       return `${h}h ${m}m`;
+    },
+    fmtMins(fraction) {
+      if (!fraction || isNaN(fraction) || !isFinite(fraction)) return '0 mins';
+      let totalMins = Number(fraction);
+      if (totalMins <= 1.5) {
+        totalMins = totalMins * 24 * 60;
+      }
+      if (totalMins > 500) totalMins = 0;
+      const mins = Math.round(totalMins);
+      if (mins >= 60) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return `${h}h ${m}m`;
+      }
+      return `${mins} mins`;
     },
     debounce(fn, delay) {
       let timer = null;
@@ -2146,6 +2179,7 @@
 
       const aomCat = State.aomChartCategory || 'all';
       const activeMeta = catMeta[aomCat] || catMeta.all;
+      const isAOMOverall = aomCat === 'all';
 
       // Aggregation by AOM
       const aomMap = {};
@@ -2158,6 +2192,7 @@
             chainAch: 0, chainTgt: 0,
             coolAch: 0, coolTgt: 0,
             otherAch: 0, otherTgt: 0,
+            visAch: 0, visTgt: 0,
             vms: new Set()
           };
         }
@@ -2171,6 +2206,8 @@
         aomMap[r.aom].coolTgt += (r.targetedCool || 0);
         aomMap[r.aom].otherAch += (r.otherCoverage || 0);
         aomMap[r.aom].otherTgt += (r.targetedOther || 0);
+        aomMap[r.aom].visAch += (r.visitAch || 0);
+        aomMap[r.aom].visTgt += (r.visitsTarget || 0);
         if (r.userName) aomMap[r.aom].vms.add(r.userName);
       });
 
@@ -2198,6 +2235,11 @@
       const targetData = [];
       const pctData = [];
 
+      const visAchData = [];
+      const visPendingData = [];
+      const visTargetData = [];
+      const visPctData = [];
+
       aomLabels.forEach(a => {
         const v = getCatValues(aomMap[a], aomCat);
         const ach = v.ach;
@@ -2208,16 +2250,42 @@
         pendingData.push(pending);
         targetData.push(tgt);
         pctData.push(pct);
+
+        const vAch = aomMap[a].visAch || 0;
+        const vTgt = aomMap[a].visTgt || 0;
+        const vPending = Math.max(0, vTgt - vAch);
+        const vPct = vTgt > 0 ? Math.round((vAch / vTgt) * 100) : 0;
+        visAchData.push(vAch);
+        visPendingData.push(vPending);
+        visTargetData.push(vTgt);
+        visPctData.push(vPct);
       });
 
-      const maxVal = Math.max(...targetData, ...achData, 10);
+      const maxVal = isAOMOverall
+        ? Math.max(...targetData, ...visTargetData, ...achData, ...visAchData, 10)
+        : Math.max(...targetData, ...achData, 10);
       const aomYMax = Math.ceil((maxVal * 1.18 + 10) / 10) * 10;
 
       // Update titles
       const titleEl = document.getElementById('aomChartTitle');
-      if (titleEl) titleEl.textContent = `AOM-wise ${activeMeta.name} Coverage %`;
+      if (titleEl) {
+        titleEl.textContent = isAOMOverall 
+          ? 'AOM-wise Overall Coverage & Visits' 
+          : `AOM-wise ${activeMeta.name} Coverage %`;
+      }
       const subEl = document.getElementById('aomChartSubtitle');
-      if (subEl) subEl.textContent = `Showing ${activeMeta.label} (Target vs Achieved) across all Area Operations Managers. Click any column bar to filter by AOM.`;
+      if (subEl) {
+        subEl.textContent = isAOMOverall
+          ? 'Showing Overall Coverage % alongside Total Visits (Target vs Achieved) across all Area Operations Managers. Click any column bar to filter by AOM.'
+          : `Showing ${activeMeta.label} across all Area Operations Managers. Click any column bar to filter by AOM.`;
+      }
+
+      document.querySelectorAll('.leg-aom-visit').forEach(el => {
+        el.style.display = isAOMOverall ? 'inline-flex' : 'none';
+      });
+      document.querySelectorAll('.leg-aom-cov').forEach(el => {
+        el.style.backgroundColor = activeMeta.color;
+      });
 
       // Helper to draw clean contrasting badges for chart labels
       const drawChartBadge = (ctx, text, x, y, opts = {}) => {
@@ -2275,10 +2343,13 @@
           const { ctx } = chart;
           const metaAch = chart.getDatasetMeta(0);
           const metaPending = chart.getDatasetMeta(1);
+          const metaVisAch = isAOMOverall ? chart.getDatasetMeta(2) : null;
+          const metaVisPending = isAOMOverall ? chart.getDatasetMeta(3) : null;
           if (!metaAch || !metaAch.data.length) return;
 
           const count = metaAch.data.length;
           for (let i = 0; i < count; i++) {
+            // ---- 1. OUTLETS STACK ----
             const elAch = metaAch.data[i];
             const elPending = metaPending ? metaPending.data[i] : null;
 
@@ -2287,7 +2358,7 @@
             const pendingVal = pendingData[i] || 0;
             const x = elAch.x;
 
-            // 1. Percentage badge at the top of the column
+            // 1. Percentage badge at the top of the outlets column
             const topY = elPending && pendingVal > 0 ? Math.min(elAch.y, elPending.y) : elAch.y;
             drawChartBadge(ctx, pct + '%', x, topY - 3, {
               bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
@@ -2329,9 +2400,114 @@
                 });
               }
             }
+
+            // ---- 2. VISITS STACK (When isAOMOverall is true) ----
+            if (isAOMOverall && metaVisAch && metaVisAch.data && metaVisAch.data[i]) {
+              const elVisAch = metaVisAch.data[i];
+              const elVisPending = metaVisPending ? metaVisPending.data[i] : null;
+              const visAchVal = visAchData[i] || 0;
+              const visPendingVal = visPendingData[i] || 0;
+              const visPct = visPctData[i] || 0;
+              const xVis = elVisAch.x;
+
+              // Visits % badge above top of visits column
+              const topVisY = elVisPending && visPendingVal > 0 ? Math.min(elVisAch.y, elVisPending.y) : elVisAch.y;
+              drawChartBadge(ctx, visPct + '%', xVis, topVisY - 3, {
+                bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                textColor: isDark ? '#34d399' : '#059669',
+                borderColor: isDark ? 'rgba(52, 211, 153, 0.5)' : 'rgba(5, 150, 105, 0.35)',
+                fontSize: 10,
+                fontWeight: '700',
+                paddingX: 4.5,
+                paddingY: 2,
+                alignY: 'bottom'
+              });
+
+              // Visits Achieved count inside achieved bar
+              const visAchHeight = Math.abs(elVisAch.base - elVisAch.y);
+              if (visAchHeight >= 11 && visAchVal > 0) {
+                drawChartBadge(ctx, Utils.fmtNum(visAchVal), xVis, elVisAch.y + visAchHeight / 2, {
+                  bgColor: isDark ? 'rgba(6, 78, 59, 0.94)' : 'rgba(6, 78, 59, 0.92)',
+                  textColor: '#ffffff',
+                  borderColor: isDark ? 'rgba(52, 211, 153, 0.6)' : 'rgba(5, 150, 105, 0.5)',
+                  fontSize: 9.5,
+                  fontWeight: '700',
+                  paddingX: 3.5,
+                  paddingY: 1.5
+                });
+              }
+
+              // Visits Pending count inside pending bar
+              if (elVisPending && visPendingVal > 0) {
+                const visPendingHeight = Math.abs(elVisPending.base - elVisPending.y);
+                if (visPendingHeight >= 11) {
+                  drawChartBadge(ctx, Utils.fmtNum(visPendingVal), xVis, elVisPending.y + visPendingHeight / 2, {
+                    bgColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(240, 253, 244, 0.96)',
+                    textColor: isDark ? '#a7f3d0' : '#047857',
+                    borderColor: isDark ? 'rgba(52, 211, 153, 0.4)' : 'rgba(5, 150, 105, 0.4)',
+                    fontSize: 9.5,
+                    fontWeight: '700',
+                    paddingX: 3.5,
+                    paddingY: 1.5
+                  });
+                }
+              }
+            }
           }
         }
       };
+
+      const aomDatasets = [
+        {
+          label: `${activeMeta.name} Outlets Covered`,
+          stack: 'coverage',
+          data: achData,
+          backgroundColor: activeMeta.color,
+          hoverBackgroundColor: '#e4002b',
+          borderRadius: 4,
+          borderSkipped: false,
+          barPercentage: isAOMOverall ? 0.85 : 0.65,
+          categoryPercentage: isAOMOverall ? 0.85 : 0.75
+        },
+        {
+          label: `${activeMeta.name} Outlets Pending`,
+          stack: 'coverage',
+          data: pendingData,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+          hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
+          borderRadius: 4,
+          borderSkipped: false,
+          barPercentage: isAOMOverall ? 0.85 : 0.65,
+          categoryPercentage: isAOMOverall ? 0.85 : 0.75
+        }
+      ];
+
+      if (isAOMOverall) {
+        aomDatasets.push(
+          {
+            label: 'Visits Achieved',
+            stack: 'visits',
+            data: visAchData,
+            backgroundColor: '#10b981',
+            hoverBackgroundColor: '#059669',
+            borderRadius: 4,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          },
+          {
+            label: 'Visits Pending',
+            stack: 'visits',
+            data: visPendingData,
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.18)',
+            hoverBackgroundColor: 'rgba(16, 185, 129, 0.35)',
+            borderRadius: 4,
+            borderSkipped: false,
+            barPercentage: 0.85,
+            categoryPercentage: 0.85
+          }
+        );
+      }
 
       const ctxAOM = document.getElementById('chartAOMCoverage');
       if (ctxAOM) {
@@ -2342,28 +2518,7 @@
           plugins: [stackedColumnDataLabelsPlugin],
           data: {
             labels: aomLabels,
-            datasets: [
-              {
-                label: 'Achieved Outlets',
-                data: achData,
-                backgroundColor: activeMeta.color,
-                hoverBackgroundColor: '#e4002b',
-                borderRadius: 4,
-                borderSkipped: false,
-                barPercentage: 0.65,
-                categoryPercentage: 0.75
-              },
-              {
-                label: 'Pending to Target',
-                data: pendingData,
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                hoverBackgroundColor: 'rgba(228, 0, 43, 0.25)',
-                borderRadius: 4,
-                borderSkipped: false,
-                barPercentage: 0.65,
-                categoryPercentage: 0.75
-              }
-            ]
+            datasets: aomDatasets
           },
           options: {
             responsive: true,
@@ -2391,28 +2546,34 @@
                   title: (items) => `AOM: ${items[0].label}`,
                   label: (item) => {
                     const idx = item.dataIndex;
-                    return item.datasetIndex === 0 
-                      ? `Achieved: ${Utils.fmtNum(achData[idx])}` 
-                      : `Pending: ${Utils.fmtNum(pendingData[idx])}`;
+                    if (item.datasetIndex === 0) return `${activeMeta.name} Outlets Covered: ${Utils.fmtNum(achData[idx])}`;
+                    if (item.datasetIndex === 1) return `${activeMeta.name} Outlets Pending: ${Utils.fmtNum(pendingData[idx])} (Target: ${Utils.fmtNum(targetData[idx])}, ${pctData[idx]}%)`;
+                    if (item.datasetIndex === 2) return `Visits Achieved: ${Utils.fmtNum(visAchData[idx])}`;
+                    if (item.datasetIndex === 3) return `Visits Pending: ${Utils.fmtNum(visPendingData[idx])} (Target: ${Utils.fmtNum(visTargetData[idx])}, ${visPctData[idx]}%)`;
+                    return '';
                   },
                   afterBody: (context) => {
                     const idx = context[0].dataIndex;
                     const a = aomLabels[idx];
                     const d = aomMap[a];
-                    return [
-                      `Target: ${Utils.fmtNum(targetData[idx])}`,
-                      `Coverage: ${pctData[idx]}%`,
-                      `Active Field VMs: ${d.vms.size}`,
+                    const lines = [
                       '----------------------------',
-                      '👉 Click column to filter dashboard by ' + a
+                      `Outlets: ${pctData[idx]}% Covered (${Utils.fmtNum(achData[idx])} / ${Utils.fmtNum(targetData[idx])})`
                     ];
+                    if (isAOMOverall) {
+                      lines.push(`Visits: ${visPctData[idx]}% Achieved (${Utils.fmtNum(visAchData[idx])} / ${Utils.fmtNum(visTargetData[idx])})`);
+                    }
+                    lines.push(`Active Field VMs: ${d.vms.size}`);
+                    lines.push('----------------------------');
+                    lines.push('👉 Click column to filter dashboard by ' + a);
+                    return lines;
                   }
                 }
               }
             },
             scales: {
               x: {
-                stacked: true,
+                stacked: !isAOMOverall,
                 grid: { display: false },
                 ticks: {
                   color: textColor,
