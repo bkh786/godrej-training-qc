@@ -168,10 +168,12 @@ def sync_training(opener):
     print("\n--- Syncing training.html (Training Tracker) ---")
     data = fetch_url_data(opener, SHAREPOINT_URLS["training"], LOCAL_FALLBACKS.get("training"), label="Training Tracker (training)")
     wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-    target_sheet = "Training Data" if "Training Data" in wb.sheetnames else wb.sheetnames[0]
+    target_sheet = "Training Details" if "Training Details" in wb.sheetnames else ("Training Data" if "Training Data" in wb.sheetnames else wb.sheetnames[0])
     ws = wb[target_sheet]
     rows = []
     for row in ws.iter_rows(values_only=True):
+        if not any(c is not None and str(c).strip() != "" for c in row):
+            continue
         row_clean = []
         for cell in row:
             if isinstance(cell, (datetime.date, datetime.datetime)):
