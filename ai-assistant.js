@@ -1356,8 +1356,106 @@ window.updateFiltersSidebarBadge = function () {
     appendBubble('assistant', welcome);
   }
 
+  const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function formatDateDDMMMYYYY(input) {
+    if (!input) return '';
+    if (input instanceof Date && !isNaN(input.getTime())) {
+      const dd = String(input.getDate()).padStart(2, '0');
+      return `${dd} ${MONTHS_SHORT[input.getMonth()]} ${input.getFullYear()}`;
+    }
+    const str = String(input).trim();
+    // Already formatted like "30 Oct 2026"
+    if (/^\d{1,2}\s+[A-Za-z]{3}\s+\d{4}$/.test(str)) return str;
+    // YYYY-MM-DD
+    const mIso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (mIso) {
+      const yr = Number(mIso[1]);
+      const mo = Number(mIso[2]) - 1;
+      const dy = mIso[3];
+      if (MONTHS_SHORT[mo]) return `${dy} ${MONTHS_SHORT[mo]} ${yr}`;
+    }
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      const dd = String(parsed.getDate()).padStart(2, '0');
+      return `${dd} ${MONTHS_SHORT[parsed.getMonth()]} ${parsed.getFullYear()}`;
+    }
+    return str;
+  }
+
+  function formatDateTimeSync(dt) {
+    const d = dt instanceof Date && !isNaN(dt.getTime()) ? dt : new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mon = MONTHS_SHORT[d.getMonth()];
+    const yyyy = d.getFullYear();
+    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${dd} ${mon} ${yyyy}, ${timeStr}`;
+  }
+
+  let __isNormalizingHeaderMeta = false;
+  function normalizeHeaderSyncMeta(pageType) {
+    if (__isNormalizingHeaderMeta) return;
+    __isNormalizingHeaderMeta = true;
+    try {
+      // 1. Ensure status pill reads "Live SharePoint connected" when connected
+      const statusTextEl = document.getElementById('liveStatusText');
+      if (statusTextEl && statusTextEl.textContent) {
+        const cur = statusTextEl.textContent.trim();
+        if (cur.toLowerCase() === 'live data connected') {
+          statusTextEl.textContent = 'Live SharePoint connected';
+        }
+      }
+
+      // 2. Format #dataUpdatedTillMeta as "DD MMM YYYY" (e.g. "30 Oct 2026")
+      const uptoEl = document.getElementById('dataUpdatedTillMeta');
+      if (uptoEl) {
+        let rawUpto = '';
+        if (typeof State !== 'undefined' && State.metadata && State.metadata.dataUpdatedTill) {
+          rawUpto = State.metadata.dataUpdatedTill;
+        } else if (typeof State !== 'undefined' && State.dateBounds && State.dateBounds.max) {
+          rawUpto = State.dateBounds.max;
+        } else {
+          const allRecs = getAllRecords(pageType);
+          if (allRecs && allRecs.length) {
+            let maxIso = '';
+            allRecs.forEach(r => {
+              const dVal = r.visitDate || r.qcDate || r.dateStr || '';
+              if (typeof dVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dVal)) {
+                if (dVal > maxIso) maxIso = dVal;
+              } else if (r.date instanceof Date && !isNaN(r.date.getTime())) {
+                const iso = r.date.toISOString().slice(0, 10);
+                if (iso > maxIso) maxIso = iso;
+              }
+            });
+            if (maxIso) rawUpto = maxIso;
+          }
+        }
+        const candidate = rawUpto || uptoEl.textContent.trim();
+        const formattedUpto = formatDateDDMMMYYYY(candidate);
+        if (formattedUpto && uptoEl.textContent !== formattedUpto) {
+          uptoEl.textContent = formattedUpto;
+        }
+      }
+
+      // 3. Format #lastUpdatedMeta as "DD MMM YYYY, hh:mm AM/PM" (e.g. "01 Nov 2026, 02:04 PM")
+      const syncEl = document.getElementById('lastUpdatedMeta');
+      if (syncEl) {
+        const curSync = (syncEl.textContent || '').trim();
+        if (!/^\d{2}\s+[A-Za-z]{3}\s+\d{4},\s+\d{1,2}:\d{2}\s*(AM|PM)$/i.test(curSync)) {
+          const formattedSync = formatDateTimeSync(state.lastSyncTimestamp || new Date());
+          if (syncEl.textContent !== formattedSync) {
+            syncEl.textContent = formattedSync;
+          }
+        }
+      }
+    } catch (e) {} finally {
+      __isNormalizingHeaderMeta = false;
+    }
+  }
+
   function updateContextUI() {
     const pageType = detectPageType();
+    normalizeHeaderSyncMeta(pageType);
     const pageLabel = getPageLabel(pageType);
     const pill = document.getElementById('aiCopilotContextPill');
     const sub = document.getElementById('aiCopilotSubtitle');
