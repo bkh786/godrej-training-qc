@@ -1371,12 +1371,13 @@ footer.foot {
 
 .filters-sidebar {
   position: fixed;
-  top: 50%;
+  top: 0;
   left: 0;
-  transform: translateY(-50%);
+  bottom: 0;
+  width: 0;
+  height: 100vh;
+  transform: none;
   z-index: 1100;
-  display: flex;
-  align-items: center;
   pointer-events: none;
 }
 
@@ -1474,9 +1475,10 @@ footer.foot {
   bottom: 0;
   width: 300px;
   max-width: 85vw;
-  background: var(--bg-panel, #ffffff);
-  border-right: 1px solid var(--border-subtle, #e2e8f0);
-  box-shadow: 8px 0 30px rgba(15, 23, 42, 0.14);
+  height: 100vh;
+  background: var(--surface-solid, #ffffff);
+  border-right: 1px solid var(--surface-border, #e2e8f0);
+  box-shadow: 12px 0 36px rgba(15, 23, 42, 0.22);
   z-index: 1101;
   display: flex;
   flex-direction: column;

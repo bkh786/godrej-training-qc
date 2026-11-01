@@ -246,11 +246,13 @@ window.updateFiltersSidebarBadge = function () {
     const lastSyncEl = document.getElementById('lastUpdatedMeta');
     const sourceEl = document.getElementById('dataSourceLabel');
     const pieces = [];
-    if (dataUpdatedEl && dataUpdatedEl.textContent && dataUpdatedEl.textContent !== '--') {
-      pieces.push('Data Upto ' + dataUpdatedEl.textContent.trim());
+    if (dataUpdatedEl && dataUpdatedEl.textContent && dataUpdatedEl.textContent.trim() !== '--') {
+      const du = dataUpdatedEl.textContent.trim();
+      pieces.push(du.toLowerCase().startsWith('data') ? du : 'Data Upto ' + du);
     }
     if (lastSyncEl && lastSyncEl.textContent && !lastSyncEl.textContent.toLowerCase().includes('connecting')) {
-      pieces.push('Synced ' + lastSyncEl.textContent.trim());
+      const ls = lastSyncEl.textContent.trim();
+      pieces.push(ls.toLowerCase().startsWith('synced') ? ls : 'Synced ' + ls);
     } else if (sourceEl && sourceEl.textContent) {
       pieces.push(sourceEl.textContent.trim());
     }
@@ -293,15 +295,23 @@ window.updateFiltersSidebarBadge = function () {
     const recs = activeRecs.length ? activeRecs : allRecs;
     const sum = (arr, fn) => arr.reduce((acc, r) => acc + (Number(fn(r)) || 0), 0);
 
-    const covTgt = sum(recs, r => r.totalPlannedCoverage);
-    const covAch = sum(recs, r => r.totalAchievedCoverage);
-    const visTgt = sum(recs, r => r.totalPlannedVisits);
-    const visAch = sum(recs, r => r.totalAchievedVisits);
+    const covTgt = sum(recs, r => r.coverageTarget);
+    const covAch = sum(recs, r => r.coverageAch);
+    const visTgt = sum(recs, r => r.visitsTarget);
+    const visAch = sum(recs, r => r.visitAch);
     const prodVis = sum(recs, r => r.productiveVisits);
     const disp = sum(recs, r => r.productDisplay);
     const posm = sum(recs, r => r.posmDeployment);
     const manAch = sum(recs, r => r.manDaysAchieved);
-    const manTgt = sum(recs, r => r.targetManDays || 22);
+    const manTgt = sum(recs, r => r.targetManDays);
+    const eboTgt = sum(recs, r => r.targetedEBO);
+    const eboAch = sum(recs, r => r.eboCoverage);
+    const chainTgt = sum(recs, r => r.targetedChain);
+    const chainAch = sum(recs, r => r.chainCoverage);
+    const coolTgt = sum(recs, r => r.targetedCool);
+    const coolAch = sum(recs, r => r.coolCoverage);
+    const othTgt = sum(recs, r => r.targetedOther);
+    const othAch = sum(recs, r => r.otherCoverage);
     const avgFinalAch = recs.length ? (sum(recs, r => r.finalAch) / recs.length) * 100 : 0;
 
     // AOM Breakdown
@@ -311,10 +321,10 @@ window.updateFiltersSidebarBadge = function () {
       if (!aomMap[k]) aomMap[k] = { vms: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, prodVis: 0, disp: 0, posm: 0, achSum: 0 };
       const g = aomMap[k];
       g.vms++;
-      g.covTgt += r.totalPlannedCoverage || 0;
-      g.covAch += r.totalAchievedCoverage || 0;
-      g.visTgt += r.totalPlannedVisits || 0;
-      g.visAch += r.totalAchievedVisits || 0;
+      g.covTgt += r.coverageTarget || 0;
+      g.covAch += r.coverageAch || 0;
+      g.visTgt += r.visitsTarget || 0;
+      g.visAch += r.visitAch || 0;
       g.prodVis += r.productiveVisits || 0;
       g.disp += r.productDisplay || 0;
       g.posm += r.posmDeployment || 0;
@@ -334,10 +344,10 @@ window.updateFiltersSidebarBadge = function () {
       if (!stateMap[k]) stateMap[k] = { vms: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, achSum: 0 };
       const g = stateMap[k];
       g.vms++;
-      g.covTgt += r.totalPlannedCoverage || 0;
-      g.covAch += r.totalAchievedCoverage || 0;
-      g.visTgt += r.totalPlannedVisits || 0;
-      g.visAch += r.totalAchievedVisits || 0;
+      g.covTgt += r.coverageTarget || 0;
+      g.covAch += r.coverageAch || 0;
+      g.visTgt += r.visitsTarget || 0;
+      g.visAch += r.visitAch || 0;
       g.achSum += (r.finalAch || 0) * 100;
     });
     const stateLines = ['State | VMs | CovTgt | CovAch | CovPending | Cov% | VisTgt | VisAch | Vis% | AvgFinalAch%'];
@@ -349,15 +359,16 @@ window.updateFiltersSidebarBadge = function () {
 
     // Complete VM Roster (Sorted by FinalAch% desc)
     const sortedVMs = [...recs].sort((a, b) => (b.finalAch || 0) - (a.finalAch || 0));
-    const vmLines = ['Rank | VM Name | EmpID | AOM | Branch | State | CovTgt | CovAch | Cov% | VisTgt | VisAch | Vis% | ProdVis | Display | POSM | ManDays | FinalAch%'];
+    const vmLines = ['Rank | VM Name | EmpCode | AOM | Branch | State | CovTgt | CovAch | Cov% | VisTgt | VisAch | Vis% | ProdVis | Display | POSM | ManDays | FinalAch%'];
     sortedVMs.forEach((r, idx) => {
-      vmLines.push(`${idx + 1} | ${r.name} | ${r.empId || '-'} | ${r.aom || '-'} | ${r.branch || '-'} | ${r.state || '-'} | ${r.totalPlannedCoverage || 0} | ${r.totalAchievedCoverage || 0} | ${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)} | ${r.totalPlannedVisits || 0} | ${r.totalAchievedVisits || 0} | ${pct(r.totalAchievedVisits, r.totalPlannedVisits)} | ${r.productiveVisits || 0} | ${r.productDisplay || 0} | ${r.posmDeployment || 0} | ${r.manDaysAchieved || 0}/${r.targetManDays || 22} | ${((r.finalAch || 0) * 100).toFixed(1)}%`);
+      vmLines.push(`${idx + 1} | ${r.userName || '-'} | ${r.userCode || '-'} | ${r.aom || '-'} | ${r.branch || '-'} | ${r.state || '-'} | ${r.coverageTarget || 0} | ${r.coverageAch || 0} | ${pct(r.coverageAch, r.coverageTarget)} | ${r.visitsTarget || 0} | ${r.visitAch || 0} | ${pct(r.visitAch, r.visitsTarget)} | ${r.productiveVisits || 0} | ${r.productDisplay || 0} | ${r.posmDeployment || 0} | ${r.manDaysAchieved || 0}/${r.targetManDays || 0} | ${((r.finalAch || 0) * 100).toFixed(1)}%`);
     });
 
     return [
       `=== GODREJ VM PERFORMANCE LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} VMs | Coverage: ${covAch}/${covTgt} (${pct(covAch, covTgt)}, Pending: ${Math.max(0, covTgt - covAch)}) | Visits: ${visAch}/${visTgt} (${pct(visAch, visTgt)}) | Productive Visits: ${prodVis} (${pct(prodVis, visAch)}) | Product Display: ${disp} | POSM Deployed: ${posm} | Man-Days: ${manAch}/${manTgt} (${pct(manAch, manTgt)}) | Avg Final Achievement: ${avgFinalAch.toFixed(1)}%`,
+      `Active Scope: ${recs.length} VMs | Overall Coverage: ${covAch}/${covTgt} (${pct(covAch, covTgt)}, Pending: ${Math.max(0, covTgt - covAch)}) | Total Visits: ${visAch}/${visTgt} (${pct(visAch, visTgt)}) | Productive Visits: ${prodVis} (${pct(prodVis, visAch)}) | Product Display: ${disp} | POSM Deployed: ${posm} | Man-Days: ${manAch}/${manTgt} (${pct(manAch, manTgt)}) | Avg Final Achievement: ${avgFinalAch.toFixed(1)}%`,
+      `Store Category Coverage: EBO: ${eboAch}/${eboTgt} (${pct(eboAch, eboTgt)}) | Chain Stores: ${chainAch}/${chainTgt} (${pct(chainAch, chainTgt)}) | Cool Studio: ${coolAch}/${coolTgt} (${pct(coolAch, coolTgt)}) | Others: ${othAch}/${othTgt} (${pct(othAch, othTgt)})`,
       ``,
       `--- AOM-WISE VM PERFORMANCE SUMMARY ---`,
       aomLines.join('\n'),
@@ -375,15 +386,19 @@ window.updateFiltersSidebarBadge = function () {
     const recs = activeRecs.length ? activeRecs : allRecs;
     const sum = (arr, fn) => arr.reduce((acc, r) => acc + (Number(fn(r)) || 0), 0);
 
-    const covTgt = sum(recs, r => r.totalPlannedCoverage);
-    const covAch = sum(recs, r => r.totalAchievedCoverage);
-    const visTgt = sum(recs, r => r.totalPlannedVisits);
-    const visAch = sum(recs, r => r.totalAchievedVisits);
+    const covTgt = sum(recs, r => r.coverageTarget);
+    const covAch = sum(recs, r => r.coverageAch);
+    const visTgt = sum(recs, r => r.visitsTarget);
+    const visAch = sum(recs, r => r.visitAch);
     const prodVis = sum(recs, r => r.productiveVisits);
-    const catATgt = sum(recs, r => r.catACovPlan);
-    const catAAch = sum(recs, r => r.catACovAch);
-    const catBTgt = sum(recs, r => r.catBCovPlan);
-    const catBAch = sum(recs, r => r.catBCovAch);
+    const eboTgt = sum(recs, r => r.targetedEBO);
+    const eboAch = sum(recs, r => r.eboCoverage);
+    const chainTgt = sum(recs, r => r.targetedChain);
+    const chainAch = sum(recs, r => r.chainCoverage);
+    const coolTgt = sum(recs, r => r.targetedCool);
+    const coolAch = sum(recs, r => r.coolCoverage);
+    const othTgt = sum(recs, r => r.targetedOther);
+    const othAch = sum(recs, r => r.otherCoverage);
     const avgAch = recs.length ? (sum(recs, r => r.finalAch) / recs.length) * 100 : 0;
 
     // Zone Breakdown
@@ -393,10 +408,10 @@ window.updateFiltersSidebarBadge = function () {
       if (!zoneMap[k]) zoneMap[k] = { branches: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, prodVis: 0, achSum: 0 };
       const g = zoneMap[k];
       g.branches++;
-      g.covTgt += r.totalPlannedCoverage || 0;
-      g.covAch += r.totalAchievedCoverage || 0;
-      g.visTgt += r.totalPlannedVisits || 0;
-      g.visAch += r.totalAchievedVisits || 0;
+      g.covTgt += r.coverageTarget || 0;
+      g.covAch += r.coverageAch || 0;
+      g.visTgt += r.visitsTarget || 0;
+      g.visAch += r.visitAch || 0;
       g.prodVis += r.productiveVisits || 0;
       g.achSum += (r.finalAch || 0) * 100;
     });
@@ -414,10 +429,10 @@ window.updateFiltersSidebarBadge = function () {
       if (!aomMap[k]) aomMap[k] = { branches: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, achSum: 0 };
       const g = aomMap[k];
       g.branches++;
-      g.covTgt += r.totalPlannedCoverage || 0;
-      g.covAch += r.totalAchievedCoverage || 0;
-      g.visTgt += r.totalPlannedVisits || 0;
-      g.visAch += r.totalAchievedVisits || 0;
+      g.covTgt += r.coverageTarget || 0;
+      g.covAch += r.coverageAch || 0;
+      g.visTgt += r.visitsTarget || 0;
+      g.visAch += r.visitAch || 0;
       g.achSum += (r.finalAch || 0) * 100;
     });
     const aomLines = ['AOM | Branches | CovTgt | CovAch | Cov% | VisTgt | VisAch | Vis% | AvgAch%'];
@@ -429,15 +444,15 @@ window.updateFiltersSidebarBadge = function () {
 
     // Branch Roster
     const sortedBranches = [...recs].sort((a, b) => (b.finalAch || 0) - (a.finalAch || 0));
-    const branchLines = ['Rank | Branch | Zone | TMM | AOM | CovTgt | CovAch | Cov% | VisTgt | VisAch | Vis% | ProdVis | CatACov% | CatBCov% | FinalAch%'];
+    const branchLines = ['Rank | Branch | Zone | State | TMM | AOM | CovTgt | CovAch | Cov% | VisTgt | VisAch | Vis% | ProdVis | EBOCov% | ChainCov% | FinalAch%'];
     sortedBranches.forEach((r, idx) => {
-      branchLines.push(`${idx + 1} | ${r.branch} | ${r.zone || '-'} | ${r.tmm || '-'} | ${r.aom || '-'} | ${r.totalPlannedCoverage || 0} | ${r.totalAchievedCoverage || 0} | ${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)} | ${r.totalPlannedVisits || 0} | ${r.totalAchievedVisits || 0} | ${pct(r.totalAchievedVisits, r.totalPlannedVisits)} | ${r.productiveVisits || 0} | ${pct(r.catACovAch, r.catACovPlan)} | ${pct(r.catBCovAch, r.catBCovPlan)} | ${((r.finalAch || 0) * 100).toFixed(1)}%`);
+      branchLines.push(`${idx + 1} | ${r.branch} | ${r.zone || '-'} | ${r.state || '-'} | ${r.tmm || '-'} | ${r.aom || '-'} | ${r.coverageTarget || 0} | ${r.coverageAch || 0} | ${pct(r.coverageAch, r.coverageTarget)} | ${r.visitsTarget || 0} | ${r.visitAch || 0} | ${pct(r.visitAch, r.visitsTarget)} | ${r.productiveVisits || 0} | ${pct(r.eboCoverage, r.targetedEBO)} | ${pct(r.chainCoverage, r.targetedChain)} | ${((r.finalAch || 0) * 100).toFixed(1)}%`);
     });
 
     return [
       `=== GODREJ BRANCH PERFORMANCE LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} Branches | Coverage: ${covAch}/${covTgt} (${pct(covAch, covTgt)}, Pending: ${Math.max(0, covTgt - covAch)}) | Visits: ${visAch}/${visTgt} (${pct(visAch, visTgt)}) | Productive Visits: ${prodVis} (${pct(prodVis, visAch)}) | Cat A Coverage: ${catAAch}/${catATgt} (${pct(catAAch, catATgt)}) | Cat B Coverage: ${catBAch}/${catBTgt} (${pct(catBAch, catBTgt)}) | Avg Final Achievement: ${avgAch.toFixed(1)}%`,
+      `Active Scope: ${recs.length} Branches | Coverage: ${covAch}/${covTgt} (${pct(covAch, covTgt)}, Pending: ${Math.max(0, covTgt - covAch)}) | Visits: ${visAch}/${visTgt} (${pct(visAch, visTgt)}) | Productive Visits: ${prodVis} (${pct(prodVis, visAch)}) | EBO Coverage: ${eboAch}/${eboTgt} (${pct(eboAch, eboTgt)}) | Chain Coverage: ${chainAch}/${chainTgt} (${pct(chainAch, chainTgt)}) | Cool Studio: ${coolAch}/${coolTgt} (${pct(coolAch, coolTgt)}) | Others: ${othAch}/${othTgt} (${pct(othAch, othTgt)}) | Avg Final Achievement: ${avgAch.toFixed(1)}%`,
       ``,
       `--- ZONE-WISE BRANCH PERFORMANCE ---`,
       zoneLines.join('\n'),
@@ -453,18 +468,18 @@ window.updateFiltersSidebarBadge = function () {
   /* --- 3. MERCHANDISING SCORE (m_score.html) --- */
   function buildMScorePipeTable(allRecs, activeRecs, filterSummary, updatedMeta) {
     const recs = activeRecs.length ? activeRecs : allRecs;
-    let totObt = 0, totMax = 0, pctSum = 0;
+    let totDeployed = 0, totTarget = 0, pctSum = 0;
     const stores = new Set(), vms = new Set(), branches = new Set();
     let exc = 0, good = 0, warn = 0, low = 0;
 
     const aomMap = {}, branchMap = {}, prodCatMap = {}, storeCatMap = {}, vmMap = {};
 
     recs.forEach(r => {
-      const sc = Number(r.scorePct) || 0;
-      const obt = Number(r.totalScore) || 0;
-      const mx = Number(r.maxApplicable) || 0;
-      totObt += obt;
-      totMax += mx;
+      const sc = (Number(r.mScore) || 0) * 100;
+      const obt = Number(r.finalDeployed) || 0;
+      const mx = Number(r.targetDeployment) || 0;
+      totDeployed += obt;
+      totTarget += mx;
       pctSum += sc;
       if (r.storeCode || r.storeName) stores.add(r.storeCode || r.storeName);
       if (r.vmName) vms.add(r.vmName);
@@ -485,15 +500,15 @@ window.updateFiltersSidebarBadge = function () {
         if (r.storeCode || r.storeName) map[k].stores.add(r.storeCode || r.storeName);
       };
 
-      addGrp(aomMap, r.aom);
-      addGrp(branchMap, r.branch, r.aom);
-      addGrp(prodCatMap, r.productCategory);
-      addGrp(storeCatMap, r.storeCategory);
-      addGrp(vmMap, r.vmName, `${r.aom || '-'} | ${r.branch || '-'}`);
+      addGrp(aomMap, r.aomName);
+      addGrp(branchMap, r.branch, r.aomName);
+      addGrp(prodCatMap, r.prodCat);
+      addGrp(storeCatMap, r.storeCat);
+      addGrp(vmMap, r.vmName, `${r.aomName || '-'} | ${r.branch || '-'}`);
     });
 
     const avgScore = recs.length ? (pctSum / recs.length).toFixed(1) : '0.0';
-    const weightedScore = totMax > 0 ? ((totObt / totMax) * 100).toFixed(1) : avgScore;
+    const weightedScore = totTarget > 0 ? ((totDeployed / totTarget) * 100).toFixed(1) : avgScore;
 
     const fmtGrp = (map, header, limit = 40) => {
       const lines = [header];
@@ -502,33 +517,33 @@ window.updateFiltersSidebarBadge = function () {
         .slice(0, limit)
         .forEach(([k, g]) => {
           const avg = (g.pctSum / g.count).toFixed(1) + '%';
-          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.count} | ${g.stores.size} | ${avg}`);
+          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.count} | ${g.stores.size} | ${g.obt}/${g.mx} | ${avg}`);
         });
       return lines.join('\n');
     };
 
     const lowStores = [...recs]
-      .sort((a, b) => (a.scorePct || 0) - (b.scorePct || 0))
+      .sort((a, b) => (a.mScore || 0) - (b.mScore || 0))
       .slice(0, 35)
-      .map(r => `${r.visitDate || '-'} | ${r.storeName || '-'} (${r.storeCode || '-'}) | ${r.branch || '-'} | ${r.aom || '-'} | ${r.vmName || '-'} | ${r.productCategory || '-'} | ${r.productName || '-'} | ${(r.scorePct || 0).toFixed(1)}% (${r.totalScore || 0}/${r.maxApplicable || 0})`);
+      .map(r => `${r.visitDate || '-'} | ${r.storeName || '-'} (${r.storeCode || '-'}) | ${r.branch || '-'} | ${r.aomName || '-'} | ${r.vmName || '-'} | ${r.prodCat || '-'} | ${r.prodName || '-'} | ${((r.mScore || 0) * 100).toFixed(1)}% (${r.finalDeployed || 0}/${r.targetDeployment || 0})`);
 
     return [
       `=== GODREJ MERCHANDISING SCORE (M-SCORE) LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} Product-Store Audits | Unique Stores: ${stores.size} | Unique VMs: ${vms.size} | Branches: ${branches.size} | Avg M-Score: ${avgScore}% (Weighted: ${weightedScore}%) | Score Bands: Excellent(>=85%): ${exc}, Good(70-84%): ${good}, Warning(50-69%): ${warn}, Critical(<50%): ${low}`,
+      `Active Scope: ${recs.length} Product-Store Audits | Unique Stores: ${stores.size} | Unique VMs: ${vms.size} | Branches: ${branches.size} | Avg M-Score: ${avgScore}% (Weighted Deployed/Target: ${totDeployed}/${totTarget} = ${weightedScore}%) | Score Bands: Excellent(>=85%): ${exc}, Good(70-84%): ${good}, Warning(50-69%): ${warn}, Critical(<50%): ${low}`,
       ``,
       `--- AOM-WISE M-SCORE SUMMARY ---`,
-      fmtGrp(aomMap, 'AOM | Audits | UniqueStores | AvgMScore%'),
+      fmtGrp(aomMap, 'AOM | Audits | UniqueStores | Deployed/Target | AvgMScore%'),
       ``,
       `--- PRODUCT CATEGORY & STORE CATEGORY M-SCORE ---`,
-      fmtGrp(prodCatMap, 'ProductCategory | Audits | UniqueStores | AvgMScore%'),
-      fmtGrp(storeCatMap, 'StoreCategory | Audits | UniqueStores | AvgMScore%'),
+      fmtGrp(prodCatMap, 'ProductCategory | Audits | UniqueStores | Deployed/Target | AvgMScore%'),
+      fmtGrp(storeCatMap, 'StoreCategory | Audits | UniqueStores | Deployed/Target | AvgMScore%'),
       ``,
       `--- BRANCH-WISE M-SCORE SUMMARY ---`,
-      fmtGrp(branchMap, 'Branch | AOM | Audits | UniqueStores | AvgMScore%', 35),
+      fmtGrp(branchMap, 'Branch | AOM | Audits | UniqueStores | Deployed/Target | AvgMScore%', 35),
       ``,
       `--- VM-WISE M-SCORE SUMMARY (TOP & BOTTOM) ---`,
-      fmtGrp(vmMap, 'VM Name | AOM | Branch | Audits | UniqueStores | AvgMScore%', 80),
+      fmtGrp(vmMap, 'VM Name | AOM | Branch | Audits | UniqueStores | Deployed/Target | AvgMScore%', 80),
       ``,
       `--- LOWEST SCORING STORE AUDITS (BOTTOM 35) ---`,
       `Date | Store | Branch | AOM | VM | ProdCat | Product | M-Score%`,
@@ -539,33 +554,46 @@ window.updateFiltersSidebarBadge = function () {
   /* --- 4. QC PERFORMANCE (index.html) --- */
   function buildQCPipeTable(allRecs, activeRecs, filterSummary, updatedMeta) {
     const recs = activeRecs.length ? activeRecs : allRecs;
-    let scoreSum = 0, rejTotal = 0, perfect = 0;
+    let scoreSum = 0, rejAudits = 0, paramRejTotal = 0, perfect = 0;
     const stores = new Set(), vms = new Set();
     const paramRej = {}, aomMap = {}, branchMap = {}, vmMap = {}, catMap = {};
 
     recs.forEach(r => {
-      const sc = Number(r.qcScore) || 0;
-      const rj = Number(r.rejectionCount) || 0;
+      const sc = (Number(r.qcPct) || 0) * 100;
+      const isRej = Boolean(r.isRejection) || sc < 99.9;
       scoreSum += sc;
-      rejTotal += rj;
-      if (sc >= 99.9 || rj === 0) perfect++;
-      if (r.storeCode || r.storeName) stores.add(r.storeCode || r.storeName);
+      if (isRej) rejAudits++;
+      else perfect++;
+      if (r.outletCode || r.store) stores.add(r.outletCode || r.store);
       if (r.empName) vms.add(r.empName);
 
-      if (r.params && typeof r.params === 'object') {
-        Object.entries(r.params).forEach(([pName, val]) => {
-          if (Number(val) === 0) {
-            paramRej[pName] = (paramRej[pName] || 0) + 1;
+      let rowRejCount = 0;
+      if (Array.isArray(r.display)) {
+        r.display.forEach(p => {
+          if (p && !p.ok) {
+            paramRej[p.name] = (paramRej[p.name] || 0) + 1;
+            paramRejTotal++;
+            rowRejCount++;
+          }
+        });
+      }
+      if (Array.isArray(r.campaign)) {
+        r.campaign.forEach(p => {
+          if (p && !p.ok) {
+            paramRej[p.name] = (paramRej[p.name] || 0) + 1;
+            paramRejTotal++;
+            rowRejCount++;
           }
         });
       }
 
       const addG = (map, key, extra) => {
         const k = key || 'Unknown';
-        if (!map[k]) map[k] = { audits: 0, scSum: 0, rej: 0, extra: extra || '' };
+        if (!map[k]) map[k] = { audits: 0, scSum: 0, rej: 0, paramFails: 0, extra: extra || '' };
         map[k].audits++;
         map[k].scSum += sc;
-        map[k].rej += rj;
+        if (isRej) map[k].rej++;
+        map[k].paramFails += rowRejCount;
       };
 
       addG(aomMap, r.aom);
@@ -576,11 +604,11 @@ window.updateFiltersSidebarBadge = function () {
 
     const avgQC = recs.length ? (scoreSum / recs.length).toFixed(1) : '0.0';
 
-    const paramLines = ['QC Parameter | Rejections | ShareOfRejections%'];
+    const paramLines = ['QC Parameter | FailedAudits | ShareOfFailures%'];
     Object.entries(paramRej)
       .sort((a, b) => b[1] - a[1])
       .forEach(([p, c]) => {
-        paramLines.push(`${p} | ${c} | ${pct(c, rejTotal)}`);
+        paramLines.push(`${p} | ${c} | ${pct(c, paramRejTotal)}`);
       });
 
     const fmtQCGrp = (map, hdr, limit = 60) => {
@@ -589,39 +617,39 @@ window.updateFiltersSidebarBadge = function () {
         .sort((a, b) => (b[1].scSum / b[1].audits) - (a[1].scSum / a[1].audits))
         .slice(0, limit)
         .forEach(([k, g]) => {
-          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.audits} | ${(g.scSum / g.audits).toFixed(1)}% | ${g.rej}`);
+          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.audits} | ${(g.scSum / g.audits).toFixed(1)}% | ${g.rej} | ${g.paramFails}`);
         });
       return lines.join('\n');
     };
 
     const rejectedAudits = recs
-      .filter(r => (r.rejectionCount || 0) > 0 || (r.qcScore || 100) < 100)
-      .sort((a, b) => (a.qcScore || 0) - (b.qcScore || 0))
+      .filter(r => r.isRejection || (r.qcPct || 1) < 1)
+      .sort((a, b) => (a.qcPct || 0) - (b.qcPct || 0))
       .slice(0, 60)
-      .map(r => `${r.visitDate || '-'} | ${r.storeName || '-'} (${r.storeCode || '-'}) | ${r.branch || '-'} | ${r.aom || '-'} | ${r.empName || '-'} | ${r.category || '-'} | ${(r.qcScore || 0).toFixed(1)}% | Rej:${r.rejectionCount || 0} (${(r.rejectedParams || []).join(', ')}) | Remarks: ${r.remarks || '-'}`);
+      .map(r => `${r.visitDate || r.date || '-'} | ${r.store || '-'} (${r.outletCode || '-'}) | ${r.branch || '-'} | ${r.aom || '-'} | ${r.empName || '-'} | ${r.category || '-'} | ${((r.qcPct || 0) * 100).toFixed(1)}% | Mistakes: ${r.mistakes || '-'} | Remarks: ${r.trainerRemarks || '-'}`);
 
     return [
       `=== GODREJ QC PERFORMANCE LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} QC Audits | Unique Stores: ${stores.size} | Unique VMs: ${vms.size} | Avg QC Score: ${avgQC}% | Perfect 100% Audits: ${perfect} (${pct(perfect, recs.length)}) | Audits With Rejections: ${recs.length - perfect} | Total Parameter Rejections: ${rejTotal}`,
+      `Active Scope: ${recs.length} QC Audits | Unique Stores: ${stores.size} | Unique VMs: ${vms.size} | Avg QC Score: ${avgQC}% | Perfect 100% Audits: ${perfect} (${pct(perfect, recs.length)}) | Rejected Audits: ${rejAudits} | Total Parameter Failures: ${paramRejTotal}`,
       ``,
-      `--- QC PARAMETER REJECTION BREAKDOWN ---`,
+      `--- QC PARAMETER FAILURE BREAKDOWN ---`,
       paramLines.join('\n'),
       ``,
       `--- AOM-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(aomMap, 'AOM | Audits | AvgQCScore% | TotalRejections'),
+      fmtQCGrp(aomMap, 'AOM | Audits | AvgQCScore% | RejectedAudits | ParamFailures'),
       ``,
       `--- CATEGORY & CLASSIFICATION QC PERFORMANCE ---`,
-      fmtQCGrp(catMap, 'Category (Class) | Audits | AvgQCScore% | TotalRejections'),
+      fmtQCGrp(catMap, 'Category (Class) | Audits | AvgQCScore% | RejectedAudits | ParamFailures'),
       ``,
       `--- BRANCH-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(branchMap, 'Branch | AOM | Audits | AvgQCScore% | TotalRejections', 40),
+      fmtQCGrp(branchMap, 'Branch | AOM | Audits | AvgQCScore% | RejectedAudits | ParamFailures', 40),
       ``,
       `--- VM-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(vmMap, 'VM Name | AOM | Branch | Audits | AvgQCScore% | TotalRejections', 80),
+      fmtQCGrp(vmMap, 'VM Name | AOM | Branch | Audits | AvgQCScore% | RejectedAudits | ParamFailures', 80),
       ``,
       `--- REJECTED / UNDER-100% STORE AUDITS (TOP 60) ---`,
-      `Date | Store | Branch | AOM | VM | Category | QCScore% | Rejections | Remarks`,
+      `Date | Store | Branch | AOM | VM | Category | QCScore% | Mistakes | TrainerRemarks`,
       ...rejectedAudits
     ].join('\n');
   }
@@ -629,83 +657,86 @@ window.updateFiltersSidebarBadge = function () {
   /* --- 5. TRAINING PERFORMANCE (training.html) --- */
   function buildTrainingPipeTable(allRecs, activeRecs, filterSummary, updatedMeta) {
     const recs = activeRecs.length ? activeRecs : allRecs;
-    let present = 0, attempted = 0, preSum = 0, postSum = 0, passed = 0;
-    const sessions = new Set(), vms = new Set(), branches = new Set();
+    let present = 0, attempted = 0, unattempted = 0, scoreSum = 0, ptsAch = 0, ptsTot = 0, passed = 0;
+    const topics = new Set(), vms = new Set(), branches = new Set();
     const aomMap = {}, catMap = {}, branchMap = {}, empMap = {};
 
     recs.forEach(r => {
-      if (r.sessionKey) sessions.add(r.sessionKey);
-      if (r.empId || r.empName) vms.add(r.empId || r.empName);
+      if (r.topic) topics.add(r.topic);
+      if (r.empCode || r.empName) vms.add(r.empCode || r.empName);
       if (r.branch) branches.add(r.branch);
-      if (r.isPresent) present++;
+      const isPres = String(r.attendance || '').toLowerCase() === 'present';
+      if (isPres) present++;
       if (r.isAttempted) {
         attempted++;
-        preSum += Number(r.prePct) || 0;
-        postSum += Number(r.postPct) || 0;
-        if ((Number(r.postPct) || 0) >= 80) passed++;
+        const sc = (Number(r.scorePct) || 0) * 100;
+        scoreSum += sc;
+        ptsAch += Number(r.achievedPoints) || 0;
+        ptsTot += Number(r.totalPoints) || 0;
+        if (sc >= 80) passed++;
+      } else if (r.isUnattempted) {
+        unattempted++;
       }
 
       const addT = (map, key, extra) => {
         const k = key || 'Unknown';
-        if (!map[k]) map[k] = { total: 0, pres: 0, att: 0, pre: 0, post: 0, pass: 0, extra: extra || '' };
+        if (!map[k]) map[k] = { total: 0, pres: 0, att: 0, unatt: 0, scSum: 0, pass: 0, extra: extra || '' };
         const g = map[k];
         g.total++;
-        if (r.isPresent) g.pres++;
+        if (isPres) g.pres++;
         if (r.isAttempted) {
           g.att++;
-          g.pre += Number(r.prePct) || 0;
-          g.post += Number(r.postPct) || 0;
-          if ((Number(r.postPct) || 0) >= 80) g.pass++;
+          const sc = (Number(r.scorePct) || 0) * 100;
+          g.scSum += sc;
+          if (sc >= 80) g.pass++;
+        } else if (r.isUnattempted) {
+          g.unatt++;
         }
       };
 
       addT(aomMap, r.rh);
-      addT(catMap, `${r.category || '-'} (${r.week || '-'})`);
+      addT(catMap, `${r.category || '-'} (${r.weekLabel || '-'})`);
       addT(branchMap, r.branch, r.rh);
-      addT(empMap, r.empName, `${r.empId || '-'} | ${r.rh || '-'} | ${r.branch || '-'}`);
+      addT(empMap, r.empName, `${r.empCode || '-'} | ${r.rh || '-'} | ${r.branch || '-'}`);
     });
 
-    const avgPre = attempted ? (preSum / attempted).toFixed(1) : '0.0';
-    const avgPost = attempted ? (postSum / attempted).toFixed(1) : '0.0';
-    const gain = (Number(avgPost) - Number(avgPre)).toFixed(1);
+    const avgScore = attempted ? (scoreSum / attempted).toFixed(1) : '0.0';
 
     const fmtTGrp = (map, hdr, limit = 60) => {
       const lines = [hdr];
       Object.entries(map)
-        .sort((a, b) => (b[1].att ? b[1].post / b[1].att : 0) - (a[1].att ? a[1].post / a[1].att : 0))
+        .sort((a, b) => (b[1].att ? b[1].scSum / b[1].att : 0) - (a[1].att ? a[1].scSum / a[1].att : 0))
         .slice(0, limit)
         .forEach(([k, g]) => {
-          const pr = g.att ? (g.pre / g.att).toFixed(1) : '0.0';
-          const po = g.att ? (g.post / g.att).toFixed(1) : '0.0';
-          const gn = (Number(po) - Number(pr)).toFixed(1);
-          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | Enrolled:${g.total} | Pres:${g.pres} (${pct(g.pres, g.total)}) | Attempted:${g.att} | Unattempted:${g.total - g.att} | Pre:${pr}% | Post:${po}% | Gain:+${gn}pts | PassRate:${pct(g.pass, g.att)}`);
+          const avg = g.att ? (g.scSum / g.att).toFixed(1) : '0.0';
+          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.total} | ${g.pres} (${pct(g.pres, g.total)}) | ${g.att} | ${g.unatt} | ${avg}% | ${pct(g.pass, g.att)}`);
         });
       return lines.join('\n');
     };
 
     const unattemptedList = recs
-      .filter(r => !r.isAttempted || (r.postPct || 0) < 75)
+      .filter(r => r.isUnattempted || (r.isAttempted && (r.scorePct || 0) < 0.75))
       .slice(0, 60)
-      .map(r => `${r.empName || '-'} (${r.empId || '-'}) | AOM:${r.rh || '-'} | Branch:${r.branch || '-'} | Cat:${r.category || '-'} | Week:${r.week || '-'} | Att:${r.attendance || '-'} | Attempted:${r.isAttempted ? 'Yes' : 'No'} | Pre:${r.prePct != null ? r.prePct.toFixed(1) + '%' : '-'} | Post:${r.postPct != null ? r.postPct.toFixed(1) + '%' : '-'}`);
+      .map(r => `${r.empName || '-'} (${r.empCode || '-'}) | AOM:${r.rh || '-'} | Branch:${r.branch || '-'} | Cat:${r.category || '-'} | Topic:${r.topic || '-'} | Week:${r.weekLabel || '-'} | Att:${r.attendance || '-'} | Attempted:${r.attempted || '-'} | Score:${r.scorePct != null ? (r.scorePct * 100).toFixed(1) + '%' : '-'}`);
 
     return [
       `=== GODREJ TRAINING PERFORMANCE LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} Training Records | Unique Sessions: ${sessions.size} | Unique Employees: ${vms.size} | Present: ${present}/${recs.length} (${pct(present, recs.length)}) | Test Attempted: ${attempted} | Unattempted: ${recs.length - attempted} | Avg Pre-Test: ${avgPre}% | Avg Post-Test: ${avgPost}% | Knowledge Gain: +${gain} pts | Pass Rate (>=80%): ${pct(passed, attempted)}`,
+      `Active Scope: ${recs.length} Training Records | Unique Topics: ${topics.size} | Unique Employees: ${vms.size} | Present: ${present}/${recs.length} (${pct(present, recs.length)}) | Assessment Attempted: ${attempted} | Unattempted: ${unattempted} | Avg Assessment Score: ${avgScore}% (Points: ${ptsAch}/${ptsTot}) | Pass Rate (>=80%): ${pct(passed, attempted)}`,
       ``,
       `--- AOM-WISE TRAINING SUMMARY ---`,
-      fmtTGrp(aomMap, 'AOM | Enrolled | Present | Attempted | Unattempted | Pre% | Post% | Gain | PassRate%'),
+      fmtTGrp(aomMap, 'AOM | Enrolled | Present | Attempted | Unattempted | AvgScore% | PassRate%'),
       ``,
       `--- CATEGORY & WEEK TRAINING SUMMARY ---`,
-      fmtTGrp(catMap, 'Category (Week) | Enrolled | Present | Attempted | Unattempted | Pre% | Post% | Gain | PassRate%'),
+      fmtTGrp(catMap, 'Category (Week) | Enrolled | Present | Attempted | Unattempted | AvgScore% | PassRate%'),
       ``,
       `--- BRANCH-WISE TRAINING SUMMARY ---`,
-      fmtTGrp(branchMap, 'Branch | AOM | Enrolled | Present | Attempted | Unattempted | Pre% | Post% | Gain | PassRate%', 35),
+      fmtTGrp(branchMap, 'Branch | AOM | Enrolled | Present | Attempted | Unattempted | AvgScore% | PassRate%', 35),
       ``,
       `--- EMPLOYEE-WISE TRAINING SUMMARY ---`,
-      fmtTGrp(empMap, 'Employee | EmpID | AOM | Branch | Enrolled | Present | Attempted | Unattempted | Pre% | Post% | Gain | PassRate%', 85),
+      fmtTGrp(empMap, 'Employee | EmpCode | AOM | Branch | Enrolled | Present | Attempted | Unattempted | AvgScore% | PassRate%', 85),
       ``,
-      `--- UNATTEMPTED OR LOW POST-TEST SCORE (<75%) RECORDS ---`,
+      `--- UNATTEMPTED OR LOW ASSESSMENT SCORE (<75%) RECORDS ---`,
       ...unattemptedList
     ].join('\n');
   }
@@ -729,33 +760,33 @@ window.updateFiltersSidebarBadge = function () {
 
     // 1. VM PERFORMANCE (program)
     if (pageType === 'program') {
-      const covTgt = sum(recs, r => r.totalPlannedCoverage);
-      const covAch = sum(recs, r => r.totalAchievedCoverage);
-      const visTgt = sum(recs, r => r.totalPlannedVisits);
-      const visAch = sum(recs, r => r.totalAchievedVisits);
+      const covTgt = sum(recs, r => r.coverageTarget);
+      const covAch = sum(recs, r => r.coverageAch);
+      const visTgt = sum(recs, r => r.visitsTarget);
+      const visAch = sum(recs, r => r.visitAch);
       const prodVis = sum(recs, r => r.productiveVisits);
       const disp = sum(recs, r => r.productDisplay);
       const posm = sum(recs, r => r.posmDeployment);
       const manAch = sum(recs, r => r.manDaysAchieved);
-      const manTgt = sum(recs, r => r.targetManDays || 22);
+      const manTgt = sum(recs, r => r.targetManDays);
 
       // Check if user asked about a specific VM, AOM, Branch, or State
       const matchedVMs = recs.filter(r =>
-        (r.name && q.includes(r.name.toLowerCase())) ||
+        (r.userName && q.includes(r.userName.toLowerCase())) ||
         (r.aom && q.includes(r.aom.toLowerCase())) ||
         (r.branch && q.includes(r.branch.toLowerCase())) ||
         (r.state && q.includes(r.state.toLowerCase()))
       );
 
       if (matchedVMs.length > 0 && matchedVMs.length <= 25 && !q.includes('rank aom') && !q.includes('overall') && !q.includes('top 5')) {
-        const mCovTgt = sum(matchedVMs, r => r.totalPlannedCoverage);
-        const mCovAch = sum(matchedVMs, r => r.totalAchievedCoverage);
-        const mVisTgt = sum(matchedVMs, r => r.totalPlannedVisits);
-        const mVisAch = sum(matchedVMs, r => r.totalAchievedVisits);
+        const mCovTgt = sum(matchedVMs, r => r.coverageTarget);
+        const mCovAch = sum(matchedVMs, r => r.coverageAch);
+        const mVisTgt = sum(matchedVMs, r => r.visitsTarget);
+        const mVisAch = sum(matchedVMs, r => r.visitAch);
         const rows = matchedVMs
           .sort((a, b) => (b.finalAch || 0) - (a.finalAch || 0))
           .slice(0, 15)
-          .map(r => `| ${r.name} | ${r.aom} | ${r.branch} | ${r.totalAchievedCoverage}/${r.totalPlannedCoverage} (${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)}) | ${r.totalAchievedVisits}/${r.totalPlannedVisits} (${pct(r.totalAchievedVisits, r.totalPlannedVisits)}) | ${((r.finalAch || 0) * 100).toFixed(1)}% |`);
+          .map(r => `| ${r.userName} | ${r.aom} | ${r.branch} | ${r.coverageAch}/${r.coverageTarget} (**${pct(r.coverageAch, r.coverageTarget)}**) | ${r.visitAch}/${r.visitsTarget} (**${pct(r.visitAch, r.visitsTarget)}**) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
         return [
           `**Live SharePoint Match (${matchedVMs.length} VMs)** · *${updatedMeta}*`,
           `- **Coverage Achievement:** **${mCovAch.toLocaleString()} / ${mCovTgt.toLocaleString()}** (**${pct(mCovAch, mCovTgt)}**, Pending: **${Math.max(0, mCovTgt - mCovAch)}**)`,
@@ -769,8 +800,8 @@ window.updateFiltersSidebarBadge = function () {
 
       if (q.includes('top') || q.includes('bottom') || q.includes('best') || q.includes('lowest') || q.includes('vm')) {
         const sorted = [...recs].sort((a, b) => (b.finalAch || 0) - (a.finalAch || 0));
-        const top5 = sorted.slice(0, 5).map((r, i) => `| #${i + 1} | ${r.name} | ${r.aom} | ${r.branch} | ${r.totalAchievedCoverage}/${r.totalPlannedCoverage} (${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)}) | ${r.totalAchievedVisits}/${r.totalPlannedVisits} (${pct(r.totalAchievedVisits, r.totalPlannedVisits)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
-        const bot5 = sorted.slice(-5).reverse().map((r, i) => `| #${sorted.length - i} | ${r.name} | ${r.aom} | ${r.branch} | ${r.totalAchievedCoverage}/${r.totalPlannedCoverage} (${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)}) | ${r.totalAchievedVisits}/${r.totalPlannedVisits} (${pct(r.totalAchievedVisits, r.totalPlannedVisits)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
+        const top5 = sorted.slice(0, 5).map((r, i) => `| #${i + 1} | ${r.userName} | ${r.aom} | ${r.branch} | ${r.coverageAch}/${r.coverageTarget} (${pct(r.coverageAch, r.coverageTarget)}) | ${r.visitAch}/${r.visitsTarget} (${pct(r.visitAch, r.visitsTarget)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
+        const bot5 = sorted.slice(-5).reverse().map((r, i) => `| #${sorted.length - i} | ${r.userName} | ${r.aom} | ${r.branch} | ${r.coverageAch}/${r.coverageTarget} (${pct(r.coverageAch, r.coverageTarget)}) | ${r.visitAch}/${r.visitsTarget} (${pct(r.visitAch, r.visitsTarget)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
         return [
           `**Top 5 & Bottom 5 Field VMs** (*${filterSummary} · ${updatedMeta}*)`,
           ``,
@@ -792,10 +823,10 @@ window.updateFiltersSidebarBadge = function () {
           const k = r.state || 'Unknown';
           if (!stMap[k]) stMap[k] = { vms: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0 };
           stMap[k].vms++;
-          stMap[k].covTgt += r.totalPlannedCoverage || 0;
-          stMap[k].covAch += r.totalAchievedCoverage || 0;
-          stMap[k].visTgt += r.totalPlannedVisits || 0;
-          stMap[k].visAch += r.totalAchievedVisits || 0;
+          stMap[k].covTgt += r.coverageTarget || 0;
+          stMap[k].covAch += r.coverageAch || 0;
+          stMap[k].visTgt += r.visitsTarget || 0;
+          stMap[k].visAch += r.visitAch || 0;
         });
         const rows = Object.entries(stMap)
           .sort((a, b) => (b[1].covTgt - b[1].covAch) - (a[1].covTgt - a[1].covAch))
@@ -814,19 +845,20 @@ window.updateFiltersSidebarBadge = function () {
       const aomMap = {};
       recs.forEach(r => {
         const k = r.aom || 'Unassigned';
-        if (!aomMap[k]) aomMap[k] = { vms: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, prod: 0, disp: 0, posm: 0 };
+        if (!aomMap[k]) aomMap[k] = { vms: 0, covTgt: 0, covAch: 0, visTgt: 0, visAch: 0, prod: 0, disp: 0, posm: 0, achSum: 0 };
         aomMap[k].vms++;
-        aomMap[k].covTgt += r.totalPlannedCoverage || 0;
-        aomMap[k].covAch += r.totalAchievedCoverage || 0;
-        aomMap[k].visTgt += r.totalPlannedVisits || 0;
-        aomMap[k].visAch += r.totalAchievedVisits || 0;
+        aomMap[k].covTgt += r.coverageTarget || 0;
+        aomMap[k].covAch += r.coverageAch || 0;
+        aomMap[k].visTgt += r.visitsTarget || 0;
+        aomMap[k].visAch += r.visitAch || 0;
         aomMap[k].prod += r.productiveVisits || 0;
         aomMap[k].disp += r.productDisplay || 0;
         aomMap[k].posm += r.posmDeployment || 0;
+        aomMap[k].achSum += (r.finalAch || 0) * 100;
       });
       const aomRows = Object.entries(aomMap)
         .sort((a, b) => (b[1].covTgt ? b[1].covAch / b[1].covTgt : 0) - (a[1].covTgt ? a[1].covAch / a[1].covTgt : 0))
-        .map(([aom, g]) => `| **${aom}** | ${g.vms} | ${g.covAch}/${g.covTgt} (**${pct(g.covAch, g.covTgt)}**) | ${g.visAch}/${g.visTgt} (**${pct(g.visAch, g.visTgt)}**) | ${g.prod} (${pct(g.prod, g.visAch)}) | ${g.disp.toLocaleString()} | ${g.posm.toLocaleString()} |`);
+        .map(([aom, g], idx) => `| #${idx + 1} | **${aom}** | ${g.vms} | ${g.covAch}/${g.covTgt} (**${pct(g.covAch, g.covTgt)}**) | ${g.visAch}/${g.visTgt} (**${pct(g.visAch, g.visTgt)}**) | ${g.prod.toLocaleString()} | **${(g.achSum / g.vms).toFixed(1)}%** |`);
 
       return [
         `**VM Program Performance Summary** (*${filterSummary} · ${updatedMeta}*)`,
@@ -834,7 +866,7 @@ window.updateFiltersSidebarBadge = function () {
         `- **Total Visits:** **${visAch.toLocaleString()} / ${visTgt.toLocaleString()}** (**${pct(visAch, visTgt)}**) · **Productive Visits:** **${prodVis.toLocaleString()}** (**${pct(prodVis, visAch)}**)`,
         `- **Field Execution:** **${disp.toLocaleString()}** Product Displays · **${posm.toLocaleString()}** POSM Deployed · **${manAch}/${manTgt}** Man-Days (**${pct(manAch, manTgt)}**)`,
         ``,
-        `| AOM | VMs | Coverage (Ach/Tgt) | Visits (Ach/Tgt) | Productive Visits | Display | POSM |`,
+        `| Rank | AOM | VMs | Coverage (Ach/Tgt) | Visits (Ach/Tgt) | Prod Visits | Avg Final Ach % |`,
         `|---|---|---|---|---|---|---|`,
         ...aomRows
       ].join('\n');
@@ -842,16 +874,16 @@ window.updateFiltersSidebarBadge = function () {
 
     // 2. BRANCH PERFORMANCE (branch)
     if (pageType === 'branch') {
-      const covTgt = sum(recs, r => r.totalPlannedCoverage);
-      const covAch = sum(recs, r => r.totalAchievedCoverage);
-      const visTgt = sum(recs, r => r.totalPlannedVisits);
-      const visAch = sum(recs, r => r.totalAchievedVisits);
+      const covTgt = sum(recs, r => r.coverageTarget);
+      const covAch = sum(recs, r => r.coverageAch);
+      const visTgt = sum(recs, r => r.visitsTarget);
+      const visAch = sum(recs, r => r.visitAch);
       const prodVis = sum(recs, r => r.productiveVisits);
 
       if (q.includes('branch') || q.includes('top') || q.includes('bottom') || q.includes('lowest') || q.includes('highest')) {
         const sorted = [...recs].sort((a, b) => (b.finalAch || 0) - (a.finalAch || 0));
-        const topRows = sorted.slice(0, 8).map((r, i) => `| #${i + 1} | **${r.branch}** | ${r.zone} | ${r.aom} | ${r.totalAchievedCoverage}/${r.totalPlannedCoverage} (${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)}) | ${r.totalAchievedVisits}/${r.totalPlannedVisits} (${pct(r.totalAchievedVisits, r.totalPlannedVisits)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
-        const botRows = sorted.slice(-5).reverse().map((r, i) => `| #${sorted.length - i} | **${r.branch}** | ${r.zone} | ${r.aom} | ${r.totalAchievedCoverage}/${r.totalPlannedCoverage} (${pct(r.totalAchievedCoverage, r.totalPlannedCoverage)}) | ${r.totalAchievedVisits}/${r.totalPlannedVisits} (${pct(r.totalAchievedVisits, r.totalPlannedVisits)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
+        const topRows = sorted.slice(0, 8).map((r, i) => `| #${i + 1} | **${r.branch}** | ${r.zone} | ${r.aom} | ${r.coverageAch}/${r.coverageTarget} (${pct(r.coverageAch, r.coverageTarget)}) | ${r.visitAch}/${r.visitsTarget} (${pct(r.visitAch, r.visitsTarget)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
+        const botRows = sorted.slice(-5).reverse().map((r, i) => `| #${sorted.length - i} | **${r.branch}** | ${r.zone} | ${r.aom} | ${r.coverageAch}/${r.coverageTarget} (${pct(r.coverageAch, r.coverageTarget)}) | ${r.visitAch}/${r.visitsTarget} (${pct(r.visitAch, r.visitsTarget)}) | **${((r.finalAch || 0) * 100).toFixed(1)}%** |`);
         return [
           `**Branch Performance Ranking** (*${filterSummary} · ${updatedMeta}*)`,
           ``,
@@ -872,10 +904,10 @@ window.updateFiltersSidebarBadge = function () {
         const k = r.zone || 'Unknown';
         if (!zMap[k]) zMap[k] = { b: 0, ct: 0, ca: 0, vt: 0, va: 0, pv: 0 };
         zMap[k].b++;
-        zMap[k].ct += r.totalPlannedCoverage || 0;
-        zMap[k].ca += r.totalAchievedCoverage || 0;
-        zMap[k].vt += r.totalPlannedVisits || 0;
-        zMap[k].va += r.totalAchievedVisits || 0;
+        zMap[k].ct += r.coverageTarget || 0;
+        zMap[k].ca += r.coverageAch || 0;
+        zMap[k].vt += r.visitsTarget || 0;
+        zMap[k].va += r.visitAch || 0;
         zMap[k].pv += r.productiveVisits || 0;
       });
       const zRows = Object.entries(zMap)
@@ -895,14 +927,14 @@ window.updateFiltersSidebarBadge = function () {
 
     // 3. MERCHANDISING SCORE (m_score)
     if (pageType === 'm_score') {
-      const avg = (sum(recs, r => r.scorePct) / recs.length).toFixed(1);
+      const avg = ((sum(recs, r => r.mScore) / recs.length) * 100).toFixed(1);
       const stores = new Set(recs.map(r => r.storeCode || r.storeName)).size;
       const aomMap = {};
       recs.forEach(r => {
-        const k = r.aom || 'Unknown';
+        const k = r.aomName || 'Unknown';
         if (!aomMap[k]) aomMap[k] = { c: 0, s: 0, st: new Set() };
         aomMap[k].c++;
-        aomMap[k].s += Number(r.scorePct) || 0;
+        aomMap[k].s += (Number(r.mScore) || 0) * 100;
         aomMap[k].st.add(r.storeCode || r.storeName);
       });
       const aomRows = Object.entries(aomMap)
@@ -911,9 +943,9 @@ window.updateFiltersSidebarBadge = function () {
 
       if (q.includes('low') || q.includes('store') || q.includes('bottom')) {
         const lowRows = [...recs]
-          .sort((a, b) => (a.scorePct || 0) - (b.scorePct || 0))
+          .sort((a, b) => (a.mScore || 0) - (b.mScore || 0))
           .slice(0, 10)
-          .map(r => `| ${r.visitDate || '-'} | ${r.storeName} | ${r.branch} | ${r.vmName} | ${r.productCategory} | **${(r.scorePct || 0).toFixed(1)}%** |`);
+          .map(r => `| ${r.visitDate || '-'} | ${r.storeName} | ${r.branch} | ${r.vmName} | ${r.prodCat} | **${((r.mScore || 0) * 100).toFixed(1)}%** |`);
         return [
           `**Lowest Merchandising Score Store Audits** (*${filterSummary} · ${updatedMeta}*)`,
           ``,
@@ -935,17 +967,15 @@ window.updateFiltersSidebarBadge = function () {
 
     // 4. TRAINING PERFORMANCE (training)
     if (pageType === 'training') {
-      const pres = recs.filter(r => r.isPresent).length;
+      const pres = recs.filter(r => String(r.attendance || '').toLowerCase() === 'present').length;
       const attRecs = recs.filter(r => r.isAttempted);
-      const preAvg = attRecs.length ? (sum(attRecs, r => r.prePct) / attRecs.length).toFixed(1) : '0.0';
-      const postAvg = attRecs.length ? (sum(attRecs, r => r.postPct) / attRecs.length).toFixed(1) : '0.0';
-      const gain = (Number(postAvg) - Number(preAvg)).toFixed(1);
+      const unattRecs = recs.filter(r => r.isUnattempted);
+      const scoreAvg = attRecs.length ? ((sum(attRecs, r => r.scorePct) / attRecs.length) * 100).toFixed(1) : '0.0';
 
       if (q.includes('unattempt') || q.includes('not attempt') || q.includes('pending')) {
-        const unatt = recs.filter(r => !r.isAttempted);
-        const rows = unatt.slice(0, 15).map(r => `| ${r.empName} | ${r.rh} | ${r.branch} | ${r.category} | ${r.week} | ${r.attendance} |`);
+        const rows = unattRecs.slice(0, 15).map(r => `| ${r.empName} | ${r.rh} | ${r.branch} | ${r.category} | ${r.weekLabel} | ${r.attendance} |`);
         return [
-          `**Employees With Unattempted Post-Test (${unatt.length} records)** (*${filterSummary} · ${updatedMeta}*)`,
+          `**Employees With Unattempted Assessment (${unattRecs.length} records)** (*${filterSummary} · ${updatedMeta}*)`,
           ``,
           `| Employee Name | AOM | Branch | Category | Week | Attendance |`,
           `|---|---|---|---|---|---|`,
@@ -956,43 +986,44 @@ window.updateFiltersSidebarBadge = function () {
       const aomMap = {};
       recs.forEach(r => {
         const k = r.rh || 'Unknown';
-        if (!aomMap[k]) aomMap[k] = { tot: 0, pr: 0, at: 0, pre: 0, post: 0 };
+        if (!aomMap[k]) aomMap[k] = { tot: 0, pr: 0, at: 0, unat: 0, sc: 0 };
         aomMap[k].tot++;
-        if (r.isPresent) aomMap[k].pr++;
+        if (String(r.attendance || '').toLowerCase() === 'present') aomMap[k].pr++;
         if (r.isAttempted) {
           aomMap[k].at++;
-          aomMap[k].pre += Number(r.prePct) || 0;
-          aomMap[k].post += Number(r.postPct) || 0;
+          aomMap[k].sc += (Number(r.scorePct) || 0) * 100;
+        } else if (r.isUnattempted) {
+          aomMap[k].unat++;
         }
       });
       const aomRows = Object.entries(aomMap)
-        .sort((a, b) => (b[1].at ? b[1].post / b[1].at : 0) - (a[1].at ? a[1].post / a[1].at : 0))
+        .sort((a, b) => (b[1].at ? b[1].sc / b[1].at : 0) - (a[1].at ? a[1].sc / a[1].at : 0))
         .map(([k, g]) => {
-          const pr = g.at ? (g.pre / g.at).toFixed(1) : '0.0';
-          const po = g.at ? (g.post / g.at).toFixed(1) : '0.0';
-          return `| **${k}** | ${g.tot} | ${g.pr} (${pct(g.pr, g.tot)}) | ${g.at} | ${pr}% | **${po}%** | **+${(Number(po) - Number(pr)).toFixed(1)} pts** |`;
+          const avg = g.at ? (g.sc / g.at).toFixed(1) : '0.0';
+          return `| **${k}** | ${g.tot} | ${g.pr} (${pct(g.pr, g.tot)}) | ${g.at} | ${g.unat} | **${avg}%** |`;
         });
 
       return [
         `**Training Performance Summary** (*${filterSummary} · ${updatedMeta}*)`,
-        `- **Attendance:** **${pres} / ${recs.length}** (**${pct(pres, recs.length)}**) · **Test Attempted:** **${attRecs.length}** (Unattempted: **${recs.length - attRecs.length}**)`,
-        `- **Assessment Scores:** Avg Pre-Test **${preAvg}%** → Avg Post-Test **${postAvg}%** (**+${gain} pts** knowledge gain)`,
+        `- **Attendance:** **${pres} / ${recs.length}** (**${pct(pres, recs.length)}**) · **Assessment Attempted:** **${attRecs.length}** (Unattempted: **${unattRecs.length}**)`,
+        `- **Average Assessment Score:** **${scoreAvg}%**`,
         ``,
-        `| AOM | Enrolled | Present | Attempted | Pre-Test % | Post-Test % | Gain |`,
-        `|---|---|---|---|---|---|---|`,
+        `| AOM | Enrolled | Present | Attempted | Unattempted | Avg Score % |`,
+        `|---|---|---|---|---|---|`,
         ...aomRows
       ].join('\n');
     }
 
     // 5. QC PERFORMANCE (qc)
-    const avgQC = (sum(recs, r => r.qcScore) / recs.length).toFixed(1);
-    const totRej = sum(recs, r => r.rejectionCount);
+    const avgQC = ((sum(recs, r => r.qcPct) / recs.length) * 100).toFixed(1);
+    let totRej = 0;
     const paramRej = {};
     recs.forEach(r => {
-      if (r.params) {
-        Object.entries(r.params).forEach(([p, v]) => {
-          if (Number(v) === 0) paramRej[p] = (paramRej[p] || 0) + 1;
-        });
+      if (Array.isArray(r.display)) {
+        r.display.forEach(p => { if (p && !p.ok) { paramRej[p.name] = (paramRej[p.name] || 0) + 1; totRej++; } });
+      }
+      if (Array.isArray(r.campaign)) {
+        r.campaign.forEach(p => { if (p && !p.ok) { paramRej[p.name] = (paramRej[p.name] || 0) + 1; totRej++; } });
       }
     });
     const pRows = Object.entries(paramRej)
@@ -1004,8 +1035,8 @@ window.updateFiltersSidebarBadge = function () {
       const k = r.aom || 'Unknown';
       if (!aomMap[k]) aomMap[k] = { c: 0, s: 0, rj: 0 };
       aomMap[k].c++;
-      aomMap[k].s += Number(r.qcScore) || 0;
-      aomMap[k].rj += Number(r.rejectionCount) || 0;
+      aomMap[k].s += (Number(r.qcPct) || 0) * 100;
+      if (r.isRejection) aomMap[k].rj++;
     });
     const aomRows = Object.entries(aomMap)
       .sort((a, b) => (b[1].s / b[1].c) - (a[1].s / a[1].c))
@@ -1013,15 +1044,15 @@ window.updateFiltersSidebarBadge = function () {
 
     return [
       `**QC Performance Summary** (*${filterSummary} · ${updatedMeta}*)`,
-      `- **Total Audits:** **${recs.length}** · **Average QC Score:** **${avgQC}%** · **Total Parameter Rejections:** **${totRej}**`,
+      `- **Total Audits:** **${recs.length}** · **Average QC Score:** **${avgQC}%** · **Total Parameter Failures:** **${totRej}**`,
       ``,
       `**AOM-wise QC Breakdown:**`,
-      `| AOM | Audits | Avg QC Score % | Total Rejections |`,
+      `| AOM | Audits | Avg QC Score % | Rejected Audits |`,
       `|---|---|---|---|`,
       ...aomRows,
       ``,
-      `**Parameter-wise Rejections:**`,
-      `| QC Parameter | Rejections | Share % |`,
+      `**Parameter-wise Failures:**`,
+      `| QC Parameter | Failures | Share % |`,
       `|---|---|---|`,
       ...pRows
     ].join('\n');
@@ -1051,13 +1082,12 @@ window.updateFiltersSidebarBadge = function () {
     let html = '';
     let inList = false;
     let inTable = false;
-    let tableHeaderDone = false;
 
     const closeList = () => {
       if (inList) { html += '</ul>'; inList = false; }
     };
     const closeTable = () => {
-      if (inTable) { html += '</tbody></table>'; inTable = false; tableHeaderDone = false; }
+      if (inTable) { html += '</tbody></table></div>'; inTable = false; }
     };
 
     for (let i = 0; i < lines.length; i++) {
@@ -1079,9 +1109,8 @@ window.updateFiltersSidebarBadge = function () {
           continue;
         }
         if (!inTable) {
-          html += '<table><thead><tr>' + cells.map(c => `<th>${formatInline(c)}</th>`).join('') + '</tr></thead><tbody>';
+          html += '<div class="ai-table-wrap"><table class="ai-chat-table"><thead><tr>' + cells.map(c => `<th>${formatInline(c)}</th>`).join('') + '</tr></thead><tbody>';
           inTable = true;
-          tableHeaderDone = true;
         } else {
           html += '<tr>' + cells.map(c => `<td>${formatInline(c)}</td>`).join('') + '</tr>';
         }
@@ -1456,3 +1485,4 @@ window.updateFiltersSidebarBadge = function () {
     createWidgetDOM();
   }
 })();
+

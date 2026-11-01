@@ -188,11 +188,12 @@ LIVE SHAREPOINT CONNECTION STATUS: {sp_status}
 ACTIVE DASHBOARD PAGE: {page_type.upper()}
 ACTIVE SCREEN FILTERS: {json.dumps(active_filters, ensure_ascii=False)}
 
-STRICT ANALYTICAL RULES:
+STRICT ANALYTICAL & TABLE FORMATTING RULES:
 1. Answer strictly using the exact numbers, names, scores, counts, and percentages in the LIVE SHAREPOINT DATASET below. Never invent or guess figures.
 2. Lead with the direct executive answer or headline metric in the first sentence, then provide a clean Markdown table or bullet breakdown.
-3. Bold key numbers, percentages, AOM names, Branch names, VM names, and Store names for instant readability.
-4. Keep responses concise, structured, and executive-ready.
+3. Keep Markdown tables compact and scannable (4 to 6 columns max, with short headers such as `Rank`, `AOM`, `VMs`, `Coverage (Ach/Tgt)`, `Visits (Ach/Tgt)`, `Final Ach %`). Combine Achieved/Target and % in one cell (e.g. `1,150/1,420 (81.0%)`) rather than creating separate columns for Target, Achieved, and %.
+4. Bold key numbers, percentages, AOM names, Branch names, VM names, and Store names for instant readability.
+5. Keep responses concise, structured, and executive-ready.
 
 LIVE SHAREPOINT DATASET (SYNCHRONIZED WITH USER'S CURRENT VIEW):
 {client_pipe_table[:110000]}
