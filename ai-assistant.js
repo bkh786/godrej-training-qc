@@ -1152,18 +1152,20 @@ window.updateFiltersSidebarBadge = function () {
     const pageType = detectPageType();
     const pageLabel = getPageLabel(pageType);
 
-    // Floating Launcher Button
+    // Right-Edge Vertical Tab Launcher Button (Opposite to Left-Edge Filters Tab)
     const launcher = document.createElement('button');
     launcher.className = 'ai-copilot-launcher';
     launcher.id = 'aiCopilotLauncher';
     launcher.setAttribute('aria-label', 'Open Godrej AI Copilot');
+    launcher.title = 'Toggle Godrej AI Copilot';
     launcher.innerHTML = `
+      <svg class="ai-copilot-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       <span class="ai-copilot-launcher-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
         </svg>
       </span>
-      <span>AI Copilot</span>
+      <span class="ai-copilot-launcher-text">AI Copilot</span>
       <span class="ai-copilot-status-dot" title="Connected to live SharePoint datasource"></span>
     `;
 
@@ -1474,9 +1476,11 @@ window.updateFiltersSidebarBadge = function () {
 
   function toggleDrawer(forceState) {
     const panel = document.getElementById('aiCopilotPanel');
+    const launcher = document.getElementById('aiCopilotLauncher');
     if (!panel) return;
     state.isOpen = typeof forceState === 'boolean' ? forceState : !state.isOpen;
     panel.classList.toggle('open', state.isOpen);
+    if (launcher) launcher.classList.toggle('open', state.isOpen);
     if (state.isOpen) {
       updateContextUI();
       setTimeout(() => {

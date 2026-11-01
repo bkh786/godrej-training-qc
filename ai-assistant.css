@@ -1,54 +1,73 @@
 /* ============================================================
-   GODREJ AI COPILOT — FLOATING WIDGET & DRAWER STYLES
+   GODREJ AI COPILOT — RIGHT-EDGE VERTICAL TAB & DRAWER STYLES
+   (Mirrors Left-Edge "FILTERS" Vertical Tab)
    ============================================================ */
 
 .ai-copilot-launcher {
+  pointer-events: auto;
   position: fixed;
-  bottom: 22px;
-  right: 22px;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 9998;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 11px 18px 11px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: linear-gradient(135deg, #e4002b 0%, #b91c1c 55%, #0f172a 100%);
+  justify-content: center;
+  gap: 8px;
+  width: 34px;
+  padding: 14px 4px;
+  background: linear-gradient(180deg, var(--godrej-red, #e4002b) 0%, #b91c1c 100%);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  box-shadow: -3px 4px 16px rgba(220, 38, 38, 0.32), 0 1px 4px rgba(15, 23, 42, 0.18);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 12px 28px -6px rgba(228, 0, 43, 0.55), 0 4px 12px rgba(15, 23, 42, 0.25);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
 }
 
 .ai-copilot-launcher:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 16px 34px -6px rgba(228, 0, 43, 0.68), 0 6px 16px rgba(15, 23, 42, 0.32);
+  width: 38px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+  box-shadow: -4px 6px 20px rgba(220, 38, 38, 0.44);
 }
 
 .ai-copilot-launcher:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(-50%) scale(0.98);
+}
+
+.ai-copilot-chevron {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ai-copilot-launcher.open .ai-copilot-chevron {
+  transform: rotate(180deg);
 }
 
 .ai-copilot-launcher-icon {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  flex-shrink: 0;
 }
 
 .ai-copilot-launcher-icon::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -2.5px;
   border-radius: 50%;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   animation: aiPulseRing 2.4s infinite ease-out;
@@ -60,24 +79,40 @@
   100% { transform: scale(1.28); opacity: 0; }
 }
 
+.ai-copilot-launcher-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 2px 0;
+  white-space: nowrap;
+}
+
 .ai-copilot-status-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.28);
+  box-shadow: 0 0 0 2.5px rgba(34, 197, 94, 0.32);
   flex-shrink: 0;
 }
 
 /* Drawer Container */
 .ai-copilot-panel {
   position: fixed;
-  bottom: 82px;
-  right: 22px;
+  top: 50%;
+  right: 44px;
   width: 475px;
-  max-width: calc(100vw - 28px);
+  max-width: calc(100vw - 56px);
   height: 640px;
-  max-height: calc(100vh - 110px);
+  max-height: calc(100vh - 48px);
   z-index: 9999;
   background: #ffffff;
   border: 1px solid rgba(15, 23, 42, 0.12);
@@ -87,7 +122,7 @@
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(18px) scale(0.96);
+  transform: translateY(-50%) translateX(18px) scale(0.96);
   pointer-events: none;
   transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), width 0.24s cubic-bezier(0.16, 1, 0.3, 1), height 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -95,14 +130,14 @@
 
 .ai-copilot-panel.open {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(-50%) translateX(0) scale(1);
   pointer-events: auto;
 }
 
 .ai-copilot-panel.expanded {
   width: 720px;
-  height: 80vh;
-  max-height: calc(100vh - 96px);
+  height: 82vh;
+  max-height: calc(100vh - 40px);
 }
 
 /* Dark Theme Support */
