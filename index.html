@@ -6,6 +6,7 @@
 <title>QC Performance — Godrej Enterprises</title>
 <!-- Google Fonts & External CSS -->
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="ai-assistant.css">
 <!-- SheetJS & Chart.js -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -101,11 +102,37 @@
   <!-- DASHBOARD CONTENT -->
   <div id="dashboard">
 
-    <!-- FILTERS -->
-    <div class="filters-container" id="filterContainer">
-      <div class="filters-grid" id="filterBar"></div>
-      <div class="active-filters-chips" id="activeChips"></div>
-    </div>
+    <!-- COLLAPSIBLE LEFT-SIDEBAR FILTERS BAR (Collapsed by default) -->
+    <div class="filters-sidebar-backdrop" id="filtersSidebarBackdrop" onclick="toggleFiltersSidebar(false)"></div>
+    <aside class="filters-sidebar" id="filterContainer" aria-label="Dashboard Filters">
+      <button type="button" class="filters-sidebar-toggle-btn" id="filtersSidebarToggleBtn" onclick="toggleFiltersSidebar()" title="Toggle Filters Sidebar">
+        <svg class="filters-toggle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg class="filters-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span class="filters-toggle-text-wrap"><span class="filters-toggle-text">Filters</span></span>
+        <span class="filters-toggle-badge" id="filtersToggleBadge">0</span>
+      </button>
+
+      <div class="filters-sidebar-panel" id="filtersSidebarPanel">
+        <div class="filters-sidebar-header">
+          <div class="filters-sidebar-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span>QC Audit Filters</span>
+          </div>
+          <button type="button" class="filters-sidebar-close" onclick="toggleFiltersSidebar(false)" title="Close Filters">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="filters-bar-row" id="filterBar"></div>
+        <div style="padding: 0 16px 12px;">
+          <button type="button" class="compact-filter-reset" onclick="if(window.UI && UI.resetAllFilters) UI.resetAllFilters();">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset All Filters
+          </button>
+        </div>
+        <div class="active-filters-chips" id="activeChips"></div>
+      </div>
+    </aside>
 
     <!-- KPI ROW -->
     <div class="section">
@@ -1821,5 +1848,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 </script>
+<script src="ai-assistant.js"></script>
 </body>
 </html>
