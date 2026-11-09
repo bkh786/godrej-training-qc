@@ -7,7 +7,7 @@
   pointer-events: auto;
   position: fixed;
   right: 0;
-  top: 50%;
+  top: calc(50% + 55px);
   transform: translateY(-50%);
   z-index: 9998;
   display: flex;
@@ -22,16 +22,27 @@
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-right: none;
   border-radius: 10px 0 0 10px;
-  box-shadow: -3px 4px 16px rgba(151, 5, 66, 0.32), 0 1px 4px rgba(15, 23, 42, 0.18);
+  box-shadow: -3px 4px 16px rgba(151, 5, 66, 0.35), 0 1px 4px rgba(15, 23, 42, 0.18);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   cursor: pointer;
   transition: width 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
+  animation: aiCopilotGlowPulse 3s infinite ease-in-out;
+}
+
+@keyframes aiCopilotGlowPulse {
+  0%, 100% {
+    box-shadow: -3px 4px 16px rgba(151, 5, 66, 0.35), 0 0 0 0 rgba(225, 29, 72, 0.6);
+  }
+  50% {
+    box-shadow: -4px 6px 24px rgba(151, 5, 66, 0.65), 0 0 0 6px rgba(225, 29, 72, 0.25);
+  }
 }
 
 .ai-copilot-launcher:hover {
   width: 38px;
   transform: translateY(-50%);
+  animation: none;
   background: linear-gradient(180deg, #c20956 0%, #720331 100%);
   box-shadow: -4px 6px 20px rgba(151, 5, 66, 0.44);
 }
@@ -108,7 +119,7 @@
 .ai-copilot-panel {
   position: fixed;
   top: 50%;
-  right: 44px;
+  right: 48px;
   width: 475px;
   max-width: calc(100vw - 56px);
   height: 640px;
