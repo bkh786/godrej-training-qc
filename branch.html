@@ -1030,12 +1030,12 @@
 
         <div style="display:flex; flex-direction:column; gap:22px;">
 
-          <!-- NEW: AOM-wise Channel Coverage & MT Drill-down Chart -->
+          <!-- NEW: Branch-wise Channel Coverage & MT Drill-down Chart -->
           <div class="chart-container-card" style="margin-bottom:6px;">
             <div class="chart-head-wrap">
               <div>
-                <h3 id="aomChannelChartTitle">AOM-wise Channel Coverage (GT &amp; Modern Trade Drill-down)</h3>
-                <span class="chart-hint" id="aomChannelChartSubtitle">Comparing General Trade (GT) vs Modern Trade (MT) Coverage across all Area Operations Managers. Selecting MT drills down into key accounts (Reliance, Croma, Vijay Sales).</span>
+                <h3 id="branchChannelChartTitle">Branch-wise Overall Coverage %</h3>
+                <span class="chart-hint" id="branchChannelChartSubtitle">Showing Overall outlet targets vs coverage achieved across Branches. Click buttons to switch to GT, MT or drill down into Modern Trade accounts.</span>
               </div>
               <span class="chart-interactive-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -1043,9 +1043,13 @@
               </span>
             </div>
             
-            <div class="chart-filter-tabs" id="aomChannelLegendTabs" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-              <span class="chart-filter-label" style="font-weight:700;">Channel:</span>
-              <button class="chart-filter-btn active" data-channel="gt" onclick="App.toggleChannelCategory('gt')">
+            <div class="chart-filter-tabs" id="branchChannelLegendTabs" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+              <span class="chart-filter-label" style="font-weight:700;">View:</span>
+              <button class="chart-filter-btn active" data-channel="all" onclick="App.toggleChannelCategory('all')">
+                <span class="cat-dot" style="background:#0284c7;"></span>
+                Overall Coverage
+              </button>
+              <button class="chart-filter-btn" data-channel="gt" onclick="App.toggleChannelCategory('gt')">
                 <span class="cat-dot" style="background:#2456d9;"></span>
                 GT Coverage
               </button>
@@ -1073,12 +1077,12 @@
               </button>
             </div>
 
-            <div class="chart-legend-row" id="aomChannelLegendRow" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
+            <div class="chart-legend-row" id="branchChannelLegendRow" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px 0;">
               <!-- Dynamic legend items inserted by JS -->
             </div>
 
-            <div style="height:360px; position:relative;">
-              <canvas id="chartAOMChannelCoverage"></canvas>
+            <div style="height:380px; position:relative;">
+              <canvas id="chartBranchChannelCoverage"></canvas>
             </div>
           </div>
 
@@ -1482,7 +1486,7 @@
       branch: 'all',
       zone: 'all'
     },
-    aomChannelCategory: 'gt',
+    branchChannelCategory: 'all',
     searchQuery: '',
     sortKey: 'rank',
     sortAsc: true,
@@ -1492,7 +1496,7 @@
     auditSortKey: 'default',
     auditSortAsc: true,
     charts: {
-      aomChannel: null,
+      branchChannel: null,
       tmm: null,
       branch: null,
       zone: null
@@ -2000,16 +2004,16 @@
     },
 
     toggleChannelCategory(cat) {
-      State.aomChannelCategory = cat;
+      State.branchChannelCategory = cat;
       this.updateChannelCategoryButtons();
-      this.renderAOMChannelChart(this.getFilteredRecords());
+      this.renderBranchChannelChart(this.getFilteredRecords());
     },
 
     updateChannelCategoryButtons() {
-      const btns = document.querySelectorAll('#aomChannelLegendTabs .chart-filter-btn');
+      const btns = document.querySelectorAll('#branchChannelLegendTabs .chart-filter-btn');
       btns.forEach(btn => {
         const c = btn.getAttribute('data-channel');
-        if (c === State.aomChannelCategory) {
+        if (c === State.branchChannelCategory) {
           btn.classList.add('active');
         } else {
           btn.classList.remove('active');
@@ -2377,7 +2381,7 @@
        ------------------------------------------------------------- */
     renderCharts(records) {
       if (!records) records = this.getFilteredRecords();
-      this.renderAOMChannelChart(records);
+      this.renderBranchChannelChart(records);
       const isDark = document.body.classList.contains('dark-theme');
       const textColor = isDark ? '#94a3b8' : '#475569';
 
@@ -3180,56 +3184,69 @@
     },
 
     /* -------------------------------------------------------------
-       AOM-WISE CHANNEL COVERAGE & MT DRILL-DOWN CHART (GT, MT, RELIANCE, CROMA, VIJAY SALES)
+       BRANCH-WISE CHANNEL COVERAGE & MT DRILL-DOWN CHART (OVERALL, GT, MT, RELIANCE, CROMA, VIJAY SALES)
        ------------------------------------------------------------- */
-    renderAOMChannelChart(records) {
+    renderBranchChannelChart(records) {
       if (!records) records = this.getFilteredRecords();
-      const ctx = document.getElementById('chartAOMChannelCoverage');
+      const ctx = document.getElementById('chartBranchChannelCoverage');
       if (!ctx) return;
 
       const isDark = document.body.classList.contains('dark-theme');
       const textColor = isDark ? '#94a3b8' : '#475569';
-      const channelMode = State.aomChannelCategory || 'gt';
+      const channelMode = State.branchChannelCategory || 'all';
 
-      // 1. Group records by AOM
-      const aomMap = {};
+      // 1. Group records by Branch
+      const branchMap = {};
       records.forEach(r => {
-        const aom = r.aom ? String(r.aom).trim() : '';
-        if (!aom) return;
-        if (!aomMap[aom]) {
-          aomMap[aom] = {
+        const branch = r.branch ? String(r.branch).trim() : '';
+        if (!branch) return;
+        if (!branchMap[branch]) {
+          branchMap[branch] = {
+            totAch: 0, totTgt: 0,
             gtAch: 0, gtTgt: 0,
             mtAch: 0, mtTgt: 0,
             relAch: 0, relTgt: 0,
             croAch: 0, croTgt: 0,
             vijAch: 0, vijTgt: 0,
-            totAch: 0, totTgt: 0,
-            branches: new Set()
+            visAch: 0, visTgt: 0,
+            aom: r.aom || '',
+            tmm: r.tmm || '',
+            zone: r.zone || ''
           };
         }
-        aomMap[aom].gtAch += (r.gtCoverage || 0);
-        aomMap[aom].gtTgt += (r.targetedGT || 0);
-        aomMap[aom].mtAch += (r.mtCoverage || 0);
-        aomMap[aom].mtTgt += (r.targetedMT || 0);
-        aomMap[aom].relAch += (r.relianceCoverage || 0);
-        aomMap[aom].relTgt += (r.targetedReliance || 0);
-        aomMap[aom].croAch += (r.cromaCoverage || 0);
-        aomMap[aom].croTgt += (r.targetedCroma || 0);
-        aomMap[aom].vijAch += (r.vijayCoverage || 0);
-        aomMap[aom].vijTgt += (r.targetedVijay || 0);
-        aomMap[aom].totAch += (r.coverageAch || 0);
-        aomMap[aom].totTgt += (r.coverageTarget || 0);
-        if (r.branch) aomMap[aom].branches.add(r.branch);
+        branchMap[branch].totAch += (r.coverageAch || 0);
+        branchMap[branch].totTgt += (r.coverageTarget || 0);
+        branchMap[branch].gtAch += (r.gtCoverage || 0);
+        branchMap[branch].gtTgt += (r.targetedGT || 0);
+        branchMap[branch].mtAch += (r.mtCoverage || 0);
+        branchMap[branch].mtTgt += (r.targetedMT || 0);
+        branchMap[branch].relAch += (r.relianceCoverage || 0);
+        branchMap[branch].relTgt += (r.targetedReliance || 0);
+        branchMap[branch].croAch += (r.cromaCoverage || 0);
+        branchMap[branch].croTgt += (r.targetedCroma || 0);
+        branchMap[branch].vijAch += (r.vijayCoverage || 0);
+        branchMap[branch].vijTgt += (r.targetedVijay || 0);
+        branchMap[branch].visAch += (r.visitAch || 0);
+        branchMap[branch].visTgt += (r.visitsTarget || 0);
       });
 
-      const aomLabels = Object.keys(aomMap).filter(a => {
-        const d = aomMap[a];
-        return d.gtTgt > 0 || d.mtTgt > 0 || d.totTgt > 0;
+      // Filter branches that have targets or activity and sort descending by %
+      const branchLabels = Object.keys(branchMap).filter(b => {
+        const d = branchMap[b];
+        if (channelMode === 'gt') return d.gtTgt > 0;
+        if (channelMode === 'mt' || channelMode === 'mt_stacked') return d.mtTgt > 0;
+        if (channelMode === 'reliance') return d.relTgt > 0;
+        if (channelMode === 'croma') return d.croTgt > 0;
+        if (channelMode === 'vijay') return d.vijTgt > 0;
+        return d.totTgt > 0;
       }).sort((a, b) => {
-        const dA = aomMap[a];
-        const dB = aomMap[b];
+        const dA = branchMap[a];
+        const dB = branchMap[b];
         let pctA = 0, pctB = 0;
-        if (channelMode === 'gt') {
+        if (channelMode === 'all') {
+          pctA = dA.totTgt > 0 ? (dA.totAch / dA.totTgt) : 0;
+          pctB = dB.totTgt > 0 ? (dB.totAch / dB.totTgt) : 0;
+        } else if (channelMode === 'gt') {
           pctA = dA.gtTgt > 0 ? (dA.gtAch / dA.gtTgt) : 0;
           pctB = dB.gtTgt > 0 ? (dB.gtAch / dB.gtTgt) : 0;
         } else if (channelMode === 'mt' || channelMode === 'mt_stacked') {
@@ -3245,9 +3262,11 @@
           pctA = dA.vijTgt > 0 ? (dA.vijAch / dA.vijTgt) : 0;
           pctB = dB.vijTgt > 0 ? (dB.vijAch / dB.vijTgt) : 0;
         }
-        return pctB - pctA;
+        if (pctB !== pctA) return pctB - pctA;
+        return (dB.totAch || 0) - (dA.totAch || 0);
       });
 
+      // Helper for drawing badge
       const drawChartBadge = (ctx2, text, x, y, opts = {}) => {
         if (!text && text !== 0) return;
         const sText = String(text);
@@ -3255,10 +3274,10 @@
           bgColor = 'rgba(15, 23, 42, 0.90)',
           textColor = '#ffffff',
           borderColor = 'rgba(255, 255, 255, 0.3)',
-          fontSize = 10,
+          fontSize = 9.5,
           fontWeight = '700',
-          paddingX = 4,
-          paddingY = 2,
+          paddingX = 3.5,
+          paddingY = 1.5,
           radius = 3,
           alignY = 'center'
         } = opts;
@@ -3291,16 +3310,16 @@
         ctx2.restore();
       };
 
-      const titleEl = document.getElementById('aomChannelChartTitle');
-      const subEl = document.getElementById('aomChannelChartSubtitle');
-      const legEl = document.getElementById('aomChannelLegendRow');
+      const titleEl = document.getElementById('branchChannelChartTitle');
+      const subEl = document.getElementById('branchChannelChartSubtitle');
+      const legEl = document.getElementById('branchChannelLegendRow');
 
       let datasets = [];
       let channelLabelsPlugin = null;
 
       if (channelMode === 'mt_stacked') {
-        if (titleEl) titleEl.textContent = 'AOM-wise Modern Trade Drill-down (Croma, Reliance & Vijay Sales)';
-        if (subEl) subEl.textContent = 'Comparing breakdown of key Modern Trade sub-accounts across Area Operations Managers.';
+        if (titleEl) titleEl.textContent = 'Branch-wise Modern Trade Drill-down (Croma, Reliance & Vijay Sales)';
+        if (subEl) subEl.textContent = 'Comparing breakdown of key Modern Trade sub-accounts across Branches.';
         if (legEl) {
           legEl.innerHTML = `
             <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:#e11d48;"></span> Reliance Covered</span>
@@ -3316,8 +3335,8 @@
         const mtPendingArr = [];
         const mtPctArr = [];
 
-        aomLabels.forEach(a => {
-          const d = aomMap[a];
+        branchLabels.forEach(b => {
+          const d = branchMap[b];
           const rel = d.relAch;
           const cro = d.croAch;
           const vij = d.vijAch;
@@ -3338,8 +3357,8 @@
             data: relAchArr,
             backgroundColor: '#e11d48',
             borderRadius: 3,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           },
           {
             label: 'Croma Covered',
@@ -3347,8 +3366,8 @@
             data: croAchArr,
             backgroundColor: '#0284c7',
             borderRadius: 3,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           },
           {
             label: 'Vijay Sales Covered',
@@ -3356,8 +3375,8 @@
             data: vijAchArr,
             backgroundColor: '#ea580c',
             borderRadius: 3,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           },
           {
             label: 'MT Balance Pending',
@@ -3365,8 +3384,8 @@
             data: mtPendingArr,
             backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(124,58,237,0.10)',
             borderRadius: 3,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           }
         ];
 
@@ -3378,7 +3397,7 @@
             const metaVij = chart.getDatasetMeta(2);
             const metaRel = chart.getDatasetMeta(0);
 
-            for (let i = 0; i < aomLabels.length; i++) {
+            for (let i = 0; i < branchLabels.length; i++) {
               const x = metaRel.data[i].x;
               const pct = mtPctArr[i] || 0;
               const pendVal = mtPendingArr[i];
@@ -3389,46 +3408,52 @@
                 bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
                 textColor: '#7c3aed',
                 borderColor: 'rgba(124, 58, 237, 0.4)',
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: '700',
-                paddingX: 4.5,
-                paddingY: 2,
+                paddingX: 3.5,
+                paddingY: 1.5,
                 alignY: 'bottom'
               });
             }
           }
         };
       } else {
-        let color = '#2456d9';
-        let labelCovered = 'GT Outlets Covered';
-        let labelPending = 'GT Outlets Pending';
-        let channelTitle = 'AOM-wise General Trade (GT) Coverage';
-        let channelSubtitle = 'Showing General Trade (GT) outlet targets vs coverage achieved across Area Operations Managers.';
+        let color = '#0284c7';
+        let labelCovered = 'Outlets Covered';
+        let labelPending = 'Outlets Pending';
+        let channelTitle = 'Branch-wise Overall Coverage %';
+        let channelSubtitle = 'Showing Overall outlet targets vs coverage achieved across Branches. Click buttons to switch to GT, MT or drill down into Modern Trade accounts.';
 
-        if (channelMode === 'mt') {
+        if (channelMode === 'gt') {
+          color = '#2456d9';
+          labelCovered = 'GT Outlets Covered';
+          labelPending = 'GT Outlets Pending';
+          channelTitle = 'Branch-wise General Trade (GT) Coverage';
+          channelSubtitle = 'Showing General Trade (GT) outlet targets vs coverage achieved across Branches.';
+        } else if (channelMode === 'mt') {
           color = '#7c3aed';
           labelCovered = 'MT Outlets Covered';
           labelPending = 'MT Outlets Pending';
-          channelTitle = 'AOM-wise Modern Trade (MT) Coverage';
-          channelSubtitle = 'Showing Modern Trade (MT) targets vs coverage achieved across AOMs. Click column or buttons to drill down into Croma, Reliance & Vijay Sales.';
+          channelTitle = 'Branch-wise Modern Trade (MT) Coverage';
+          channelSubtitle = 'Showing Modern Trade (MT) targets vs coverage achieved across Branches. Click column or buttons to drill down into Croma, Reliance & Vijay Sales.';
         } else if (channelMode === 'reliance') {
           color = '#e11d48';
           labelCovered = 'Reliance Outlets Covered';
           labelPending = 'Reliance Outlets Pending';
-          channelTitle = 'AOM-wise Reliance Accounts Coverage';
-          channelSubtitle = 'Reliance Modern Trade outlets targeted vs covered across Area Operations Managers.';
+          channelTitle = 'Branch-wise Reliance Accounts Coverage';
+          channelSubtitle = 'Reliance Modern Trade outlets targeted vs covered across Branches.';
         } else if (channelMode === 'croma') {
           color = '#0284c7';
           labelCovered = 'Croma Outlets Covered';
           labelPending = 'Croma Outlets Pending';
-          channelTitle = 'AOM-wise Croma Accounts Coverage';
-          channelSubtitle = 'Croma Modern Trade outlets targeted vs covered across Area Operations Managers.';
+          channelTitle = 'Branch-wise Croma Accounts Coverage';
+          channelSubtitle = 'Croma Modern Trade outlets targeted vs covered across Branches.';
         } else if (channelMode === 'vijay') {
           color = '#ea580c';
           labelCovered = 'Vijay Sales Outlets Covered';
           labelPending = 'Vijay Sales Outlets Pending';
-          channelTitle = 'AOM-wise Vijay Sales Accounts Coverage';
-          channelSubtitle = 'Vijay Sales Modern Trade outlets targeted vs covered across Area Operations Managers.';
+          channelTitle = 'Branch-wise Vijay Sales Accounts Coverage';
+          channelSubtitle = 'Vijay Sales Modern Trade outlets targeted vs covered across Branches.';
         }
 
         if (titleEl) titleEl.textContent = channelTitle;
@@ -3437,7 +3462,7 @@
           legEl.innerHTML = `
             <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:${color};"></span> ${labelCovered}</span>
             <span class="chart-legend-badge"><span style="width:10px; height:10px; border-radius:2px; background:${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}; border:1px dashed ${color};"></span> ${labelPending}</span>
-            ${channelMode === 'mt' ? '<span class="chart-legend-badge" style="color:var(--godrej-cobalt); font-weight:600;">✨ Click MT drill-down buttons above to view Croma, Reliance & Vijay Sales</span>' : ''}
+            ${channelMode === 'all' ? '<span class="chart-legend-badge" style="color:var(--godrej-cobalt); font-weight:600;">💡 Default Overall View — Click GT or MT buttons to filter channel</span>' : channelMode === 'mt' ? '<span class="chart-legend-badge" style="color:var(--godrej-cobalt); font-weight:600;">✨ Click MT drill-down buttons above to view Croma, Reliance & Vijay Sales</span>' : ''}
           `;
         }
 
@@ -3445,10 +3470,11 @@
         const pendingData = [];
         const pctData = [];
 
-        aomLabels.forEach(a => {
-          const d = aomMap[a];
+        branchLabels.forEach(b => {
+          const d = branchMap[b];
           let ach = 0, tgt = 0;
-          if (channelMode === 'gt') { ach = d.gtAch; tgt = d.gtTgt; }
+          if (channelMode === 'all') { ach = d.totAch; tgt = d.totTgt; }
+          else if (channelMode === 'gt') { ach = d.gtAch; tgt = d.gtTgt; }
           else if (channelMode === 'mt') { ach = d.mtAch; tgt = d.mtTgt; }
           else if (channelMode === 'reliance') { ach = d.relAch; tgt = d.relTgt; }
           else if (channelMode === 'croma') { ach = d.croAch; tgt = d.croTgt; }
@@ -3468,8 +3494,8 @@
             data: achData,
             backgroundColor: color,
             borderRadius: 4,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           },
           {
             label: labelPending,
@@ -3477,8 +3503,8 @@
             data: pendingData,
             backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
             borderRadius: 4,
-            barPercentage: 0.65,
-            categoryPercentage: 0.75
+            barPercentage: 0.75,
+            categoryPercentage: 0.82
           }
         ];
 
@@ -3489,7 +3515,7 @@
             const metaAch = chart.getDatasetMeta(0);
             const metaPend = chart.getDatasetMeta(1);
 
-            for (let i = 0; i < aomLabels.length; i++) {
+            for (let i = 0; i < branchLabels.length; i++) {
               const elAch = metaAch.data[i];
               const elPend = metaPend ? metaPend.data[i] : null;
               const achVal = achData[i] || 0;
@@ -3502,10 +3528,10 @@
                 bgColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
                 textColor: color,
                 borderColor: color,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: '700',
-                paddingX: 4.5,
-                paddingY: 2,
+                paddingX: 3.5,
+                paddingY: 1.5,
                 alignY: 'bottom'
               });
 
@@ -3514,10 +3540,10 @@
                 drawChartBadge(c, Utils.fmtNum(achVal), x, elAch.y + achHeight / 2, {
                   bgColor: isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.90)',
                   textColor: '#ffffff',
-                  fontSize: 9.5,
+                  fontSize: 8.5,
                   fontWeight: '700',
-                  paddingX: 3.5,
-                  paddingY: 1.5
+                  paddingX: 3,
+                  paddingY: 1
                 });
               }
 
@@ -3527,10 +3553,10 @@
                   drawChartBadge(c, Utils.fmtNum(pendVal), x, elPend.y + pendHeight / 2, {
                     bgColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(241, 245, 249, 0.96)',
                     textColor: isDark ? '#f1f5f9' : '#0f172a',
-                    fontSize: 9.5,
+                    fontSize: 8.5,
                     fontWeight: '700',
-                    paddingX: 3.5,
-                    paddingY: 1.5
+                    paddingX: 3,
+                    paddingY: 1
                   });
                 }
               }
@@ -3540,11 +3566,12 @@
       }
 
       let maxColHeight = 0;
-      for (let i = 0; i < aomLabels.length; i++) {
-        const a = aomLabels[i];
-        const d = aomMap[a];
+      for (let i = 0; i < branchLabels.length; i++) {
+        const b = branchLabels[i];
+        const d = branchMap[b];
         let h = 0;
-        if (channelMode === 'gt') h = d.gtTgt;
+        if (channelMode === 'all') h = d.totTgt;
+        else if (channelMode === 'gt') h = d.gtTgt;
         else if (channelMode === 'mt' || channelMode === 'mt_stacked') h = d.mtTgt;
         else if (channelMode === 'reliance') h = d.relTgt;
         else if (channelMode === 'croma') h = d.croTgt;
@@ -3553,22 +3580,22 @@
       }
       const yMax = maxColHeight > 0 ? Math.ceil(maxColHeight * 1.18) : 100;
 
-      if (State.charts.aomChannel) {
-        State.charts.aomChannel.destroy();
+      if (State.charts.branchChannel) {
+        State.charts.branchChannel.destroy();
       }
 
-      State.charts.aomChannel = new Chart(ctx, {
+      State.charts.branchChannel = new Chart(ctx, {
         type: 'bar',
         plugins: [channelLabelsPlugin],
         data: {
-          labels: aomLabels,
+          labels: branchLabels,
           datasets: datasets
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: { top: 26, bottom: 5, left: 10, right: 10 }
+            padding: { top: 26, bottom: 5, left: 8, right: 8 }
           },
           interaction: {
             mode: 'index',
@@ -3577,39 +3604,42 @@
           onClick: (evt, elements) => {
             if (elements.length > 0) {
               const idx = elements[0].index;
-              const selectedAOM = aomLabels[idx];
-              App.setFilter('aom', selectedAOM);
+              const selectedBranch = branchLabels[idx];
+              App.setFilter('branch', selectedBranch);
             }
           },
           plugins: {
             legend: { display: false },
             tooltip: {
               callbacks: {
-                title: (items) => `AOM: ${items[0].label}`,
+                title: (items) => `Branch: ${items[0].label}`,
                 afterBody: (context) => {
                   const idx = context[0].dataIndex;
-                  const a = aomLabels[idx];
-                  const d = aomMap[a];
+                  const b = branchLabels[idx];
+                  const d = branchMap[b];
+                  const totPct = d.totTgt > 0 ? (d.totAch / d.totTgt * 100).toFixed(1) : '0';
                   const gtPct = d.gtTgt > 0 ? (d.gtAch / d.gtTgt * 100).toFixed(1) : '0';
                   const mtPct = d.mtTgt > 0 ? (d.mtAch / d.mtTgt * 100).toFixed(1) : '0';
                   const relPct = d.relTgt > 0 ? (d.relAch / d.relTgt * 100).toFixed(1) : '0';
                   const croPct = d.croTgt > 0 ? (d.croAch / d.croTgt * 100).toFixed(1) : '0';
                   const vijPct = d.vijTgt > 0 ? (d.vijAch / d.vijTgt * 100).toFixed(1) : '0';
-                  const totPct = d.totTgt > 0 ? (d.totAch / d.totTgt * 100).toFixed(1) : '0';
 
-                  return [
+                  const lines = [
                     '----------------------------',
+                    `Zone: ${d.zone || '—'} | AOM: ${d.aom || '—'} | TMM: ${d.tmm || '—'}`,
+                    '----------------------------',
+                    `Overall Coverage: ${Utils.fmtNum(d.totAch)} / ${Utils.fmtNum(d.totTgt)} (${totPct}%)`,
                     `GT Coverage: ${Utils.fmtNum(d.gtAch)} / ${Utils.fmtNum(d.gtTgt)} (${gtPct}%)`,
-                    `MT Coverage: ${Utils.fmtNum(d.mtAch)} / ${Utils.fmtNum(d.mtTgt)} (${mtPct}%)`,
-                    `  • Reliance: ${Utils.fmtNum(d.relAch)} / ${Utils.fmtNum(d.relTgt)} (${relPct}%)`,
-                    `  • Croma: ${Utils.fmtNum(d.croAch)} / ${Utils.fmtNum(d.croTgt)} (${croPct}%)`,
-                    `  • Vijay Sales: ${Utils.fmtNum(d.vijAch)} / ${Utils.fmtNum(d.vijTgt)} (${vijPct}%)`,
-                    '----------------------------',
-                    `Total Coverage: ${Utils.fmtNum(d.totAch)} / ${Utils.fmtNum(d.totTgt)} (${totPct}%)`,
-                    `Branches: ${d.branches.size}`,
-                    '----------------------------',
-                    '👉 Click column to filter dashboard by ' + a
+                    `MT Coverage: ${Utils.fmtNum(d.mtAch)} / ${Utils.fmtNum(d.mtTgt)} (${mtPct}%)`
                   ];
+                  if (d.mtTgt > 0) {
+                    lines.push(`  • Reliance: ${Utils.fmtNum(d.relAch)} / ${Utils.fmtNum(d.relTgt)} (${relPct}%)`);
+                    lines.push(`  • Croma: ${Utils.fmtNum(d.croAch)} / ${Utils.fmtNum(d.croTgt)} (${croPct}%)`);
+                    lines.push(`  • Vijay Sales: ${Utils.fmtNum(d.vijAch)} / ${Utils.fmtNum(d.vijTgt)} (${vijPct}%)`);
+                  }
+                  lines.push('----------------------------');
+                  lines.push('👉 Click column to filter dashboard by ' + b);
+                  return lines;
                 }
               }
             }
@@ -3620,7 +3650,10 @@
               grid: { display: false },
               ticks: {
                 color: textColor,
-                font: { size: 12, weight: '700', family: 'Plus Jakarta Sans' }
+                font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' },
+                maxRotation: 45,
+                minRotation: 35,
+                autoSkip: false
               }
             },
             y: {

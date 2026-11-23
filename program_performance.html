@@ -1142,8 +1142,8 @@
           <div class="chart-container-card" style="margin-bottom:6px;">
             <div class="chart-head-wrap">
               <div>
-                <h3 id="aomChannelChartTitle">AOM-wise Channel Coverage (GT &amp; Modern Trade Drill-down)</h3>
-                <span class="chart-hint" id="aomChannelChartSubtitle">Comparing General Trade (GT) vs Modern Trade (MT) Coverage across all Area Operations Managers. Selecting MT drills down into key accounts (Reliance, Croma, Vijay Sales).</span>
+                <h3 id="aomChannelChartTitle">AOM-wise Overall Coverage %</h3>
+                <span class="chart-hint" id="aomChannelChartSubtitle">Showing Overall outlet targets vs coverage achieved across Area Operations Managers. Click buttons to switch to GT, MT or drill down into Modern Trade accounts.</span>
               </div>
               <span class="chart-interactive-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -1152,8 +1152,12 @@
             </div>
             
             <div class="chart-filter-tabs" id="aomChannelLegendTabs" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-              <span class="chart-filter-label" style="font-weight:700;">Channel:</span>
-              <button class="chart-filter-btn active" data-channel="gt" onclick="App.toggleChannelCategory('gt')">
+              <span class="chart-filter-label" style="font-weight:700;">View:</span>
+              <button class="chart-filter-btn active" data-channel="all" onclick="App.toggleChannelCategory('all')">
+                <span class="cat-dot" style="background:#0284c7;"></span>
+                Overall Coverage
+              </button>
+              <button class="chart-filter-btn" data-channel="gt" onclick="App.toggleChannelCategory('gt')">
                 <span class="cat-dot" style="background:#2456d9;"></span>
                 GT Coverage
               </button>
@@ -1442,7 +1446,7 @@
     defaultMonth: '',
     isMonthManuallySelected: false,
     aomChartCategory: 'all',
-    aomChannelCategory: 'gt',
+    aomChannelCategory: 'all',
     searchQuery: '',
     sortKey: 'rank',
     sortAsc: true,
@@ -2992,7 +2996,10 @@
         const dA = aomMap[a];
         const dB = aomMap[b];
         let pctA = 0, pctB = 0;
-        if (channelMode === 'gt') {
+        if (channelMode === 'all') {
+          pctA = dA.totTgt > 0 ? (dA.totAch / dA.totTgt) : 0;
+          pctB = dB.totTgt > 0 ? (dB.totAch / dB.totTgt) : 0;
+        } else if (channelMode === 'gt') {
           pctA = dA.gtTgt > 0 ? (dA.gtAch / dA.gtTgt) : 0;
           pctB = dB.gtTgt > 0 ? (dB.gtAch / dB.gtTgt) : 0;
         } else if (channelMode === 'mt' || channelMode === 'mt_stacked') {
@@ -3163,13 +3170,19 @@
           }
         };
       } else {
-        let color = '#2456d9';
-        let labelCovered = 'GT Outlets Covered';
-        let labelPending = 'GT Outlets Pending';
-        let channelTitle = 'AOM-wise General Trade (GT) Coverage';
-        let channelSubtitle = 'Showing General Trade (GT) outlet targets vs coverage achieved across Area Operations Managers.';
+        let color = '#0284c7';
+        let labelCovered = 'Outlets Covered';
+        let labelPending = 'Outlets Pending';
+        let channelTitle = 'AOM-wise Overall Coverage %';
+        let channelSubtitle = 'Showing Overall outlet targets vs coverage achieved across Area Operations Managers. Click buttons to switch to GT, MT or drill down into Modern Trade accounts.';
 
-        if (channelMode === 'mt') {
+        if (channelMode === 'gt') {
+          color = '#2456d9';
+          labelCovered = 'GT Outlets Covered';
+          labelPending = 'GT Outlets Pending';
+          channelTitle = 'AOM-wise General Trade (GT) Coverage';
+          channelSubtitle = 'Showing General Trade (GT) outlet targets vs coverage achieved across Area Operations Managers.';
+        } else if (channelMode === 'mt') {
           color = '#7c3aed';
           labelCovered = 'MT Outlets Covered';
           labelPending = 'MT Outlets Pending';
@@ -3212,7 +3225,8 @@
         aomLabels.forEach(a => {
           const d = aomMap[a];
           let ach = 0, tgt = 0;
-          if (channelMode === 'gt') { ach = d.gtAch; tgt = d.gtTgt; }
+          if (channelMode === 'all') { ach = d.totAch; tgt = d.totTgt; }
+          else if (channelMode === 'gt') { ach = d.gtAch; tgt = d.gtTgt; }
           else if (channelMode === 'mt') { ach = d.mtAch; tgt = d.mtTgt; }
           else if (channelMode === 'reliance') { ach = d.relAch; tgt = d.relTgt; }
           else if (channelMode === 'croma') { ach = d.croAch; tgt = d.croTgt; }
@@ -3308,7 +3322,8 @@
         const a = aomLabels[i];
         const d = aomMap[a];
         let h = 0;
-        if (channelMode === 'gt') h = d.gtTgt;
+        if (channelMode === 'all') h = d.totTgt;
+        else if (channelMode === 'gt') h = d.gtTgt;
         else if (channelMode === 'mt' || channelMode === 'mt_stacked') h = d.mtTgt;
         else if (channelMode === 'reliance') h = d.relTgt;
         else if (channelMode === 'croma') h = d.croTgt;
