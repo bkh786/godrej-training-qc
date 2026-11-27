@@ -5,7 +5,7 @@ Live interactive intelligence suite for Godrej Training & QC Operations (Visual 
 ## 🚀 Live Features
 
 1. **Multi-Page Tabbed Architecture**:
-   - **QC Performance Dashboard (`index.html`)**: Complete QC audit analytics, compliance scoring (Display Categories, Campaign/POSM, AOM-wise scores, trends, recurring mistakes, management insights, and audit records).
+   - **QC Performance Dashboard (`index.html`)**: QC approval-score analytics from the `Quality Check Report` workbook (Summary sheet): overall/campaign/activity score, AOM, channel (GT/MT), campaign, activity, QC-remark and daily-trend charts, VM ranking tables, and click-to-filter.
    - **Training Performance Dashboard (`training.html`)**: Field workforce deployment (VMs), regional coverage (North, East, West, South 1, South 2), branch distribution, pitfall root-cause analysis, and trainer action guidelines.
    - **Merchandising Score Dashboard (`m_score.html`)**: Execution & compliance intelligence extracted directly from the `Product-VM-Score` sheet. Features Overall Merchandising Score, Products Captured, Target Deployment, POSM Executed, POSM Not Executed, trend/category/AOM charts, and detailed `<100%` score audit records table with instant search and pagination.
    - **Program Performance Dashboard (`program_performance.html`)**: Comprehensive executive KPI intelligence extracted from the `Program Performance` sheet. Features Overall KPI, Detailed Channel Segment Coverage (EBO, Chain Store, Cool Studio, Others), Manpower Productivity & Market Time, interactive click-to-filter stacked column charts, Top/Bottom 5 performer comparison, AOM leadership ranking, and paginated master roster.

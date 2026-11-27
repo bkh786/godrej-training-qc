@@ -175,11 +175,11 @@ window.updateFiltersSidebarBadge = function () {
         ];
       default:
         return [
-          'Summarize overall QC score, total audits & rejections',
-          'Which QC parameters have the highest rejections?',
-          'Compare AOM-wise & Branch-wise QC score %',
-          'List stores that scored below 100% with rejection reasons',
-          'Who are the top performing VMs in QC audits?'
+          'Summarize overall QC score, outlets & visits audited',
+          'Compare AOM-wise and GT vs MT QC score %',
+          'Which campaigns need to be focused on?',
+          'What are the top QC rejection remarks?',
+          'Who are the top and bottom VMs by QC score?'
         ];
     }
   }
@@ -214,6 +214,7 @@ window.updateFiltersSidebarBadge = function () {
   }
 
   function getActiveFilterSummary() {
+    if (typeof window.__qcFilterSummary === 'function') return window.__qcFilterSummary();
     const parts = [];
     const sidebar = document.getElementById('filterContainer');
     if (sidebar) {
@@ -554,103 +555,60 @@ window.updateFiltersSidebarBadge = function () {
   /* --- 4. QC PERFORMANCE (index.html) --- */
   function buildQCPipeTable(allRecs, activeRecs, filterSummary, updatedMeta) {
     const recs = activeRecs.length ? activeRecs : allRecs;
-    let scoreSum = 0, rejAudits = 0, paramRejTotal = 0, perfect = 0;
-    const stores = new Set(), vms = new Set();
-    const paramRej = {}, aomMap = {}, branchMap = {}, vmMap = {}, catMap = {};
-
-    recs.forEach(r => {
-      const sc = (Number(r.qcPct) || 0) * 100;
-      const isRej = Boolean(r.isRejection) || sc < 99.9;
-      scoreSum += sc;
-      if (isRej) rejAudits++;
-      else perfect++;
-      if (r.outletCode || r.store) stores.add(r.outletCode || r.store);
-      if (r.empName) vms.add(r.empName);
-
-      let rowRejCount = 0;
-      if (Array.isArray(r.display)) {
-        r.display.forEach(p => {
-          if (p && !p.ok) {
-            paramRej[p.name] = (paramRej[p.name] || 0) + 1;
-            paramRejTotal++;
-            rowRejCount++;
-          }
-        });
-      }
-      if (Array.isArray(r.campaign)) {
-        r.campaign.forEach(p => {
-          if (p && !p.ok) {
-            paramRej[p.name] = (paramRej[p.name] || 0) + 1;
-            paramRejTotal++;
-            rowRejCount++;
-          }
-        });
-      }
-
-      const addG = (map, key, extra) => {
-        const k = key || 'Unknown';
-        if (!map[k]) map[k] = { audits: 0, scSum: 0, rej: 0, paramFails: 0, extra: extra || '' };
-        map[k].audits++;
-        map[k].scSum += sc;
-        if (isRej) map[k].rej++;
-        map[k].paramFails += rowRejCount;
-      };
-
-      addG(aomMap, r.aom);
-      addG(branchMap, r.branch, r.aom);
-      addG(vmMap, r.empName, `${r.aom || '-'} | ${r.branch || '-'}`);
-      addG(catMap, `${r.category || '-'} (${r.classification || '-'})`);
-    });
-
-    const avgQC = recs.length ? (scoreSum / recs.length).toFixed(1) : '0.0';
-
-    const paramLines = ['QC Parameter | FailedAudits | ShareOfFailures%'];
-    Object.entries(paramRej)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([p, c]) => {
-        paramLines.push(`${p} | ${c} | ${pct(c, paramRejTotal)}`);
-      });
-
-    const fmtQCGrp = (map, hdr, limit = 60) => {
-      const lines = [hdr];
-      Object.entries(map)
-        .sort((a, b) => (b[1].scSum / b[1].audits) - (a[1].scSum / a[1].audits))
-        .slice(0, limit)
-        .forEach(([k, g]) => {
-          lines.push(`${k}${g.extra ? ' | ' + g.extra : ''} | ${g.audits} | ${(g.scSum / g.audits).toFixed(1)}% | ${g.rej} | ${g.paramFails}`);
-        });
-      return lines.join('\n');
-    };
-
-    const rejectedAudits = recs
-      .filter(r => r.isRejection || (r.qcPct || 1) < 1)
-      .sort((a, b) => (a.qcPct || 0) - (b.qcPct || 0))
-      .slice(0, 60)
-      .map(r => `${r.visitDate || r.date || '-'} | ${r.store || '-'} (${r.outletCode || '-'}) | ${r.branch || '-'} | ${r.aom || '-'} | ${r.empName || '-'} | ${r.category || '-'} | ${((r.qcPct || 0) * 100).toFixed(1)}% | Mistakes: ${r.mistakes || '-'} | Remarks: ${r.trainerRemarks || '-'}`);
-
+    const meta = (window.QCDash && window.QCDash.meta) || {};
+    const remarks = meta.remarks || [];
+    const mean = (a) => (a.length ? (a.reduce((t, r) => t + r.p, 0) / a.length) * 100 : 0);
+    const grp = (list, fn) => { const m = {}; list.forEach(r => { const k = fn(r) || 'Unknown'; (m[k] = m[k] || []).push(r); }); return m; };
+    const lines = (m, hdr, extra, limit = 60) => [hdr].concat(Object.entries(m)
+      .map(([k, v]) => ({ k, v, s: mean(v) }))
+      .sort((x, y) => y.s - x.s)
+      .slice(0, limit)
+      .map(x => `${x.k}${extra ? ' | ' + extra(x.v[0]) : ''} | ${x.v.length} | ${x.s.toFixed(1)}% | ${x.v.filter(r => r.p < 1).length}`)).join('\n');
+    const camp = recs.filter(r => r.at === 'C'), form = recs.filter(r => r.at === 'F');
+    const outlets = new Set(recs.map(r => r.s)).size, visits = new Set(recs.map(r => r.s + '|' + r.d)).size;
+    const vms = new Set(recs.map(r => r.u)).size;
+    const remTot = remarks.map((n, i) => `${n} | ${recs.reduce((t, r) => t + (r.r[i] || 0), 0)} | ${recs.filter(r => r.r[i] > 0).length}`);
+    const under = recs.filter(r => r.p < 1).sort((x, y) => x.p - y.p).slice(0, 60)
+      .map(r => `${r.d} | ${r.sn} (${r.s}) | ${r.br || '-'} | ${r.a} | ${r.un} | ${r.cat} > ${r.sub} | ${(r.p * 100).toFixed(1)}% | target ${r.t} | QC by ${r.qb}`);
     return [
-      `=== GODREJ QC PERFORMANCE LIVE SHAREPOINT DATASOURCE ===`,
+      `=== GODREJ QC (QUALITY CHECK) LIVE SHAREPOINT DATASOURCE ===`,
       `Status: ${updatedMeta} | Active Filters: ${filterSummary}`,
-      `Active Scope: ${recs.length} QC Audits | Unique Stores: ${stores.size} | Unique VMs: ${vms.size} | Avg QC Score: ${avgQC}% | Perfect 100% Audits: ${perfect} (${pct(perfect, recs.length)}) | Rejected Audits: ${rejAudits} | Total Parameter Failures: ${paramRejTotal}`,
+      `Scope: ${recs.length} audit lines | Overall QC Score: ${mean(recs).toFixed(1)}% | Campaign: ${mean(camp).toFixed(1)}% | Forms/Activity: ${mean(form).toFixed(1)}% | Unique outlets: ${outlets} | Visits audited: ${visits} | VMs audited: ${vms}`,
       ``,
-      `--- QC PARAMETER FAILURE BREAKDOWN ---`,
-      paramLines.join('\n'),
+      `--- QC REMARKS (why quantities were not approved) ---`,
+      `Remark | Quantity | AuditLines`,
+      ...remTot,
       ``,
-      `--- AOM-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(aomMap, 'AOM | Audits | AvgQCScore% | RejectedAudits | ParamFailures'),
+      `--- AOM-WISE ---`,
+      lines(grp(recs, r => r.a), 'AOM | AuditLines | QCScore% | LinesBelow100%'),
       ``,
-      `--- CATEGORY & CLASSIFICATION QC PERFORMANCE ---`,
-      fmtQCGrp(catMap, 'Category (Class) | Audits | AvgQCScore% | RejectedAudits | ParamFailures'),
+      `--- CHANNEL-WISE (GT / MT) ---`,
+      lines(grp(recs, r => r.ch), 'Channel | AuditLines | QCScore% | LinesBelow100%'),
       ``,
-      `--- BRANCH-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(branchMap, 'Branch | AOM | Audits | AvgQCScore% | RejectedAudits | ParamFailures', 40),
+      `--- STORE TYPE-WISE ---`,
+      lines(grp(recs, r => r.ty), 'Store type | AuditLines | QCScore% | LinesBelow100%'),
       ``,
-      `--- VM-WISE QC PERFORMANCE ---`,
-      fmtQCGrp(vmMap, 'VM Name | AOM | Branch | Audits | AvgQCScore% | RejectedAudits | ParamFailures', 80),
+      `--- CAMPAIGN SUB-CATEGORY-WISE ---`,
+      lines(grp(camp, r => r.cat + ' > ' + r.sub), 'Category > Sub | AuditLines | QCScore% | LinesBelow100%'),
       ``,
-      `--- REJECTED / UNDER-100% STORE AUDITS (TOP 60) ---`,
-      `Date | Store | Branch | AOM | VM | Category | QCScore% | Mistakes | TrainerRemarks`,
-      ...rejectedAudits
+      `--- ACTIVITY (FORMS)-WISE ---`,
+      lines(grp(form, r => r.sub), 'Activity | AuditLines | QCScore% | LinesBelow100%'),
+      ``,
+      `--- QC-BY (AOM AUDITORS) ---`,
+      lines(grp(recs, r => r.qb), 'QC by | AuditLines | QCScore% | LinesBelow100%'),
+      ``,
+      `--- BRANCH-WISE ---`,
+      lines(grp(recs, r => r.br), 'Branch | AuditLines | QCScore% | LinesBelow100%', null, 40),
+      ``,
+      `--- VM-WISE ---`,
+      lines(grp(recs, r => r.un), 'VM | AuditLines | QCScore% | LinesBelow100%', null, 80),
+      ``,
+      `--- DAILY TREND (by visit date) ---`,
+      lines(grp(recs, r => r.d), 'Date | AuditLines | QCScore% | LinesBelow100%', null, 40),
+      ``,
+      `--- LOWEST-SCORING AUDIT LINES (TOP 60) ---`,
+      `VisitDate | Store | Branch | AOM | VM | Category > Sub | Score | Target | QCBy`,
+      ...under
     ].join('\n');
   }
 
@@ -1015,46 +973,25 @@ window.updateFiltersSidebarBadge = function () {
     }
 
     // 5. QC PERFORMANCE (qc)
-    const avgQC = ((sum(recs, r => r.qcPct) / recs.length) * 100).toFixed(1);
-    let totRej = 0;
-    const paramRej = {};
-    recs.forEach(r => {
-      if (Array.isArray(r.display)) {
-        r.display.forEach(p => { if (p && !p.ok) { paramRej[p.name] = (paramRej[p.name] || 0) + 1; totRej++; } });
-      }
-      if (Array.isArray(r.campaign)) {
-        r.campaign.forEach(p => { if (p && !p.ok) { paramRej[p.name] = (paramRej[p.name] || 0) + 1; totRej++; } });
-      }
-    });
-    const pRows = Object.entries(paramRej)
-      .sort((a, b) => b[1] - a[1])
-      .map(([p, c]) => `| **${p}** | ${c} | ${pct(c, totRej)} |`);
-
+    const mean = (a) => (a.length ? (a.reduce((t, r) => t + r.p, 0) / a.length) * 100 : 0);
+    const remarks = ((window.QCDash && window.QCDash.meta) || {}).remarks || [];
+    const remRows = remarks.map((n, i) => [n, recs.reduce((t, r) => t + (r.r[i] || 0), 0)]).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1])
+      .map(([n, q]) => `| **${n}** | ${q} |`);
     const aomMap = {};
-    recs.forEach(r => {
-      const k = r.aom || 'Unknown';
-      if (!aomMap[k]) aomMap[k] = { c: 0, s: 0, rj: 0 };
-      aomMap[k].c++;
-      aomMap[k].s += (Number(r.qcPct) || 0) * 100;
-      if (r.isRejection) aomMap[k].rj++;
-    });
-    const aomRows = Object.entries(aomMap)
-      .sort((a, b) => (b[1].s / b[1].c) - (a[1].s / a[1].c))
-      .map(([k, g]) => `| **${k}** | ${g.c} | **${(g.s / g.c).toFixed(1)}%** | ${g.rj} |`);
-
+    recs.forEach(r => { (aomMap[r.a || 'Unknown'] = aomMap[r.a || 'Unknown'] || []).push(r); });
+    const aomRows = Object.entries(aomMap).sort((x, y) => mean(y[1]) - mean(x[1]))
+      .map(([k, v]) => `| **${k}** | ${v.length} | **${mean(v).toFixed(1)}%** | ${v.filter(r => r.p < 1).length} |`);
     return [
       `**QC Performance Summary** (*${filterSummary} · ${updatedMeta}*)`,
-      `- **Total Audits:** **${recs.length}** · **Average QC Score:** **${avgQC}%** · **Total Parameter Failures:** **${totRej}**`,
+      `- **Overall QC Score:** **${mean(recs).toFixed(1)}%** · **Audit lines:** **${recs.length}** · **Outlets audited:** **${new Set(recs.map(r => r.s)).size}**`,
       ``,
-      `**AOM-wise QC Breakdown:**`,
-      `| AOM | Audits | Avg QC Score % | Rejected Audits |`,
+      `| AOM | Audit lines | QC Score % | Lines < 100% |`,
       `|---|---|---|---|`,
       ...aomRows,
       ``,
-      `**Parameter-wise Failures:**`,
-      `| QC Parameter | Failures | Share % |`,
-      `|---|---|---|`,
-      ...pRows
+      `| QC Remark | Quantity |`,
+      `|---|---|`,
+      ...remRows
     ].join('\n');
   }
 

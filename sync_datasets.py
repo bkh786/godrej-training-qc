@@ -23,9 +23,8 @@ import time
 print = functools.partial(print, flush=True)
 
 SHAREPOINT_URLS = {
-    "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBx5HIst0LPT4_moEtMpsbtAd4w3ClOl0h-mrlnCEmDCno?download=1",
+    "index": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQDsjxwwJGMDQqh9FnUOqXdUAYdpbxXCMaVqCJtOGT7rnis?e=IKqrM6&download=1",
     "training": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQBRmCEH6nI8TLFuK-RVqPu0ATXbidF7rGfITZvpZH7PyAA?download=1",
-    "m_score": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQALwrJKNKLQTIXnzWX8IQrXAUJP1FnSVdMZD7jPMrqpxvo?e=yACydV&download=1",
     "program_performance": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1",
     "branch": "https://teamchannelplay-my.sharepoint.com/:x:/g/personal/bikash_roy1_channelplay_in/IQB-EkkYdgTFQphMhXNUEfKSAWIldx1iKI_TWThpQI42w8E?e=2dQVkl&download=1"
 }
@@ -34,19 +33,12 @@ ONEDRIVE_BASE = "/Users/bikash/Library/CloudStorage/OneDrive-ChannelplayLimited/
 
 LOCAL_FALLBACKS = {
     "index": [
-        os.path.join(ONEDRIVE_BASE, "QC Audit Report.xlsx"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "QC Audit Report.xlsx"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "qc_download.xlsx"),
+        os.path.join(ONEDRIVE_BASE, "Quality Check Report.xlsx"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Quality Check Report.xlsx"),
     ],
     "training": [
         os.path.join(ONEDRIVE_BASE, "Training Tracker.xlsx"),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "Training Tracker.xlsx"),
-    ],
-    "m_score": [
-        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej MS Value.xlsx"),
-        os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej MS.xlsb"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS Value.xlsx"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "Godrej MS.xlsb"),
     ],
     "program_performance": [
         os.path.join(ONEDRIVE_BASE, "Ops Reports", "Godrej VM Productivity Report.xlsb"),
@@ -148,21 +140,142 @@ def embed_sample_data(html_file, rows):
         f.write(updated_content)
     print(f"✓ Embedded {len(rows):,} rows into {html_file} ({len(json_str):,} chars)")
 
+QC_REMARKS = ["Quantity does not match", "Photo evidence missing or unclear", "Not logged at store", "Duplicate entry",
+              "Execution quality below standard", "Incorrect POSM Deployment", "Others", "Activity was not actually performed"]
+
+
+def _norm(v):
+    return re.sub(r"\s+", " ", str(v or "").replace("\xa0", " ")).strip()
+
+
+def _num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _uid(v):
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return None
+
+
+def _xl_date(v):
+    """xlsx datetime or xlsb serial -> YYYY-MM-DD"""
+    if isinstance(v, (datetime.datetime, datetime.date)):
+        return v.strftime("%Y-%m-%d")
+    if isinstance(v, (int, float)) and v > 20000:
+        return (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(v))).strftime("%Y-%m-%d")
+    return ""
+
+
+def _read_ops_maps(prog_raw):
+    """From the VM Productivity workbook: 6-digit app user code -> 7-digit emp code (Attendance), emp code -> AOM (Mappings)
+    and Branch (Program Performance), store -> channel (PJP LIST), and Done visits (MVT) for the denominators."""
+    c2c, aom, branch, name2code, chan, mvt = {}, {}, {}, {}, {}, []
+    with open_workbook(io.BytesIO(prog_raw)) as wb:
+        with wb.get_sheet("Attendance") as s:
+            for i, r in enumerate(s.rows()):
+                v = [c.v for c in r]
+                if i and len(v) > 2 and _uid(v[0]) and _uid(v[1]):
+                    c2c[_uid(v[1])] = _uid(v[0])
+        with wb.get_sheet("Mappings") as s:
+            for i, r in enumerate(s.rows()):
+                v = [c.v for c in r]
+                if i and len(v) > 3 and _uid(v[1]) and v[3]:
+                    aom[_uid(v[1])] = _norm(v[3])
+                    name2code[_norm(v[2]).lower()] = _uid(v[1])
+        with wb.get_sheet("Program Performance") as s:
+            for i, r in enumerate(s.rows()):
+                v = [c.v for c in r]
+                if i >= 2 and len(v) > 4 and _uid(v[2]) and v[4]:
+                    branch[_uid(v[2])] = _norm(v[4])
+        with wb.get_sheet("PJP LIST") as s:
+            for i, r in enumerate(s.rows()):
+                v = [c.v for c in r]
+                if i and len(v) > 8 and v[8]:
+                    ch = _norm(v[8]).upper()
+                    if _uid(v[1]):
+                        chan[str(_uid(v[1]))] = ch
+                    if v[2]:
+                        chan[_norm(v[2])] = ch
+        with wb.get_sheet("MVT") as s:
+            for i, r in enumerate(s.rows()):
+                v = [c.v for c in r]
+                if i and len(v) > 12 and _norm(v[12]).lower() == "done":
+                    mvt.append((_norm(v[0]) if not isinstance(v[0], float) else str(int(v[0])), _uid(v[3]), _xl_date(v[11])))
+    return c2c, aom, branch, name2code, chan, mvt
+
+
+def build_qc_dataset(qc_raw, prog_raw):
+    c2c, aom, branch, name2code, chan, mvt = _read_ops_maps(prog_raw)
+    wb = openpyxl.load_workbook(io.BytesIO(qc_raw), read_only=True, data_only=True)
+    ws = wb["Summary"] if "Summary" in wb.sheetnames else wb[wb.sheetnames[0]]
+    it = ws.iter_rows(values_only=True)
+    hdr = [_norm(h).lower() for h in next(it)]
+    ix = {h: i for i, h in enumerate(hdr) if h}
+    g = lambda r, k: r[ix[k]] if k in ix and ix[k] < len(r) else None
+    rem_keys = [x.lower() for x in QC_REMARKS]
+    TYPE = {"chain_store": "Chain Store"}
+    out, unmapped = [], set()
+    for r in it:
+        if g(r, "store code") in (None, ""):
+            continue
+        u6 = _uid(g(r, "user code"))
+        un = _norm(g(r, "user name"))
+        u7 = c2c.get(u6) or name2code.get(un.lower())
+        a = aom.get(u7, "")
+        if not a:
+            unmapped.add(u6)
+        tgt = _num(g(r, "target deployment qty."))
+        rem = [int(_num(g(r, k))) for k in rem_keys]
+        sc = g(r, "approval %")
+        sc = float(sc) if isinstance(sc, (int, float)) else ((tgt - sum(rem[:7])) / tgt if tgt else 0.0)
+        ty = _norm(g(r, "store type"))
+        qr = _norm(g(r, "qc by user role"))
+        out.append({
+            "s": str(_uid(g(r, "store code")) or _norm(g(r, "store code"))), "sn": _norm(g(r, "store name")),
+            "ty": TYPE.get(ty.lower(), ty), "ch": _norm(g(r, "store channel")).upper(),
+            "u": u7 or u6, "un": un, "a": a or "Unmapped", "br": branch.get(u7, ""),
+            "d": _xl_date(g(r, "date of visit")), "qd": _xl_date(g(r, "qc date")),
+            "qb": _norm(g(r, "qc by user name")), "qr": qr,
+            "at": "C" if _norm(g(r, "activity type")).lower().startswith("camp") else "F",
+            "cat": _norm(g(r, "category")), "sub": _norm(g(r, "sub category")),
+            "t": int(tgt), "dp": int(_num(g(r, "deployed qty."))), "r": rem, "p": round(sc, 6),
+        })
+    last_visit = max((x["d"] for x in out if x["d"]), default="")
+    month = last_visit[:7]
+    # denominators (current month): outlets covered + store visits from the MVT (visit tracker) 'Done' rows
+    cov, vis = {}, {}
+    for outlet, emp, d in mvt:
+        if not emp or not d or d[:7] != month:
+            continue
+        a, ch = aom.get(emp, ""), chan.get(outlet, "")
+        k = (emp, outlet)
+        cov.setdefault(k, [outlet, a, ch, emp, set()])[4].add(d)
+        vk = (a, ch, emp, d)
+        vis[vk] = vis.get(vk, 0) + 1
+    return [{
+        "meta": {"updatedUpto": max((x["qd"] for x in out if x["qd"]), default=""),
+                 "firstVisit": min((x["d"] for x in out if x["d"]), default=""), "lastVisit": last_visit,
+                 "remarks": QC_REMARKS, "rows": len(out), "unmappedUsers": len(unmapped),
+                 "syncedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds")},
+        "rows": out,
+        "cov": [[e[0], e[1], e[2], e[3], sorted(e[4])] for e in cov.values()],
+        "vis": [[a, ch, u, d, n] for (a, ch, u, d), n in vis.items()],
+    }]
+
+
 def sync_index(opener):
-    print("\n--- Syncing index.html (QC Audit Report) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["index"], LOCAL_FALLBACKS.get("index"), label="QC Audit Report (index)")
-    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
-    rows = []
-    for row in ws.iter_rows(values_only=True):
-        row_clean = []
-        for cell in row:
-            if isinstance(cell, (datetime.date, datetime.datetime)):
-                row_clean.append(cell.strftime("%Y-%m-%d"))
-            else:
-                row_clean.append(cell)
-        rows.append(row_clean)
-    embed_sample_data("index.html", rows)
+    print("\n--- Syncing index.html (Quality Check Report) ---")
+    qc = fetch_url_data(opener, SHAREPOINT_URLS["index"], LOCAL_FALLBACKS.get("index"), timeout=120, label="Quality Check Report (index)")
+    prog = fetch_url_data(opener, SHAREPOINT_URLS["program_performance"], LOCAL_FALLBACKS.get("program_performance"), timeout=120, label="VM Productivity (QC mapping)")
+    ds = build_qc_dataset(qc, prog)[0]
+    print(f"  {ds['meta']['rows']} audit lines, {ds['meta']['unmappedUsers']} unmapped VMs, {len(ds['cov'])} covered outlets")
+    embed_sample_data("index.html", ds)
+
 
 def sync_training(opener):
     print("\n--- Syncing training.html (Training Tracker) ---")
@@ -182,39 +295,6 @@ def sync_training(opener):
                 row_clean.append(cell)
         rows.append(row_clean)
     embed_sample_data("training.html", rows)
-
-def sync_m_score(opener):
-    print("\n--- Syncing m_score.html (Product-VM-Score) ---")
-    data = fetch_url_data(opener, SHAREPOINT_URLS["m_score"], LOCAL_FALLBACKS.get("m_score"), timeout=120, label="Godrej MS (m_score)")
-    
-    rows = []
-    if data[:4] == b"PK\x03\x04":
-        wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-        sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheetnames else wb.sheetnames[0]
-        ws = wb[sheet_name]
-        for i, row in enumerate(ws.iter_rows(values_only=True)):
-            r_vals = list(row[:30])
-            if i > 0 and len(r_vals) > 14:
-                d = r_vals[14]
-                if isinstance(d, (int, float)):
-                    dt = datetime.date(1899, 12, 30) + datetime.timedelta(days=int(d))
-                    r_vals[14] = dt.strftime("%Y-%m-%d")
-                elif isinstance(d, (datetime.date, datetime.datetime)):
-                    r_vals[14] = d.strftime("%Y-%m-%d")
-            rows.append(r_vals)
-    else:
-        with open_workbook(io.BytesIO(data)) as wb:
-            sheet_name = "Product-VM-Score" if "Product-VM-Score" in wb.sheets else wb.sheets[0]
-            with wb.get_sheet(sheet_name) as s:
-                for i, row in enumerate(s.rows()):
-                    r_vals = [c.v for c in row[:30]]
-                    if i > 0 and len(r_vals) > 14:
-                        d = r_vals[14]
-                        if isinstance(d, (int, float)):
-                            dt = datetime.date(1899, 12, 30) + datetime.timedelta(days=int(d))
-                            r_vals[14] = dt.strftime("%Y-%m-%d")
-                    rows.append(r_vals)
-    embed_sample_data("m_score.html", rows)
 
 def sync_program_performance(opener):
     print("\n--- Syncing program_performance.html (Program Performance) ---")
@@ -303,7 +383,6 @@ def run_sync_once():
     sync_tasks = [
         ("index.html (QC Tracker)", sync_index),
         ("training.html (Training Details)", sync_training),
-        ("m_score.html (Product-VM-Score)", sync_m_score),
         ("program_performance.html (VM Performance)", sync_program_performance),
         ("branch.html (Branch Performance)", sync_branch),
     ]
